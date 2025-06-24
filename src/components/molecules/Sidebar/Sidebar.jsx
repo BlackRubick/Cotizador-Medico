@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
     { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Cotizar' },
     { id: 'clientes', path: '/clientes', icon: FileText, label: 'Clientes' },
     { id: 'historial', path: '/historial', icon: History, label: 'Historial de cotizaciones' },
+    { id: 'revisar', path: '/revisar-cotizaciones', icon: FileText, label: 'Revisar Cotizaciones' },
   ];
 
   return (

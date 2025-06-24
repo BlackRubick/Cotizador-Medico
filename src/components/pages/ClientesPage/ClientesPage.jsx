@@ -1,44 +1,77 @@
-import React from 'react';
-import { Users, Plus } from 'lucide-react';
-import Card from '../../atoms/Card';
-import Button from '../../atoms/Button';
+import React, { useState } from 'react';
+import ClientManager from '../../organisms/ClientManager';
 
 const ClientesPage = () => {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Users className="w-8 h-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Clientes</h1>
-        </div>
-        <Button className="flex items-center space-x-2">
-          <Plus size={20} />
-          <span>Nuevo Cliente</span>
-        </Button>
-      </div>
+  const [clients, setClients] = useState([
+    {
+      id: 1,
+      nombre: 'Hospital General de Tuxtla',
+      contacto: 'Dr. Eduardo Ramírez',
+      telefono: '+52 961 234 5678',
+      email: 'contacto@hospitalgeneral.com',
+      direccion: 'Av. Central 123, Tuxtla Gutiérrez, Chiapas',
+      rfc: 'HGT850101ABC',
+      tipo: 'Hospital',
+      estado: 'activo'
+    },
+    {
+      id: 2,
+      nombre: 'Clínica Especializada del Sur',
+      contacto: 'Lic. Patricia Morales',
+      telefono: '+52 961 345 6789',
+      email: 'info@clinicasur.com',
+      direccion: 'Calle 5 de Mayo 456, Tuxtla Gutiérrez, Chiapas',
+      rfc: 'CES900215XYZ',
+      tipo: 'Clínica',
+      estado: 'activo'
+    },
+    {
+      id: 3,
+      nombre: 'Laboratorio Médico Central',
+      contacto: 'Q.F.B. Carlos Ruiz',
+      telefono: '+52 961 456 7890',
+      email: 'laboratorio@medcentral.com',
+      direccion: 'Blvd. Belisario Domínguez 789, Tuxtla Gutiérrez',
+      rfc: 'LMC751020DEF',
+      tipo: 'Laboratorio',
+      estado: 'activo'
+    }
+  ]);
 
-      <Card className="text-center py-12">
-        <div className="max-w-md mx-auto">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Módulo en Desarrollo
-          </h3>
-          <p className="text-gray-500 mb-6">
-            La gestión de clientes estará disponible próximamente. Podrás crear, 
-            editar y administrar toda la información de tus clientes.
-          </p>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-2">Funciones próximas:</h4>
-            <ul className="text-sm text-blue-600 space-y-1">
-              <li>• Registro completo de clientes</li>
-              <li>• Historial de cotizaciones por cliente</li>
-              <li>• Información de contacto detallada</li>
-              <li>• Seguimiento de interacciones</li>
-            </ul>
-          </div>
-        </div>
-      </Card>
-    </div>
+  const handleSave = (clientData, clientId = null) => {
+    if (clientId) {
+      // Editar cliente existente
+      setClients(prev => 
+        prev.map(client => 
+          client.id === clientId 
+            ? { ...client, ...clientData }
+            : client
+        )
+      );
+      console.log('Cliente actualizado:', clientData);
+    } else {
+      // Crear nuevo cliente
+      const newClient = {
+        ...clientData,
+        id: Math.max(...clients.map(c => c.id), 0) + 1,
+        estado: 'activo'
+      };
+      setClients(prev => [...prev, newClient]);
+      console.log('Nuevo cliente creado:', newClient);
+    }
+  };
+
+  const handleDelete = (clientId) => {
+    setClients(prev => prev.filter(client => client.id !== clientId));
+    console.log('Cliente eliminado:', clientId);
+  };
+
+  return (
+    <ClientManager
+      clients={clients}
+      onSave={handleSave}
+      onDelete={handleDelete}
+    />
   );
 };
 

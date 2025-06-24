@@ -1,50 +1,48 @@
 #!/bin/bash
 
-# Solución rápida para ProductCard faltante
-echo "🔧 Creando ProductCard faltante..."
+echo "🛤️ Agregando rutas y navegación para Revisar Cotizaciones..."
 
-# Crear la carpeta que falta
-mkdir -p src/components/atoms/ProductCard
+# 1. Agregar import en App.jsx
+echo "📝 Agregando import en App.jsx..."
+if ! grep -q "QuoteReviewPage" src/App.jsx; then
+    sed -i '/import ClientesPage/a import QuoteReviewPage from '\''./components/pages/QuoteReviewPage'\'';' src/App.jsx
+    echo "✓ Import agregado"
+else
+    echo "✓ Import ya existe"
+fi
 
-# Crear ProductCard
-cat > src/components/atoms/ProductCard/ProductCard.jsx << 'EOF'
-import React from 'react';
+# 2. Agregar ruta en App.jsx
+echo "📝 Agregando ruta en App.jsx..."
+if ! grep -q "revisar-cotizaciones" src/App.jsx; then
+    sed -i '/path="clientes"/a \              <Route path="revisar-cotizaciones" element={<QuoteReviewPage />} />' src/App.jsx
+    echo "✓ Ruta agregada"
+else
+    echo "✓ Ruta ya existe"
+fi
 
-const ProductCard = ({ category, onClick, className = '' }) => {
-  return (
-    <div 
-      onClick={onClick}
-      className={`bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow duration-200 ${className}`}
-    >
-      <div className="flex flex-col items-center space-y-4">
-        <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-          <img 
-            src={category.image} 
-            alt={category.name}
-            className="w-16 h-16 object-contain"
-            onError={(e) => {
-              e.target.src = `data:image/svg+xml;base64,${btoa(`
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="64" height="64" fill="#E5E7EB"/>
-                  <text x="32" y="32" text-anchor="middle" dominant-baseline="middle" fill="#9CA3AF" font-size="12">${category.name}</text>
-                </svg>
-              `)}`;
-            }}
-          />
-        </div>
-        <div className="text-center">
-          <h3 className="font-bold text-lg text-gray-800">{category.name}</h3>
-          <p className="text-sm text-gray-600">{category.description}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+# 3. Agregar item al sidebar
+echo "📝 Agregando item al Sidebar..."
+if ! grep -q "revisar-cotizaciones" src/components/molecules/Sidebar/Sidebar.jsx; then
+    # Buscar la línea del historial y agregar después
+    sed -i "/{ id: 'historial'/a \    { id: 'revisar', path: '/revisar-cotizaciones', icon: FileText, label: 'Revisar Cotizaciones' }," src/components/molecules/Sidebar/Sidebar.jsx
+    echo "✓ Item de menú agregado"
+else
+    echo "✓ Item de menú ya existe"
+fi
 
-export default ProductCard;
-EOF
+# 4. Verificar que FileText esté importado en Sidebar
+echo "📝 Verificando iconos en Sidebar..."
+if ! grep -q "FileText" src/components/molecules/Sidebar/Sidebar.jsx; then
+    sed -i 's/{ Home, User, FileText, History, ShoppingCart, LogOut, Menu }/{ Home, User, FileText, History, ShoppingCart, LogOut, Menu }/' src/components/molecules/Sidebar/Sidebar.jsx
+    echo "✓ Icono FileText ya está importado"
+fi
 
-echo "export { default } from './ProductCard';" > src/components/atoms/ProductCard/index.js
-
-echo "✅ ProductCard creado!"
-echo "🚀 Ahora ejecuta: npm run dev"
+echo ""
+echo "✅ ¡Rutas y navegación agregadas exitosamente!"
+echo ""
+echo "🎯 Ahora puedes acceder desde:"
+echo "   📱 Sidebar → 'Revisar Cotizaciones'"
+echo "   🌐 URL directa → http://localhost:5173/revisar-cotizaciones"
+echo ""
+echo "🚀 Ejecuta: npm run dev"
+echo "🎉 ¡Ya puedes probar el módulo completo!"

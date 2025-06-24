@@ -37,6 +37,7 @@ function App() {
               <Route path="cotizar/*" element={<QuotePage />} />
               <Route path="historial" element={<HistoryPage />} />
               <Route path="clientes" element={<ClientesPage />} />
+              <Route path="revisar-cotizaciones" element={<QuoteReviewPage />} />
             </Route>
 
             {/* Catch all route */}
@@ -49,3 +50,6 @@ function App() {
 }
 
 export default App;
+
+// Importar nueva página
+import QuoteReviewPage from './components/pages/QuoteReviewPage';
