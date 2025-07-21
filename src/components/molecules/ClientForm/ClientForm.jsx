@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, AlertCircle } from 'lucide-react';
 import Input from '../../atoms/Input';
 import Button from '../../atoms/Button';
 
@@ -11,16 +11,31 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     email: client?.email || '',
     direccion: client?.direccion || '',
     rfc: client?.rfc || '',
-    tipo: client?.tipo || 'Cliente'
+    tipo: client?.tipo || 'Hospital'
   });
 
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const clientTypes = [
+    'Hospital',
+    'Clínica', 
+    'Laboratorio',
+    'Centro Diagnóstico',
+    'Consultorio',
+    'Otro'
+  ];
 
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.nombre.trim()) {
       newErrors.nombre = 'El nombre es requerido';
+    }
+    
+    if (!formData.contacto.trim()) {
+      newErrors.contacto = 'El contacto es requerido';
     }
     
     if (!formData.email.trim()) {
@@ -32,6 +47,11 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     if (!formData.telefono.trim()) {
       newErrors.telefono = 'El teléfono es requerido';
     }
+
+    // Validación de RFC (opcional pero si se proporciona debe ser válido)
+    if (formData.rfc && !/^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/.test(formData.rfc.toUpperCase())) {
+      newErrors.rfc = 'RFC inválido (formato: ABC123456789)';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -41,21 +61,52 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'rfc' ? value.toUpperCase() : value
     }));
     
+    // Limpiar errores cuando el usuario empiece a escribir
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
     }
+
+    // Limpiar error de API
+    if (apiError) {
+      setApiError('');
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSave(formData);
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setApiError('');
+
+    try {
+      await onSave(formData);
+      // Si llegamos aquí, la operación fue exitosa
+      // El componente padre manejará el cierre del formulario
+    } catch (error) {
+      console.error('Error saving client:', error);
+      
+      // Manejar errores específicos del servidor
+      if (error.message.includes('already exists')) {
+        setApiError('Ya existe un cliente con este nombre o email');
+      } else if (error.message.includes('validation')) {
+        setApiError('Error de validación. Verifica que todos los campos sean correctos');
+      } else if (error.message.includes('unauthorized')) {
+        setApiError('No tienes permisos para realizar esta acción');
+      } else {
+        setApiError(error.message || 'Error al guardar el cliente');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,11 +118,23 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
         </h2>
         <button
           onClick={onCancel}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          disabled={loading}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
         >
           <X size={20} />
         </button>
       </div>
+
+      {/* Error de API */}
+      {apiError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
+          <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
+          <div>
+            <h4 className="text-red-800 font-medium">Error</h4>
+            <p className="text-red-700">{apiError}</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,23 +144,38 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
             value={formData.nombre}
             onChange={handleChange}
             error={errors.nombre}
+            disabled={loading}
             required
+            placeholder="Ej: Hospital General de Tuxtla"
           />
           
-          <Input
-            label="Tipo"
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleChange}
-            placeholder="Cliente, Proveedor, etc."
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tipo <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="tipo"
+              value={formData.tipo}
+              onChange={handleChange}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
+              required
+            >
+              {clientTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
           
           <Input
             label="Contacto Principal"
             name="contacto"
             value={formData.contacto}
             onChange={handleChange}
-            placeholder="Nombre del contacto"
+            error={errors.contacto}
+            disabled={loading}
+            required
+            placeholder="Ej: Dr. Eduardo Ramírez"
           />
           
           <Input
@@ -105,7 +183,10 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
             name="rfc"
             value={formData.rfc}
             onChange={handleChange}
-            placeholder="RFC de la empresa"
+            error={errors.rfc}
+            disabled={loading}
+            placeholder="Ej: ABC123456789"
+            maxLength={13}
           />
           
           <Input
@@ -115,7 +196,9 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
             value={formData.email}
             onChange={handleChange}
             error={errors.email}
+            disabled={loading}
             required
+            placeholder="contacto@empresa.com"
           />
           
           <Input
@@ -124,7 +207,9 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
             value={formData.telefono}
             onChange={handleChange}
             error={errors.telefono}
+            disabled={loading}
             required
+            placeholder="+52 961 123 4567"
           />
         </div>
         
@@ -133,18 +218,33 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
           name="direccion"
           value={formData.direccion}
           onChange={handleChange}
+          disabled={loading}
           placeholder="Dirección completa"
         />
 
         <div className="flex space-x-4 pt-4">
-          <Button type="submit" className="flex-1 flex items-center justify-center space-x-2">
-            <Save size={16} />
-            <span>{isEditing ? 'Actualizar' : 'Guardar'}</span>
+          <Button 
+            type="submit" 
+            disabled={loading}
+            className="flex-1 flex items-center justify-center space-x-2"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Guardando...</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>{isEditing ? 'Actualizar' : 'Guardar'}</span>
+              </>
+            )}
           </Button>
           <Button 
             type="button"
             variant="secondary" 
             onClick={onCancel}
+            disabled={loading}
             className="flex-1"
           >
             Cancelar

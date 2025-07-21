@@ -1,56 +1,83 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// services/authService.js
+import { apiRequest } from '../config/api';
 
 class AuthService {
-  async makeRequest(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      defaultOptions.headers.Authorization = `Bearer ${token}`;
-    }
-
-    const config = {
-      ...defaultOptions,
-      ...options,
-      headers: {
-        ...defaultOptions.headers,
-        ...options.headers,
-      },
-    };
-
+  async login(credentials) {
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
+      const response = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      });
 
-      if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      if (response.success && response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
       }
 
-      return data;
+      return response;
     } catch (error) {
-      console.error('API Request Error:', error);
       throw error;
     }
   }
 
-  async login(credentials) {
-    const response = await this.makeRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+  async register(userData) {
+    try {
+      const response = await apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
 
-    if (response.success && response.token) {
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      if (response.success && response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    return response;
+  async getMe() {
+    try {
+      const response = await apiRequest('/auth/me');
+      return response;
+    } catch (error) {
+      // Si hay error de autenticación, limpiar sesión
+      if (error.message.includes('unauthorized') || error.message.includes('token')) {
+        this.logout();
+      }
+      throw error;
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const response = await apiRequest('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async resetPassword(token, password) {
+    try {
+      const response = await apiRequest('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, password }),
+      });
+
+      if (response.success && response.token) {
+        localStorage.setItem('token', response.token);
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 
   logout() {
@@ -65,6 +92,10 @@ class AuthService {
   getUser() {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
+  }
+
+  getToken() {
+    return localStorage.getItem('token');
   }
 }
 
