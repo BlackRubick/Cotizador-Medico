@@ -1,5 +1,5 @@
 // services/clientService.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ClientService {
   // Método auxiliar para hacer requests
@@ -28,11 +28,30 @@ class ClientService {
     };
 
     try {
+      console.log('Making request to:', url);
+      console.log('Request config:', config);
+      
       const response = await fetch(url, config);
       const data = await response.json();
 
+      console.log('Response status:', response.status);
+      console.log('Response data:', data);
+
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        // Mejorar el manejo de errores para mostrar más detalles
+        let errorMessage = data.message || `HTTP error! status: ${response.status}`;
+        
+        // Si hay errores de validación específicos, incluirlos
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMessage += ': ' + data.errors.join(', ');
+        }
+        
+        // Si hay un error específico del campo
+        if (data.error) {
+          errorMessage += ': ' + data.error;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       return data;
@@ -59,21 +78,30 @@ class ClientService {
 
   // Crear nuevo cliente
   async createClient(clientData) {
+    console.log('Creating client with data:', clientData);
+    
+    // Validaciones básicas en el frontend
+    if (!clientData.nombre || !clientData.contacto || !clientData.email || !clientData.telefono) {
+      throw new Error('Los campos nombre, contacto, email y teléfono son requeridos');
+    }
+
     // Mapear datos del frontend al formato del backend
     const mappedData = {
-      name: clientData.nombre,
-      contact: clientData.contacto,
-      email: clientData.email,
-      phone: clientData.telefono,
-      street: this.extractStreetFromAddress(clientData.direccion),
-      city: 'Tuxtla Gutiérrez', // Por defecto, puedes hacer esto dinámico
+      name: clientData.nombre.trim(),
+      contact: clientData.contacto.trim(),
+      email: clientData.email.trim().toLowerCase(),
+      phone: clientData.telefono.trim(),
+      street: this.extractStreetFromAddress(clientData.direccion) || '',
+      city: 'Tuxtla Gutiérrez',
       state: 'Chiapas',
       zipCode: '29000',
       country: 'México',
-      rfc: clientData.rfc,
+      rfc: clientData.rfc ? clientData.rfc.trim().toUpperCase() : '',
       clientType: this.mapClientType(clientData.tipo),
       notes: clientData.notas || ''
     };
+
+    console.log('Mapped data for backend:', mappedData);
 
     const response = await this.makeRequest('/clients', {
       method: 'POST',

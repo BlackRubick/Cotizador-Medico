@@ -34,7 +34,6 @@ const ClientesPage = () => {
       
       // Si hay error de autenticación, redirigir al login
       if (err.message.includes('unauthorized') || err.message.includes('token')) {
-        // Aquí podrías redirigir al login o mostrar un mensaje
         console.log('Token inválido, redirigir al login');
       }
     } finally {
@@ -43,8 +42,38 @@ const ClientesPage = () => {
   };
 
   const handleSave = async (clientData, clientId = null) => {
+    console.log('handleSave called with:', { clientData, clientId });
+    
     try {
       setError(null);
+      
+      // Validaciones básicas en el frontend
+      if (!clientData.nombre?.trim()) {
+        throw new Error('El nombre es requerido');
+      }
+      if (!clientData.contacto?.trim()) {
+        throw new Error('El contacto es requerido');
+      }
+      if (!clientData.email?.trim()) {
+        throw new Error('El email es requerido');
+      }
+      if (!clientData.telefono?.trim()) {
+        throw new Error('El teléfono es requerido');
+      }
+      
+      // Validar formato de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(clientData.email)) {
+        throw new Error('El formato del email no es válido');
+      }
+      
+      // Validar RFC si se proporciona
+      if (clientData.rfc && clientData.rfc.trim()) {
+        const rfcRegex = /^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/;
+        if (!rfcRegex.test(clientData.rfc.toUpperCase())) {
+          throw new Error('El formato del RFC no es válido (Ejemplo: ABC123456789)');
+        }
+      }
       
       let response;
       
@@ -63,6 +92,7 @@ const ClientesPage = () => {
         }
       } else {
         // Crear nuevo cliente
+        console.log('Creando nuevo cliente...');
         response = await clientService.createClient(clientData);
         
         if (response.success) {
@@ -78,10 +108,30 @@ const ClientesPage = () => {
       
     } catch (err) {
       console.error('Error saving client:', err);
-      setError(err.message || 'Error al guardar el cliente');
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        clientData
+      });
+      
+      // Mostrar error más específico
+      let errorMessage = err.message || 'Error al guardar el cliente';
+      
+      // Manejar errores específicos del servidor
+      if (errorMessage.includes('already exists')) {
+        errorMessage = 'Ya existe un cliente con este email';
+      } else if (errorMessage.includes('validation')) {
+        errorMessage = 'Error de validación: ' + errorMessage;
+      } else if (errorMessage.includes('unauthorized')) {
+        errorMessage = 'No tienes permisos para realizar esta acción';
+      } else if (errorMessage.includes('cannot be null')) {
+        errorMessage = 'Faltan campos requeridos en el servidor';
+      }
+      
+      setError(errorMessage);
       
       // Re-lanzar el error para que el componente hijo pueda manejarlo
-      throw err;
+      throw new Error(errorMessage);
     }
   };
 
@@ -154,10 +204,12 @@ const ClientesPage = () => {
       {/* Mostrar error como banner si hay clientes cargados */}
       {error && clients.length > 0 && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
-          <span>{error}</span>
+          <div>
+            <strong>Error:</strong> {error}
+          </div>
           <button
             onClick={() => setError(null)}
-            className="text-red-500 hover:text-red-700"
+            className="text-red-500 hover:text-red-700 ml-4"
           >
             ×
           </button>
