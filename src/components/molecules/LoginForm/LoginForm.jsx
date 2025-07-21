@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../../../context/AuthContext'; // Cambia useAuth por useAuthContext
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 
-const LoginForm = ({ onSubmit, onForgotPassword, loading = false }) => {
+const LoginForm = () => {
+  const navigate = useNavigate();
+  const { login } = useAuthContext(); // Usar useAuthContext
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -26,10 +31,26 @@ const LoginForm = ({ onSubmit, onForgotPassword, loading = false }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
+    
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    try {
+      const result = await login(formData);
+      
+      if (result.success) {
+        console.log('Login exitoso!');
+        navigate('/dashboard');
+      } else {
+        setErrors({ general: result.error });
+      }
+    } catch (error) {
+      setErrors({ general: 'Error inesperado' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,6 +71,12 @@ const LoginForm = ({ onSubmit, onForgotPassword, loading = false }) => {
 
   return (
     <div className="space-y-6">
+      {errors.general && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-sm text-red-700">{errors.general}</p>
+        </div>
+      )}
+
       <Input
         label="Usuario"
         name="username"
@@ -72,17 +99,6 @@ const LoginForm = ({ onSubmit, onForgotPassword, loading = false }) => {
         disabled={loading}
         required
       />
-
-      <div className="text-right">
-        <button
-          type="button"
-          onClick={onForgotPassword}
-          disabled={loading}
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed"
-        >
-          ¿Olvidaste tu contraseña?
-        </button>
-      </div>
 
       <Button 
         onClick={handleSubmit} 

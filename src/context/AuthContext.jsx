@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../components/services/authService'; 
 
 const AuthContext = createContext();
 
@@ -13,26 +14,36 @@ export const useAuthContext = () => {
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Verificar si hay usuario logueado al cargar la app
+  useEffect(() => {
+    const storedUser = authService.getUser();
+    if (storedUser && authService.isAuthenticated()) {
+      setIsAuthenticated(true);
+      setUser(storedUser);
+    }
+    setLoading(false);
+  }, []);
 
   const login = async (credentials) => {
-    // Simular autenticación
-    if (credentials.username === 'admin' && credentials.password === 'password') {
-      setIsAuthenticated(true);
-      setUser({
-        id: 1,
-        username: credentials.username,
-        name: 'Juan Carlos',
-        lastName: 'González López',
-        email: 'juan.gonzalez@empresa.com',
-        phone: '+52 961 123 4567',
-        role: 'Administrador'
-      });
-      return { success: true };
+    try {
+      const response = await authService.login(credentials);
+      
+      if (response.success) {
+        setIsAuthenticated(true);
+        setUser(response.user);
+        return { success: true };
+      } else {
+        return { success: false, error: response.message || 'Error al iniciar sesión' };
+      }
+    } catch (error) {
+      return { success: false, error: error.message || 'Error de conexión' };
     }
-    return { success: false, error: 'Credenciales inválidas' };
   };
 
   const logout = () => {
+    authService.logout();
     setIsAuthenticated(false);
     setUser(null);
   };
@@ -41,6 +52,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       isAuthenticated,
       user,
+      loading,
       login,
       logout
     }}>
