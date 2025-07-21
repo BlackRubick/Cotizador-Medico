@@ -1,23 +1,37 @@
+// src/components/pages/QuoteConfigPage/QuoteConfigPage.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProductConfigurator from '../../molecules/ProductConfigurator';
-import { products } from '../../../data/products/productData';
 
 const QuoteConfigPage = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   
-  const categoryProducts = products[categoryId] || [];
-  const categoryName = categoryId?.toUpperCase() || 'PRODUCTOS';
+  // Obtener el nombre de la categoría desde la URL o usar el ID
+  const categoryName = getCategoryName(categoryId);
 
   const handleBack = () => {
     navigate('/cotizar');
   };
 
+  function getCategoryName(id) {
+    // Mapeo de IDs a nombres (esto podría venir de la API en el futuro)
+    const categoryNames = {
+      '1': 'XPREZZON',
+      '2': 'CUBE', 
+      '3': 'CSU',
+      'xprezzon': 'XPREZZON',
+      'cube': 'CUBE',
+      'csu': 'CSU'
+    };
+    
+    return categoryNames[id] || `Categoría ${id}`;
+  }
+
   return (
     <div>
       <ProductConfigurator 
-        products={categoryProducts}
+        categoryId={categoryId}
         categoryName={categoryName}
         onBack={handleBack}
       />

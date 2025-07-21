@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -14,6 +15,7 @@ import ProfilePage from './components/pages/ProfilePage';
 import HistoryPage from './components/pages/HistoryPage';
 import QuotePage from './components/pages/QuotePage';
 import ClientesPage from './components/pages/ClientesPage';
+import QuoteReviewPage from './components/pages/QuoteReviewPage';
 
 function App() {
   return (
@@ -50,6 +52,3 @@ function App() {
 }
 
 export default App;
-
-// Importar nueva página
-import QuoteReviewPage from './components/pages/QuoteReviewPage';
