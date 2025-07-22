@@ -75,60 +75,77 @@ class ProductService {
   }
 
   // Mapear producto del backend al formato del frontend
+// Mapear producto del backend al formato del frontend
   mapBackendToFrontend(backendProduct) {
+    console.log('🔄 Mapping product:', backendProduct); // DEBUG
+    
+    // ✅ CORREGIDO: Usar los campos reales de tu base de datos
+    const basePrice = backendProduct.precioVentaPaquete || 
+                     backendProduct.precioUnitario || 
+                     backendProduct.costo || 
+                     0;
+    
+    // ✅ CORREGIDO: Formatear precio sin usar this
+    const formatPrice = (price, currency = 'MXN') => {
+      if (!price) return '$0';
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0
+      }).format(price);
+    };
+    
     return {
       id: backendProduct.id,
-      name: backendProduct.name,
+      name: backendProduct.item || backendProduct.code || 'Producto sin nombre', // ✅ item en lugar de name
       code: backendProduct.code,
-      description: backendProduct.description,
-      category: backendProduct.categoryName,
+      description: backendProduct.paraDescripcion || backendProduct.uso || backendProduct.item || '', // ✅ paraDescripcion
+      category: backendProduct.category?.name || backendProduct.servicio || 'Sin categoría', // ✅ category.name o servicio
       categoryId: backendProduct.categoryId,
-      brand: backendProduct.brand,
-      basePrice: parseFloat(backendProduct.basePrice || 0),
-      formattedPrice: this.formatPrice(backendProduct.basePrice),
-      currency: backendProduct.currency || 'MXN',
-      compatibility: backendProduct.compatibility || [],
-      specifications: backendProduct.specifications || {},
-      images: backendProduct.images || [],
-      accessories: backendProduct.accessories || [],
-      stock: {
-        quantity: backendProduct.stockQuantity || 0,
-        minStock: backendProduct.stockMinStock || 0,
-        location: backendProduct.stockLocation || '',
-        isInStock: (backendProduct.stockQuantity || 0) > 0,
-        isLowStock: (backendProduct.stockQuantity || 0) <= (backendProduct.stockMinStock || 0)
+      categoryName: backendProduct.category?.name || backendProduct.servicio || 'Sin categoría',
+      brand: backendProduct.proveedor || 'N/A', // ✅ proveedor en lugar de brand
+      basePrice: parseFloat(basePrice),
+      formattedPrice: formatPrice(basePrice, backendProduct.moneda || 'MXN'), // ✅ Usar función local
+      currency: backendProduct.moneda || 'MXN', // ✅ moneda en lugar de currency
+      compatibility: backendProduct.clasificacion ? [backendProduct.clasificacion] : [], // ✅ clasificacion
+      specifications: {
+        servicio: backendProduct.servicio,
+        especialidad: backendProduct.especialidad,
+        clasificacion: backendProduct.clasificacion,
+        cantidadPaquete: backendProduct.cantidadPaquete,
+        uso: backendProduct.uso,
+        almacen: backendProduct.almacen,
+        incluye: backendProduct.incluye,
+        impuestos: backendProduct.impuestos
       },
-      status: backendProduct.status || 'active',
-      tags: backendProduct.tags || [],
+      images: [],
+      accessories: [],
+      stock: {
+        quantity: 100, 
+        minStock: 10,
+        location: backendProduct.almacen || 'Almacén principal',
+        isInStock: true,
+        isLowStock: false
+      },
+      status: 'active',
+      tags: [backendProduct.servicio, backendProduct.especialidad].filter(Boolean),
       supplier: {
-        name: backendProduct.supplierName,
-        contact: backendProduct.supplierContact,
-        email: backendProduct.supplierEmail,
-        phone: backendProduct.supplierPhone
+        name: backendProduct.proveedor,
+        contact: null,
+        email: null,
+        phone: null
       },
       warranty: {
-        duration: backendProduct.warrantyDuration || 12,
-        type: backendProduct.warrantyType || 'manufacturer',
-        description: backendProduct.warrantyDescription
+        duration: 12,
+        type: 'manufacturer',
+        description: 'Garantía del fabricante'
       },
-      salesCount: backendProduct.salesCount || 0,
-      lastSaleDate: backendProduct.lastSaleDate,
+      salesCount: 0,
+      lastSaleDate: null,
       createdAt: backendProduct.createdAt,
       updatedAt: backendProduct.updatedAt
     };
   }
-
-  // Formatear precio
-  formatPrice(price, currency = 'MXN') {
-    if (!price) return '$0';
-    
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0
-    }).format(price);
-  }
-
   // Filtrar productos por compatibilidad
   filterByCompatibility(products, compatibility) {
     if (!compatibility || compatibility.length === 0) return products;

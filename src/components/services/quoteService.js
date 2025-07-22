@@ -1,23 +1,25 @@
-// src/components/services/quoteService.js
+// src/components/services/quoteService.js - ACTUALIZADO para tu API
 import { apiRequest } from '../config/api';
 
 class QuoteService {
   // Crear una nueva cotización
   async createQuote(quoteData) {
     try {
-      console.log('Creating quote with data:', quoteData);
+      console.log('🚀 Creating quote with data:', quoteData);
       
       // Mapear datos del frontend al formato del backend
       const mappedData = this.mapFrontendToBackend(quoteData);
+      console.log('📤 Mapped data for API:', mappedData);
       
       const response = await apiRequest('/quotes', {
         method: 'POST',
         body: JSON.stringify(mappedData),
       });
       
+      console.log('✅ Quote created successfully:', response);
       return response;
     } catch (error) {
-      console.error('Create quote error:', error);
+      console.error('❌ Create quote error:', error);
       throw error;
     }
   }
@@ -106,32 +108,11 @@ class QuoteService {
 
   // Mapear datos del frontend al formato del backend
   mapFrontendToBackend(frontendData) {
-    console.log('Mapping frontend data:', frontendData);
+    console.log('🔄 Mapping frontend data:', frontendData);
     
-    return {
-      clientId: frontendData.clientId, // ID del cliente seleccionado
-      clientInfo: {
-        name: frontendData.clientName || frontendData.clientInfo?.name,
-        contact: frontendData.clientContact || frontendData.clientInfo?.contact,
-        email: frontendData.email || frontendData.clientInfo?.email,
-        phone: frontendData.phone || frontendData.clientInfo?.phone,
-        address: frontendData.clientAddress || frontendData.clientInfo?.address,
-        position: frontendData.clientPosition || frontendData.clientInfo?.position || ''
-      },
-      products: this.mapProducts(frontendData.products || frontendData.items || []),
-      terms: {
-        paymentConditions: frontendData.terms?.paymentConditions || '100% Anticipado a la entrega. (Transferencia Bancaria)',
-        deliveryTime: frontendData.terms?.deliveryTime || '15 días hábiles',
-        warranty: frontendData.terms?.warranty || 'Garantía: 12 meses sobre defectos de fabricación.',
-        observations: frontendData.terms?.observations || '',
-        validUntil: frontendData.terms?.validUntil || null
-      }
-    };
-  }
-
-  // Mapear productos del carrito al formato del backend
-  mapProducts(cartItems) {
-    return cartItems.map(item => ({
+    // Mapear productos del carrito
+    const mappedProducts = (frontendData.products || frontendData.items || []).map(item => ({
+      id: item.id,
       productId: item.id,
       code: item.code,
       name: item.name,
@@ -139,9 +120,33 @@ class QuoteService {
       category: item.category || item.categoryName || 'N/A',
       description: item.description || '',
       quantity: item.quantity,
-      unitPrice: item.basePrice || item.unitPrice,
+      basePrice: item.basePrice || item.unitPrice || 0,
+      unitPrice: item.basePrice || item.unitPrice || 0,
       totalPrice: (item.quantity || 1) * (item.basePrice || item.unitPrice || 0)
     }));
+
+    return {
+      // Información del cliente
+      clientId: frontendData.clientId || null,
+      clientName: frontendData.clientName || frontendData.clientInfo?.name,
+      clientContact: frontendData.clientContact || frontendData.clientInfo?.contact,
+      email: frontendData.email || frontendData.clientInfo?.email,
+      phone: frontendData.phone || frontendData.clientInfo?.phone,
+      clientAddress: frontendData.clientAddress || frontendData.clientInfo?.address,
+      clientPosition: frontendData.clientPosition || frontendData.clientInfo?.position || '',
+      
+      // Productos
+      products: mappedProducts,
+      
+      // Términos y condiciones
+      terms: {
+        paymentConditions: frontendData.terms?.paymentConditions || '100% Anticipado a la entrega. (Transferencia Bancaria)',
+        deliveryTime: frontendData.terms?.deliveryTime || '15 días hábiles',
+        warranty: frontendData.terms?.warranty || 'Garantía: 12 meses sobre defectos de fabricación.',
+        observations: frontendData.terms?.observations || 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.',
+        validUntil: frontendData.terms?.validUntil || null
+      }
+    };
   }
 
   // Mapear datos del backend al frontend
@@ -163,7 +168,7 @@ class QuoteService {
       total: parseFloat(backendQuote.total || 0),
       condiciones: {
         precios: 'LOS PRECIOS NO INCLUYEN IVA (16%)',
-        moneda: 'Pesos Mexicanos',
+        moneda: backendQuote.currency || 'Pesos Mexicanos',
         condicionesPago: backendQuote.termsPaymentConditions,
         tiempoEntrega: backendQuote.termsDeliveryTime,
         garantia: backendQuote.termsWarranty,

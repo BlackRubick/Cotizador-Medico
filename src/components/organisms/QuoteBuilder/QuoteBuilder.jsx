@@ -1,4 +1,4 @@
-// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx
+// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx - COMPLETO CORREGIDO
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Send, Save, User, AlertCircle } from 'lucide-react';
 import CartSummary from '../../molecules/CartSummary';
@@ -55,18 +55,34 @@ const QuoteBuilder = ({ onBack }) => {
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA: Auto-completar todos los campos
   const handleClientSelect = (client) => {
+    console.log('🎯 Cliente seleccionado:', client);
+    
     setSelectedClient(client);
+    
+    // ✅ CORREGIDO: Auto-completar TODOS los campos con los datos del cliente
     setQuoteInfo({
       ...quoteInfo,
+      // IDs y referencias
       clientId: client.id,
-      clientName: client.nombre,
-      company: client.nombre,
-      email: client.email,
-      phone: client.telefono,
-      clientContact: client.contacto,
-      clientAddress: client.direccion
+      
+      // Información básica (usar diferentes propiedades según como vengan del backend)
+      clientName: client.nombre || client.name || '',
+      company: client.nombre || client.name || '',
+      
+      // Contacto
+      clientContact: client.contacto || client.contact || '',
+      email: client.email || '',
+      phone: client.telefono || client.phone || '',
+      
+      // Dirección (puede venir con diferentes nombres desde el backend)
+      clientAddress: client.direccion || client.fullAddress || client.address || '',
+      
+      // Puesto (opcional, normalmente no viene del cliente)
+      clientPosition: quoteInfo.clientPosition || ''
     });
+    
     setShowClientSearch(false);
     setClientSearchTerm('');
     
@@ -77,13 +93,27 @@ const QuoteBuilder = ({ onBack }) => {
         client: ''
       }));
     }
+    
+    console.log('✅ Información actualizada:', {
+      clientName: client.nombre || client.name,
+      clientContact: client.contacto || client.contact,
+      email: client.email,
+      phone: client.telefono || client.phone,
+      clientAddress: client.direccion || client.fullAddress
+    });
   };
 
-  const filteredClients = clients.filter(client =>
-    client.nombre.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.contacto.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
-  );
+  // ✅ FILTRO CORREGIDO: Manejo de valores undefined
+  const filteredClients = clients.filter(client => {
+    const searchTerm = clientSearchTerm.toLowerCase();
+    const nombre = (client.nombre || '').toLowerCase();
+    const contacto = (client.contacto || '').toLowerCase();
+    const email = (client.email || '').toLowerCase();
+    
+    return nombre.includes(searchTerm) ||
+           contacto.includes(searchTerm) ||
+           email.includes(searchTerm);
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -238,6 +268,7 @@ const QuoteBuilder = ({ onBack }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Client Information */}
         <div className="lg:col-span-2 space-y-6">
+          {/* ✅ SECCIÓN CORREGIDA: Información del Cliente */}
           <Card>
             <div className="flex items-center space-x-3 mb-6">
               <User className="w-6 h-6 text-blue-600" />
@@ -253,6 +284,9 @@ const QuoteBuilder = ({ onBack }) => {
                     <p className="text-blue-700">Contacto: {selectedClient.contacto}</p>
                     <p className="text-blue-700">Email: {selectedClient.email}</p>
                     <p className="text-blue-700">Teléfono: {selectedClient.telefono}</p>
+                    {selectedClient.direccion && (
+                      <p className="text-blue-700">Dirección: {selectedClient.direccion}</p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -330,8 +364,9 @@ const QuoteBuilder = ({ onBack }) => {
                   value={quoteInfo.clientName}
                   onChange={handleInputChange}
                   placeholder="Nombre completo o empresa"
-                  disabled={!!selectedClient || isSubmitting}
+                  disabled={isSubmitting}
                   error={errors.clientName}
+                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
                 
                 <Input
@@ -340,8 +375,9 @@ const QuoteBuilder = ({ onBack }) => {
                   value={quoteInfo.clientContact}
                   onChange={handleInputChange}
                   placeholder="Persona de contacto"
-                  disabled={!!selectedClient || isSubmitting}
+                  disabled={isSubmitting}
                   error={errors.clientContact}
+                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
                 
                 <Input
@@ -354,6 +390,7 @@ const QuoteBuilder = ({ onBack }) => {
                   required
                   disabled={isSubmitting}
                   error={errors.email}
+                  // ✅ Email siempre se puede editar por si necesita enviar a otro email
                 />
                 
                 <Input
@@ -362,7 +399,8 @@ const QuoteBuilder = ({ onBack }) => {
                   value={quoteInfo.phone}
                   onChange={handleInputChange}
                   placeholder="+52 961 123 4567"
-                  disabled={!!selectedClient || isSubmitting}
+                  disabled={isSubmitting}
+                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
               </div>
 
@@ -372,7 +410,8 @@ const QuoteBuilder = ({ onBack }) => {
                 value={quoteInfo.clientAddress}
                 onChange={handleInputChange}
                 placeholder="Dirección completa"
-                disabled={!!selectedClient || isSubmitting}
+                disabled={isSubmitting}
+                // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
               />
 
               <Input
