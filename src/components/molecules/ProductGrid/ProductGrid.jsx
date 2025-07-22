@@ -1,4 +1,4 @@
-// src/components/molecules/ProductGrid/ProductGrid.jsx
+// src/components/molecules/ProductGrid/ProductGrid.jsx - VERSIÓN CORREGIDA
 import React, { useState, useEffect } from 'react';
 import ProductCard from '../../atoms/ProductCard';
 import productService from '../../services/productService';
@@ -17,51 +17,62 @@ const ProductGrid = ({ onCategorySelect }) => {
       setLoading(true);
       setError('');
 
+      console.log('🔄 Cargando categorías...');
       const response = await productService.getCategories();
+      console.log('📦 Respuesta de categorías:', response);
       
-      if (response.success) {
+      if (response.success && response.data) {
         // Mapear categorías del backend al formato del frontend
         const mappedCategories = response.data
-          .filter(cat => cat.isActive) // Solo categorías activas
-          .map(category => ({
-            id: category.id,
-            name: category.name,
-            description: category.description,
-            image: category.imageUrl || `/api/placeholder/150/150`,
-            productCount: category.productCount || 0,
-            slug: category.slug
-          }));
+          // ❌ REMOVIDO: .filter(cat => cat.isActive) 
+          .map(category => {
+            console.log('🏷️ Procesando categoría:', category);
+            return {
+              id: category.id,
+              name: category.name,
+              description: category.description,
+              image: category.imageUrl || `/api/placeholder/150/150`,
+              productCount: category.productCount || 0,
+              slug: category.slug,
+              isActive: category.isActive // ← Mantener para debug
+            };
+          });
         
+        console.log('✅ Categorías mapeadas:', mappedCategories);
         setCategories(mappedCategories);
       } else {
         throw new Error(response.message || 'Error al cargar categorías');
       }
     } catch (err) {
-      console.error('Error loading categories:', err);
+      console.error('❌ Error loading categories:', err);
       setError(err.message || 'Error al cargar las categorías');
       
-      // Fallback a categorías estáticas si falla la API
+      // Fallback a categorías estáticas 
+      console.log('🔄 Usando categorías de fallback...');
       setCategories([
         {
           id: '1',
           name: 'XPREZZON',
           description: 'Monitores de signos vitales',
           image: '/api/placeholder/150/150',
-          productCount: 0
+          productCount: 0,
+          isActive: true
         },
         {
           id: '2', 
           name: 'CUBE',
           description: 'Sistemas de monitoreo',
           image: '/api/placeholder/150/150',
-          productCount: 0
+          productCount: 0,
+          isActive: true
         },
         {
           id: '3',
           name: 'CSU',
           description: 'Unidades de control',
           image: '/api/placeholder/150/150',
-          productCount: 0
+          productCount: 0,
+          isActive: true
         }
       ]);
     } finally {
@@ -109,6 +120,17 @@ const ProductGrid = ({ onCategorySelect }) => {
         <div className="text-gray-400 text-6xl mb-4">📦</div>
         <h3 className="text-lg font-semibold text-gray-800 mb-2">No hay categorías disponibles</h3>
         <p className="text-gray-600">Las categorías de productos aparecerán aquí cuando estén configuradas.</p>
+        
+        {/* 🆕 AGREGADO: Botón de debug */}
+        <button
+          onClick={() => {
+            console.log('🔍 Debug - categorías actuales:', categories);
+            console.log('🔍 Debug - error actual:', error);
+          }}
+          className="mt-4 bg-gray-600 text-white px-4 py-2 rounded text-sm"
+        >
+          Debug Info
+        </button>
       </div>
     );
   }
