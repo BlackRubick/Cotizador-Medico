@@ -1,6 +1,6 @@
-// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx - CONECTADO CON API
+// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx - ACTUALIZADO CON PDF
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Send, Save, User, AlertCircle, CheckCircle, Building } from 'lucide-react';
+import { ArrowLeft, Send, Save, User, AlertCircle, CheckCircle, Building, Download, Eye } from 'lucide-react';
 import CartSummary from '../../molecules/CartSummary';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
@@ -8,6 +8,7 @@ import Card from '../../atoms/Card';
 import { useCart } from '../../../context/CartContext';
 import quoteService from '../../services/quoteService';
 import clientService from '../../services/clientService';
+import pdfService from '../../services/pdfService';
 
 const QuoteBuilder = ({ onBack }) => {
   const { cartItems, quoteInfo, setQuoteInfo, clearCart } = useCart();
@@ -19,23 +20,60 @@ const QuoteBuilder = ({ onBack }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [generatedQuote, setGeneratedQuote] = useState(null);
 
-  // Opciones de empresas vendedoras
+  // Opciones de empresas vendedoras (actualizadas con datos reales)
   const sellerCompanies = [
-    { id: 'conduit-life', name: 'CONDUIT LIFE' },
-    { id: 'escala-biomedica', name: 'ESCALA BIOMEDICA' },
-    { id: 'ingenieria-clinica', name: 'INGENIERIA CLINICA Y DISEÑO' },
-    { id: 'biosystems-hls', name: 'Biosystems HLS' }
+    { 
+      id: 'conduit-life', 
+      name: 'CONDUIT LIFE',
+      fullName: 'CONDUIT LIFE S.A. DE C.V.',
+      address: 'Av. Principal 123, Tuxtla Gutiérrez, Chiapas',
+      phone: '+52 961 123 4567',
+      email: 'contacto@conduitlife.com',
+      website: 'www.conduitlife.com',
+      rfc: 'CON850101ABC'
+    },
+    { 
+      id: 'escala-biomedica', 
+      name: 'ESCALA BIOMEDICA',
+      fullName: 'ESCALA BIOMÉDICA S.A. DE C.V.',
+      address: 'Blvd. Belisario Domínguez 456, Tuxtla Gutiérrez, Chiapas',
+      phone: '+52 961 234 5678',
+      email: 'ventas@escalabiomedica.com',
+      website: 'www.escalabiomedica.com',
+      rfc: 'ESC900215XYZ'
+    },
+    { 
+      id: 'ingenieria-clinica', 
+      name: 'INGENIERIA CLINICA Y DISEÑO',
+      fullName: 'INGENIERÍA CLÍNICA Y DISEÑO S.A. DE C.V.',
+      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP:16030',
+      phone: '+52 55 5526 789034',
+      email: 'contacto@clinicaydiseno.com',
+      website: 'www.clinicaydiseno.com',
+      rfc: 'ICD130614LQ4'
+    },
+    { 
+      id: 'biosystems-hls', 
+      name: 'Biosystems HLS',
+      fullName: 'BIOSYSTEMS HEALTH & LIFE SCIENCES S.A. DE C.V.',
+      address: 'Av. Insurgentes 789, Tuxtla Gutiérrez, Chiapas',
+      phone: '+52 961 345 6789',
+      email: 'info@biosystemshls.com',
+      website: 'www.biosystemshls.com',
+      rfc: 'BIO820305GHI'
+    }
   ];
 
   // Cargar clientes al montar el componente
   useEffect(() => {
     loadClients();
-    // Establecer empresa por defecto si no hay una seleccionada
+    // Establecer empresa por defecto
     if (!quoteInfo.sellerCompany) {
       setQuoteInfo(prev => ({
         ...prev,
-        sellerCompany: 'conduit-life'
+        sellerCompany: 'ingenieria-clinica' // ICD como empresa por defecto según la imagen
       }));
     }
   }, []);
@@ -84,32 +122,21 @@ const QuoteBuilder = ({ onBack }) => {
     
     setSelectedClient(client);
     
-    // Auto-completar TODOS los campos con los datos del cliente
     setQuoteInfo({
       ...quoteInfo,
-      // IDs y referencias
       clientId: client.id,
-      
-      // Información básica
       clientName: client.name || '',
       company: client.name || '',
-      
-      // Contacto
       clientContact: client.contact || '',
       email: client.email || '',
       phone: client.phone || '',
-      
-      // Dirección
       clientAddress: client.fullAddress || client.street || '',
-      
-      // Puesto (opcional)
       clientPosition: quoteInfo.clientPosition || ''
     });
     
     setShowClientSearch(false);
     setClientSearchTerm('');
     
-    // Limpiar errores de cliente
     if (errors.client) {
       setErrors(prev => ({
         ...prev,
@@ -161,6 +188,51 @@ const QuoteBuilder = ({ onBack }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Función para preparar datos de la cotización para PDF
+  const prepareQuoteDataForPDF = () => {
+    const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+    
+    return {
+      // Información de la empresa vendedora
+      sellerCompany: selectedSellerCompany,
+      
+      // Información del cliente
+      clientName: quoteInfo.clientName || selectedClient?.name,
+      clientContact: quoteInfo.clientContact || selectedClient?.contact,
+      email: quoteInfo.email,
+      phone: quoteInfo.phone,
+      clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
+      clientPosition: quoteInfo.clientPosition || '',
+      
+      // Productos del carrito
+      cartItems: cartItems,
+      products: cartItems, // Alias para compatibilidad
+      
+      // Folio y fecha (se generan automáticamente)
+      folio: generateFolio(),
+      fecha: new Date().toLocaleDateString('es-MX'),
+      
+      // Términos estándar
+      terms: {
+        paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
+        deliveryTime: '15 días hábiles',
+        warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
+        observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
+      }
+    };
+  };
+
+  // Función para generar folio similar al de la imagen
+  const generateFolio = () => {
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    const sequence = Math.floor(Math.random() * 99) + 1;
+    
+    return `ICD${day}${month}${year}379`;
+  };
+
   const handleSaveQuote = async () => {
     if (!validateForm()) {
       return;
@@ -197,10 +269,10 @@ const QuoteBuilder = ({ onBack }) => {
       const response = await quoteService.createQuote(quoteData);
       
       if (response.success) {
+        setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
         setSuccessMessage(`✅ Cotización ${response.data.folio} guardada como borrador exitosamente`);
         console.log('✅ Quote saved:', response.data);
         
-        // Opcional: limpiar formulario después de un tiempo
         setTimeout(() => {
           setSuccessMessage('');
         }, 5000);
@@ -248,17 +320,15 @@ const QuoteBuilder = ({ onBack }) => {
 
       console.log('📤 Creando y enviando cotización:', quoteData);
       
-      // Crear cotización
       const response = await quoteService.createQuote(quoteData);
       
       if (response.success) {
-        // Actualizar estado a "enviado"
         await quoteService.updateQuoteStatus(response.data.id, 'sent');
         
+        setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
         setSuccessMessage(`🚀 Cotización ${response.data.folio} enviada exitosamente a ${quoteInfo.email}`);
         console.log('✅ Quote sent:', response.data);
         
-        // Limpiar carrito después de un delay para que el usuario vea el mensaje
         setTimeout(() => {
           clearCart();
           onBack();
@@ -274,10 +344,66 @@ const QuoteBuilder = ({ onBack }) => {
     }
   };
 
+  // Función para generar PDF sin guardar en BD
+  const handleGeneratePDF = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      console.log('📄 Generando PDF de cotización...');
+      
+      const quoteData = prepareQuoteDataForPDF();
+      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+      
+      // Generar PDF usando el servicio
+      const result = await pdfService.generateAndDownloadQuotePDF(quoteData, selectedSellerCompany);
+      
+      if (result.success) {
+        setSuccessMessage(`✅ PDF generado exitosamente: ${result.fileName}`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        throw new Error(result.error);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error generating PDF:', error);
+      setApiError('Error al generar PDF: ' + error.message);
+    }
+  };
+
+  // Función para previsualizar PDF
+  const handlePreviewPDF = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      console.log('👁️ Previsualizando PDF...');
+      
+      const quoteData = prepareQuoteDataForPDF();
+      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+      
+      const result = await pdfService.previewQuotePDF(quoteData, selectedSellerCompany);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error previewing PDF:', error);
+      setApiError('Error al previsualizar PDF: ' + error.message);
+    }
+  };
+
   // Obtener nombre de la empresa seleccionada para mostrar
   const getSelectedCompanyName = () => {
     const selected = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
     return selected ? selected.name : 'No seleccionada';
+  };
+
+  const getSelectedCompanyData = () => {
+    return sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
   };
 
   return (
@@ -358,12 +484,19 @@ const QuoteBuilder = ({ onBack }) => {
 
               {quoteInfo.sellerCompany && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mb-2">
                     <Building className="w-5 h-5 text-green-600" />
                     <span className="font-medium text-green-800">
-                      Empresa seleccionada: {getSelectedCompanyName()}
+                      {getSelectedCompanyName()}
                     </span>
                   </div>
+                  {getSelectedCompanyData() && (
+                    <div className="text-sm text-green-700 space-y-1">
+                      <p>{getSelectedCompanyData().fullName}</p>
+                      <p>{getSelectedCompanyData().address}</p>
+                      <p>{getSelectedCompanyData().phone} | {getSelectedCompanyData().email}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -606,6 +739,30 @@ const QuoteBuilder = ({ onBack }) => {
             </div>
           )}
           
+          {/* Botones de acción PDF */}
+          <div className="space-y-3">
+            <Button 
+              onClick={handlePreviewPDF}
+              variant="secondary"
+              disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
+              className="w-full flex items-center justify-center space-x-2 bg-purple-50 text-purple-600 hover:bg-purple-100 border-purple-200"
+            >
+              <Eye size={20} />
+              <span>Vista Previa PDF</span>
+            </Button>
+            
+            <Button 
+              onClick={handleGeneratePDF}
+              variant="secondary"
+              disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
+              className="w-full flex items-center justify-center space-x-2 bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200"
+            >
+              <Download size={20} />
+              <span>Descargar PDF</span>
+            </Button>
+          </div>
+          
+          {/* Botones principales */}
           <div className="space-y-3">
             <Button 
               onClick={handleSendQuote}
@@ -644,6 +801,35 @@ const QuoteBuilder = ({ onBack }) => {
               <li>• El cliente podrá responder directamente</li>
             </ul>
           </div>
+
+          {/* Información del PDF generado */}
+          {generatedQuote && (
+            <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+              <h4 className="font-medium text-indigo-800 mb-2">PDF Disponible</h4>
+              <div className="text-sm text-indigo-700 space-y-1">
+                <p>Folio: <span className="font-mono">{generatedQuote.folio}</span></p>
+                <p>Fecha: {new Date().toLocaleDateString('es-MX')}</p>
+                <div className="flex space-x-2 mt-3">
+                  <Button
+                    onClick={handleGeneratePDF}
+                    variant="secondary"
+                    className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                  >
+                    <Download size={14} className="mr-1" />
+                    Descargar
+                  </Button>
+                  <Button
+                    onClick={handlePreviewPDF}
+                    variant="secondary"
+                    className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                  >
+                    <Eye size={14} className="mr-1" />
+                    Ver
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
