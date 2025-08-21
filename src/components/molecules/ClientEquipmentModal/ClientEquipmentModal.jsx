@@ -1,9 +1,10 @@
 // src/components/molecules/ClientEquipmentModal/ClientEquipmentModal.jsx - ACTUALIZADO
 import React, { useState, useEffect } from 'react';
-import { X, Activity, Plus, Edit, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Activity, Plus, Edit, Trash2, AlertCircle, CheckCircle, Eye } from 'lucide-react';
 import Button from '../../atoms/Button';
 import Card from '../../atoms/Card';
 import EquipmentForm from '../EquipmentForm';
+import EquipmentDetailView from '../EquipmentDetailView';
 import equipmentService from '../../services/equipmentService';
 
 const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
@@ -12,6 +13,8 @@ const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState(null);
+  const [showDetailView, setShowDetailView] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [stats, setStats] = useState(null);
 
@@ -114,6 +117,16 @@ const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
     setShowForm(true);
   };
 
+  const handleViewEquipment = (equipment) => {
+    setSelectedEquipment(equipment);
+    setShowDetailView(true);
+  };
+
+  const handleCloseDetailView = () => {
+    setShowDetailView(false);
+    setSelectedEquipment(null);
+  };
+
   const handleDeleteEquipment = async (equipment) => {
     if (!window.confirm(`¿Estás seguro de eliminar el equipo "${equipment.name}"?`)) {
       return;
@@ -182,17 +195,32 @@ const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
 
   if (!isOpen || !client) return null;
 
+  // Mostrar vista detallada si está activa
+  if (showDetailView) {
+    return (
+      <EquipmentDetailView
+        equipment={selectedEquipment}
+        isOpen={showDetailView}
+        onClose={handleCloseDetailView}
+        onSave={handleSaveEquipment}
+        onDelete={handleDeleteEquipment}
+      />
+    );
+  }
+
   // Mostrar formulario si está activo
   if (showForm) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <EquipmentForm
-          equipment={editingEquipment}
-          clientId={client.id}
-          onSave={handleSaveEquipment}
-          onCancel={handleCloseForm}
-          isEditing={!!editingEquipment}
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <EquipmentForm
+            equipment={editingEquipment}
+            clientId={client.id}
+            onSave={handleSaveEquipment}
+            onCancel={handleCloseForm}
+            isEditing={!!editingEquipment}
+          />
+        </div>
       </div>
     );
   }
@@ -335,16 +363,23 @@ const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
                               </span>
                               <div className="flex space-x-1">
                                 <button
+                                  onClick={() => handleViewEquipment(equipment)}
+                                  className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-green-50"
+                                  title="Ver detalles"
+                                >
+                                  <Eye size={16} />
+                                </button>
+                                <button
                                   onClick={() => handleEditEquipment(equipment)}
-                                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                                  title="Editar"
+                                  className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                                  title="Editar equipo"
                                 >
                                   <Edit size={16} />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteEquipment(equipment)}
-                                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                                  title="Eliminar"
+                                  className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                                  title="Eliminar equipo"
                                 >
                                   <Trash2 size={16} />
                                 </button>
@@ -401,7 +436,7 @@ const ClientEquipmentModal = ({ client, isOpen, onClose }) => {
                           )}
 
                           {/* Especificaciones (solo las primeras 3) */}
-                          {equipment.specifications && equipment.specifications.length > 0 && (
+                          {equipment.specifications && Array.isArray(equipment.specifications) && equipment.specifications.length > 0 && (
                             <div>
                               <p className="text-sm font-medium text-gray-600 mb-1">Especificaciones:</p>
                               <ul className="text-xs text-gray-500 space-y-1">
