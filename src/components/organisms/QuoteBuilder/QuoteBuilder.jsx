@@ -1,6 +1,6 @@
-// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx - COMPLETO CORREGIDO
+// src/components/organisms/QuoteBuilder/QuoteBuilder.jsx - CONECTADO CON API
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Send, Save, User, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Send, Save, User, AlertCircle, CheckCircle, Building } from 'lucide-react';
 import CartSummary from '../../molecules/CartSummary';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
@@ -16,22 +16,41 @@ const QuoteBuilder = ({ onBack }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+
+  // Opciones de empresas vendedoras
+  const sellerCompanies = [
+    { id: 'conduit-life', name: 'CONDUIT LIFE' },
+    { id: 'escala-biomedica', name: 'ESCALA BIOMEDICA' },
+    { id: 'ingenieria-clinica', name: 'INGENIERIA CLINICA Y DISEÑO' },
+    { id: 'biosystems-hls', name: 'Biosystems HLS' }
+  ];
 
   // Cargar clientes al montar el componente
   useEffect(() => {
     loadClients();
+    // Establecer empresa por defecto si no hay una seleccionada
+    if (!quoteInfo.sellerCompany) {
+      setQuoteInfo(prev => ({
+        ...prev,
+        sellerCompany: 'conduit-life'
+      }));
+    }
   }, []);
 
   const loadClients = async () => {
     try {
+      console.log('🔄 Cargando clientes...');
       const response = await clientService.getClients({ limit: 100 });
       if (response.success) {
         setClients(response.data || []);
+        console.log('✅ Clientes cargados:', response.data.length);
       }
     } catch (error) {
-      console.error('Error loading clients:', error);
+      console.error('❌ Error loading clients:', error);
+      setApiError('Error al cargar clientes: ' + error.message);
     }
   };
 
@@ -53,33 +72,37 @@ const QuoteBuilder = ({ onBack }) => {
     if (apiError) {
       setApiError('');
     }
+    
+    if (successMessage) {
+      setSuccessMessage('');
+    }
   };
 
-  // ✅ FUNCIÓN CORREGIDA: Auto-completar todos los campos
+  // Auto-completar todos los campos cuando se selecciona un cliente
   const handleClientSelect = (client) => {
     console.log('🎯 Cliente seleccionado:', client);
     
     setSelectedClient(client);
     
-    // ✅ CORREGIDO: Auto-completar TODOS los campos con los datos del cliente
+    // Auto-completar TODOS los campos con los datos del cliente
     setQuoteInfo({
       ...quoteInfo,
       // IDs y referencias
       clientId: client.id,
       
-      // Información básica (usar diferentes propiedades según como vengan del backend)
-      clientName: client.nombre || client.name || '',
-      company: client.nombre || client.name || '',
+      // Información básica
+      clientName: client.name || '',
+      company: client.name || '',
       
       // Contacto
-      clientContact: client.contacto || client.contact || '',
+      clientContact: client.contact || '',
       email: client.email || '',
-      phone: client.telefono || client.phone || '',
+      phone: client.phone || '',
       
-      // Dirección (puede venir con diferentes nombres desde el backend)
-      clientAddress: client.direccion || client.fullAddress || client.address || '',
+      // Dirección
+      clientAddress: client.fullAddress || client.street || '',
       
-      // Puesto (opcional, normalmente no viene del cliente)
+      // Puesto (opcional)
       clientPosition: quoteInfo.clientPosition || ''
     });
     
@@ -94,20 +117,14 @@ const QuoteBuilder = ({ onBack }) => {
       }));
     }
     
-    console.log('✅ Información actualizada:', {
-      clientName: client.nombre || client.name,
-      clientContact: client.contacto || client.contact,
-      email: client.email,
-      phone: client.telefono || client.phone,
-      clientAddress: client.direccion || client.fullAddress
-    });
+    console.log('✅ Información del cliente actualizada');
   };
 
-  // ✅ FILTRO CORREGIDO: Manejo de valores undefined
+  // Filtrar clientes para búsqueda
   const filteredClients = clients.filter(client => {
     const searchTerm = clientSearchTerm.toLowerCase();
-    const nombre = (client.nombre || '').toLowerCase();
-    const contacto = (client.contacto || '').toLowerCase();
+    const nombre = (client.name || '').toLowerCase();
+    const contacto = (client.contact || '').toLowerCase();
     const email = (client.email || '').toLowerCase();
     
     return nombre.includes(searchTerm) ||
@@ -117,6 +134,10 @@ const QuoteBuilder = ({ onBack }) => {
 
   const validateForm = () => {
     const newErrors = {};
+
+    if (!quoteInfo.sellerCompany) {
+      newErrors.sellerCompany = 'Selecciona la empresa vendedora';
+    }
 
     if (!selectedClient && !quoteInfo.clientName) {
       newErrors.client = 'Selecciona un cliente o ingresa información del cliente';
@@ -147,15 +168,20 @@ const QuoteBuilder = ({ onBack }) => {
 
     setIsSubmitting(true);
     setApiError('');
+    setSuccessMessage('');
 
     try {
+      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+      
       const quoteData = {
+        sellerCompany: selectedSellerCompany?.name || '',
+        sellerCompanyId: quoteInfo.sellerCompany,
         clientId: selectedClient?.id || null,
-        clientName: quoteInfo.clientName || selectedClient?.nombre,
-        clientContact: quoteInfo.clientContact || selectedClient?.contacto,
+        clientName: quoteInfo.clientName || selectedClient?.name,
+        clientContact: quoteInfo.clientContact || selectedClient?.contact,
         email: quoteInfo.email,
         phone: quoteInfo.phone,
-        clientAddress: quoteInfo.clientAddress || selectedClient?.direccion,
+        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
         clientPosition: quoteInfo.clientPosition || '',
         products: cartItems,
         terms: {
@@ -166,18 +192,23 @@ const QuoteBuilder = ({ onBack }) => {
         }
       };
 
-      console.log('Saving quote as draft:', quoteData);
+      console.log('💾 Guardando cotización como borrador:', quoteData);
       
       const response = await quoteService.createQuote(quoteData);
       
       if (response.success) {
-        alert('Cotización guardada como borrador');
-        console.log('Quote saved:', response.data);
+        setSuccessMessage(`✅ Cotización ${response.data.folio} guardada como borrador exitosamente`);
+        console.log('✅ Quote saved:', response.data);
+        
+        // Opcional: limpiar formulario después de un tiempo
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 5000);
       } else {
         throw new Error(response.message || 'Error al guardar cotización');
       }
     } catch (error) {
-      console.error('Error saving quote:', error);
+      console.error('❌ Error saving quote:', error);
       setApiError(error.message || 'Error al guardar la cotización');
     } finally {
       setIsSubmitting(false);
@@ -191,15 +222,20 @@ const QuoteBuilder = ({ onBack }) => {
 
     setIsSubmitting(true);
     setApiError('');
+    setSuccessMessage('');
 
     try {
+      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+      
       const quoteData = {
+        sellerCompany: selectedSellerCompany?.name || '',
+        sellerCompanyId: quoteInfo.sellerCompany,
         clientId: selectedClient?.id || null,
-        clientName: quoteInfo.clientName || selectedClient?.nombre,
-        clientContact: quoteInfo.clientContact || selectedClient?.contacto,
+        clientName: quoteInfo.clientName || selectedClient?.name,
+        clientContact: quoteInfo.clientContact || selectedClient?.contact,
         email: quoteInfo.email,
         phone: quoteInfo.phone,
-        clientAddress: quoteInfo.clientAddress || selectedClient?.direccion,
+        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
         clientPosition: quoteInfo.clientPosition || '',
         products: cartItems,
         terms: {
@@ -210,7 +246,7 @@ const QuoteBuilder = ({ onBack }) => {
         }
       };
 
-      console.log('Creating and sending quote:', quoteData);
+      console.log('📤 Creando y enviando cotización:', quoteData);
       
       // Crear cotización
       const response = await quoteService.createQuote(quoteData);
@@ -219,21 +255,29 @@ const QuoteBuilder = ({ onBack }) => {
         // Actualizar estado a "enviado"
         await quoteService.updateQuoteStatus(response.data.id, 'sent');
         
-        alert('Cotización enviada exitosamente');
-        console.log('Quote sent:', response.data);
+        setSuccessMessage(`🚀 Cotización ${response.data.folio} enviada exitosamente a ${quoteInfo.email}`);
+        console.log('✅ Quote sent:', response.data);
         
-        // Limpiar carrito y volver
-        clearCart();
-        onBack();
+        // Limpiar carrito después de un delay para que el usuario vea el mensaje
+        setTimeout(() => {
+          clearCart();
+          onBack();
+        }, 3000);
       } else {
         throw new Error(response.message || 'Error al enviar cotización');
       }
     } catch (error) {
-      console.error('Error sending quote:', error);
+      console.error('❌ Error sending quote:', error);
       setApiError(error.message || 'Error al enviar la cotización');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Obtener nombre de la empresa seleccionada para mostrar
+  const getSelectedCompanyName = () => {
+    const selected = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+    return selected ? selected.name : 'No seleccionada';
   };
 
   return (
@@ -252,6 +296,19 @@ const QuoteBuilder = ({ onBack }) => {
         <h1 className="text-2xl font-bold text-gray-800">Generar Cotización</h1>
       </div>
 
+      {/* Mensajes de éxito */}
+      {successMessage && (
+        <Card className="border-green-200 bg-green-50">
+          <div className="flex items-start space-x-3">
+            <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
+            <div>
+              <h4 className="text-green-800 font-medium">Éxito</h4>
+              <p className="text-green-700">{successMessage}</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Error de API */}
       {apiError && (
         <Card className="border-red-200 bg-red-50">
@@ -266,9 +323,53 @@ const QuoteBuilder = ({ onBack }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Client Information */}
+        {/* Company and Client Information */}
         <div className="lg:col-span-2 space-y-6">
-          {/* ✅ SECCIÓN CORREGIDA: Información del Cliente */}
+          {/* Información de la Empresa Vendedora */}
+          <Card>
+            <div className="flex items-center space-x-3 mb-6">
+              <Building className="w-6 h-6 text-green-600" />
+              <h2 className="text-lg font-semibold">Empresa Vendedora</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleccionar Empresa *
+                </label>
+                <select
+                  name="sellerCompany"
+                  value={quoteInfo.sellerCompany || ''}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  disabled={isSubmitting}
+                >
+                  <option value="">-- Selecciona una empresa --</option>
+                  {sellerCompanies.map(company => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.sellerCompany && (
+                  <p className="mt-1 text-sm text-red-600">{errors.sellerCompany}</p>
+                )}
+              </div>
+
+              {quoteInfo.sellerCompany && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Building className="w-5 h-5 text-green-600" />
+                    <span className="font-medium text-green-800">
+                      Empresa seleccionada: {getSelectedCompanyName()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Información del Cliente */}
           <Card>
             <div className="flex items-center space-x-3 mb-6">
               <User className="w-6 h-6 text-blue-600" />
@@ -280,12 +381,12 @@ const QuoteBuilder = ({ onBack }) => {
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-medium text-blue-900">{selectedClient.nombre}</h3>
-                    <p className="text-blue-700">Contacto: {selectedClient.contacto}</p>
+                    <h3 className="font-medium text-blue-900">{selectedClient.name}</h3>
+                    <p className="text-blue-700">Contacto: {selectedClient.contact}</p>
                     <p className="text-blue-700">Email: {selectedClient.email}</p>
-                    <p className="text-blue-700">Teléfono: {selectedClient.telefono}</p>
-                    {selectedClient.direccion && (
-                      <p className="text-blue-700">Dirección: {selectedClient.direccion}</p>
+                    <p className="text-blue-700">Teléfono: {selectedClient.phone}</p>
+                    {selectedClient.fullAddress && (
+                      <p className="text-blue-700">Dirección: {selectedClient.fullAddress}</p>
                     )}
                   </div>
                   <Button
@@ -304,6 +405,7 @@ const QuoteBuilder = ({ onBack }) => {
                       });
                     }}
                     className="text-blue-600 hover:text-blue-800"
+                    disabled={isSubmitting}
                   >
                     Cambiar
                   </Button>
@@ -324,6 +426,7 @@ const QuoteBuilder = ({ onBack }) => {
                       setShowClientSearch(e.target.value.length > 0);
                     }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={isSubmitting}
                   />
                   {showClientSearch && clientSearchTerm && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -334,8 +437,8 @@ const QuoteBuilder = ({ onBack }) => {
                             onClick={() => handleClientSelect(client)}
                             className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                           >
-                            <div className="font-medium">{client.nombre}</div>
-                            <div className="text-sm text-gray-600">{client.contacto} - {client.email}</div>
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-sm text-gray-600">{client.contact} - {client.email}</div>
                           </div>
                         ))
                       ) : (
@@ -366,7 +469,6 @@ const QuoteBuilder = ({ onBack }) => {
                   placeholder="Nombre completo o empresa"
                   disabled={isSubmitting}
                   error={errors.clientName}
-                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
                 
                 <Input
@@ -377,7 +479,6 @@ const QuoteBuilder = ({ onBack }) => {
                   placeholder="Persona de contacto"
                   disabled={isSubmitting}
                   error={errors.clientContact}
-                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
                 
                 <Input
@@ -390,7 +491,6 @@ const QuoteBuilder = ({ onBack }) => {
                   required
                   disabled={isSubmitting}
                   error={errors.email}
-                  // ✅ Email siempre se puede editar por si necesita enviar a otro email
                 />
                 
                 <Input
@@ -400,7 +500,6 @@ const QuoteBuilder = ({ onBack }) => {
                   onChange={handleInputChange}
                   placeholder="+52 961 123 4567"
                   disabled={isSubmitting}
-                  // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
                 />
               </div>
 
@@ -411,7 +510,6 @@ const QuoteBuilder = ({ onBack }) => {
                 onChange={handleInputChange}
                 placeholder="Dirección completa"
                 disabled={isSubmitting}
-                // ✅ CAMBIADO: Ya no se deshabilita cuando hay cliente seleccionado
               />
 
               <Input
@@ -455,7 +553,7 @@ const QuoteBuilder = ({ onBack }) => {
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <p>No hay productos en el carrito</p>
-                <Button onClick={onBack} className="mt-4">
+                <Button onClick={onBack} className="mt-4" disabled={isSubmitting}>
                   Agregar Productos
                 </Button>
               </div>
@@ -495,10 +593,23 @@ const QuoteBuilder = ({ onBack }) => {
         <div className="space-y-4">
           <CartSummary />
           
+          {/* Resumen de la empresa seleccionada */}
+          {quoteInfo.sellerCompany && (
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-2 mb-2">
+                <Building className="w-5 h-5 text-green-600" />
+                <h4 className="font-medium text-green-800">Empresa Vendedora</h4>
+              </div>
+              <p className="text-sm text-green-700 font-medium">
+                {getSelectedCompanyName()}
+              </p>
+            </div>
+          )}
+          
           <div className="space-y-3">
             <Button 
               onClick={handleSendQuote}
-              disabled={isSubmitting || cartItems.length === 0}
+              disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
               className="w-full flex items-center justify-center space-x-2"
             >
               <Send size={20} />
@@ -508,7 +619,7 @@ const QuoteBuilder = ({ onBack }) => {
             <Button 
               onClick={handleSaveQuote}
               variant="secondary"
-              disabled={isSubmitting || cartItems.length === 0}
+              disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
               className="w-full flex items-center justify-center space-x-2"
             >
               <Save size={20} />
