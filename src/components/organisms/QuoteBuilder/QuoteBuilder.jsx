@@ -791,7 +791,6 @@ const QuoteBuilder = ({ onBack }) => {
             </p>
           </div>
 
-          {/* Additional Info */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-medium text-gray-800 mb-2">Próximos Pasos</h4>
             <ul className="text-sm text-gray-600 space-y-1">
@@ -802,7 +801,6 @@ const QuoteBuilder = ({ onBack }) => {
             </ul>
           </div>
 
-          {/* Información del PDF generado */}
           {generatedQuote && (
             <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
               <h4 className="font-medium text-indigo-800 mb-2">PDF Disponible</h4>

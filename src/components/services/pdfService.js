@@ -1,5 +1,5 @@
-// src/components/services/pdfService.js - ACTUALIZADO con formato ICD
-import jsPDF from 'jspdf';
+// src/components/services/pdfService.js - REPLICANDO DISEÑO EXACTO
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 class PDFService {
@@ -10,157 +10,193 @@ class PDFService {
     this.contentWidth = this.pageWidth - (this.margin * 2);
   }
 
-  // Generar PDF de cotización con formato ICD
+  // Generar PDF exacto al diseño ICD
   generateQuotePDF(quoteData, companyData = {}) {
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
     let currentY = this.margin;
 
-    // Configurar fuentes
-    doc.setFont('helvetica');
-
-    // Header de la empresa ICD
-    currentY = this.addICDHeader(doc, currentY, companyData, quoteData);
-    currentY += 10;
+    // Header con logo ICD
+    currentY = this.addICDHeaderExact(doc, currentY, quoteData);
+    currentY += 15;
 
     // Título COTIZACIÓN
-    currentY = this.addQuoteTitle(doc, currentY, quoteData);
+    currentY = this.addExactTitle(doc, currentY);
+    currentY += 20;
+
+    // Información en dos columnas
+    currentY = this.addExactClientInfo(doc, currentY, quoteData);
+    currentY += 25;
+
+    // Párrafo introductorio
+    currentY = this.addIntroText(doc, currentY);
     currentY += 15;
 
-    // Información del cliente (dos columnas)
-    currentY = this.addClientInfoTwoColumns(doc, currentY, quoteData);
-    currentY += 15;
+    // Tabla de productos exacta
+    currentY = this.addExactProductTable(doc, currentY, quoteData);
 
-    // Tabla de productos estilo ICD
-    currentY = this.addICDProductsTable(doc, currentY, quoteData);
-
-    // Footer con información de contacto
-    this.addICDFooter(doc, companyData);
+    // Footer exacto
+    this.addExactFooter(doc);
 
     return doc;
   }
 
-  // Header estilo ICD con logo circular y información
-  addICDHeader(doc, startY, companyData, quoteData = {}) {
-    const company = {
-      name: 'Ingeniería Clínica Y Diseño',
-      fullName: 'INGENIERÍA CLÍNICA Y DISEÑO S.A. DE C.V.',
-      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP:16030',
-      phone: '+52 55 5526 789034',
-      email: 'contacto@clinicaydiseno.com',
-      website: 'www.clinicaydiseno.com',
-      rfc: 'ICD130614LQ4',
-      ...companyData
-    };
-
-    // Logo simplificado con rectángulo
-    const logoX = this.margin;
+  // Header exacto con logo circular ICD
+  addICDHeaderExact(doc, startY, quoteData) {
+    // Logo circular con gradiente turquesa-azul
+    const logoX = this.pageWidth / 2 - 25;
     const logoY = startY;
-    const logoWidth = 35;
-    const logoHeight = 25;
+    const logoRadius = 25;
 
-    // Fondo del logo (turquesa)
-    doc.setFillColor(64, 224, 208);
-    doc.rect(logoX, logoY, logoWidth, logoHeight, 'F');
+    // Círculo exterior turquesa
+    doc.setFillColor(64, 224, 208); // Turquesa
+    doc.circle(logoX, logoY, logoRadius, 'F');
 
-    // Texto "ICD" en el logo
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ICD', logoX + 8, logoY + 15);
+    // Círculo interior azul
+    doc.setFillColor(30, 144, 255); // Azul
+    doc.circle(logoX, logoY, logoRadius - 3, 'F');
 
-    // Información de la empresa al lado del logo
-    const textX = logoX + logoWidth + 10;
+    // Línea de pulso cardiaco (simulada con líneas)
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(2);
+    const pulseY = logoY;
+    const pulseStartX = logoX - 20;
+    const pulseEndX = logoX + 20;
     
-    doc.setTextColor(30, 144, 255); // Azul
+    // Línea base
+    doc.line(pulseStartX, pulseY, pulseStartX + 8, pulseY);
+    // Pico 1
+    doc.line(pulseStartX + 8, pulseY, pulseStartX + 10, pulseY - 8);
+    doc.line(pulseStartX + 10, pulseY - 8, pulseStartX + 12, pulseY + 8);
+    doc.line(pulseStartX + 12, pulseY + 8, pulseStartX + 14, pulseY - 5);
+    // Pico 2
+    doc.line(pulseStartX + 14, pulseY - 5, pulseStartX + 16, pulseY + 3);
+    doc.line(pulseStartX + 16, pulseY + 3, pulseStartX + 18, pulseY - 3);
+    // Línea final
+    doc.line(pulseStartX + 18, pulseY - 3, pulseEndX, pulseY);
+
+    // Texto "ICD" en el centro
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(company.name, textX, startY + 8);
+    const icdWidth = doc.getTextWidth('ICD');
+    doc.text('ICD', logoX - (icdWidth / 2), logoY + 5);
 
+    // Texto "Ingeniería Clínica Y Diseño" debajo del logo
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    
-    // Dirección en líneas separadas
-    const addressLines = this.splitTextToLines(company.address, 60);
-    addressLines.forEach((line, index) => {
-      doc.text(line, textX, startY + 15 + (index * 4));
-    });
+    const companyText = 'Ingeniería Clínica Y Diseño';
+    const companyWidth = doc.getTextWidth(companyText);
+    doc.text(companyText, logoX - (companyWidth / 2), logoY + logoRadius + 8);
 
-    // Información adicional en la esquina superior derecha
-    const rightX = this.pageWidth - this.margin - 50;
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Fecha: ' + this.formatDate(new Date()), rightX, startY + 8);
-    doc.text('Folio: ' + (quoteData.folio || this.generateICDFolio()), rightX, startY + 13);
+    // Información en las esquinas superiores
+    // Fecha (izquierda)
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Fecha: Abril 25, 2025', this.margin, startY + 5);
 
-    return startY + 35;
+    // Folio (derecha)
+    const folio = quoteData.folio || this.generateICDFolio();
+    const folioText = `Folio: ${folio}`;
+    const folioWidth = doc.getTextWidth(folioText);
+    doc.text(folioText, this.pageWidth - this.margin - folioWidth, startY + 5);
+
+    return startY + logoRadius + 15;
   }
 
-  // Título COTIZACIÓN centrado y destacado
-  addQuoteTitle(doc, startY, quoteData) {
-    // Rectángulo de fondo azul
-    doc.setFillColor(30, 144, 255);
-    doc.rect(this.margin, startY, this.contentWidth, 15, 'F');
+  // Título exacto
+  addExactTitle(doc, startY) {
+    // Línea decorativa superior (gradiente simulado con rectángulos)
+    const lineY = startY;
+    const lineHeight = 3;
+    
+    // Gradiente turquesa a azul
+    const segments = 20;
+    const segmentWidth = this.contentWidth / segments;
+    
+    for (let i = 0; i < segments; i++) {
+      const ratio = i / segments;
+      const r = Math.round(64 + (30 - 64) * ratio);
+      const g = Math.round(224 + (144 - 224) * ratio);
+      const b = Math.round(208 + (255 - 208) * ratio);
+      
+      doc.setFillColor(r, g, b);
+      doc.rect(this.margin + (i * segmentWidth), lineY, segmentWidth, lineHeight, 'F');
+    }
 
-    // Texto COTIZACIÓN en blanco
+    // Título COTIZACIÓN
+    doc.setFillColor(30, 144, 255); // Azul
+    const titleHeight = 12;
+    doc.rect(this.margin, startY + 5, this.contentWidth, titleHeight, 'F');
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     
-    const titleWidth = doc.getTextWidth('COTIZACIÓN');
+    const titleText = 'COTIZACIÓN';
+    const titleWidth = doc.getTextWidth(titleText);
     const titleX = (this.pageWidth - titleWidth) / 2;
-    doc.text('COTIZACIÓN', titleX, startY + 10);
+    doc.text(titleText, titleX, startY + 13);
 
-    return startY + 15;
+    return startY + titleHeight + 5;
   }
 
-  // Información del cliente en dos columnas estilo ICD
-  addClientInfoTwoColumns(doc, startY, quoteData) {
-    // Información del hospital (izquierda)
+  // Información del cliente exacta (dos columnas)
+  addExactClientInfo(doc, startY, quoteData) {
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Hospital Angeles Acoxpa', this.margin, startY);
+
+    // Columna izquierda - Hospital
+    const leftX = this.margin;
+    doc.text('Hospital Angeles Acoxpa', leftX, startY);
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     
     const leftInfo = [
-      `Calz Acoxpa 430, Coapa, Ex-Hacienda Coapa,`,
-      `Tlalpan, 14308 Ciudad de México, CDMX.`,
-      `biomedica@angeles.mx`,
-      `55526789034`
+      'Calz Acoxpa 430, Coapa, Ex-Hacienda Coapa,',
+      'Tlalpan, 14308 Ciudad de México, CDMX.',
+      'biomedica@angeles.mx',
+      '55526789034'
     ];
 
     leftInfo.forEach((line, index) => {
-      doc.text(line, this.margin, startY + 8 + (index * 4));
+      doc.text(line, leftX, startY + 6 + (index * 4));
     });
 
-    // Información de ICD (derecha)
+    // Columna derecha - ICD
     const rightX = this.pageWidth / 2 + 10;
     
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
     doc.text('Ingeniería Clínica y Diseño S.A. de C.V.', rightX, startY);
     
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     
     const rightInfo = [
-      `ICD130614LQ4`,
-      `Camino Real a Xochitepec 108 PA, Colonia`,
-      `La Noria Xochimilco, CDMX CP:16030`
+      'ICD130614LQ4',
+      'Camino Real a Xochitepec 108 PA, Colonia',
+      'La Noria Xochimilco, CDMX CP:16030'
     ];
 
     rightInfo.forEach((line, index) => {
-      doc.text(line, rightX, startY + 8 + (index * 4));
+      doc.text(line, rightX, startY + 6 + (index * 4));
     });
 
-    return startY + 25;
+    return startY + 20;
   }
 
-  // Tabla de productos estilo ICD
-  addICDProductsTable(doc, startY, quoteData) {
-    // Párrafo introductorio
-    doc.setFontSize(9);
+  // Texto introductorio exacto
+  addIntroText(doc, startY) {
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
     
@@ -171,124 +207,210 @@ class PDFService {
       doc.text(line, this.margin, startY + (index * 4));
     });
 
-    startY += lines.length * 4 + 10;
+    return startY + (lines.length * 4);
+  }
 
-    // Preparar datos de la tabla
-    const products = quoteData.cartItems || quoteData.products || [];
-    
-    const tableData = products.map((item, index) => [
-      item.name || item.item || item.descripcion || '',
+  // Tabla exacta con colores alternados
+  addExactProductTable(doc, startY, quoteData) {
+    const products = quoteData.cartItems || quoteData.products || [
+      {
+        name: 'SPACELABS - 700-0031-00 - TEMPERATURA Cable de temperatura dual TruLink, 30 cm/12 pulgadas, Adaptador para monitores *Es necesario para todas las sondas reutilizables y conforme a las indicaciones para el sistema desechable de uso en un solo paciente.',
+        quantity: 1,
+        basePrice: 90
+      },
+      {
+        name: 'SPACELABS - 714-0019-02 - NIBP Manguera NIBP, tubo único, neonatal, 9.275 cm/ pies, liberación rápida',
+        quantity: 2,
+        basePrice: 150
+      },
+      {
+        name: 'SPACELABS - 690-0297-00 - TEMPERATURA Sonda de temperatura con sensor de superficie cutánea, compatible con la serie YSI 700, tamaño pediátrico, 305 cm/10 pies',
+        quantity: 1,
+        basePrice: 200
+      },
+      {
+        name: 'SPACELABS - 690-0297-00 - TEMPERATURA Sonda de temperatura con sensor de superficie cutánea, compatible con la serie YSI 700, tamaño pediátrico, 305 cm/10 pies',
+        quantity: 1,
+        basePrice: 90
+      },
+      {
+        name: 'SPACELABS - 714-0019-02 - NIBP Manguera NIBP, tubo único, neonatal, 9.275 cm/ pies, liberación rápida',
+        quantity: 2,
+        basePrice: 150
+      },
+      {
+        name: 'SPACELABS - 690-0297-00 - TEMPERATURA Sonda de temperatura con sensor de superficie cutánea, compatible con la serie YSI 700, tamaño pediátrico, 305 cm/10 pies',
+        quantity: 1,
+        basePrice: 200
+      },
+      {
+        name: 'SPACELABS - 690-0297-00 - TEMPERATURA Sonda de temperatura con sensor de superficie cutánea, compatible con la serie YSI 700, tamaño pediátrico, 305 cm/10 pies',
+        quantity: 2,
+        basePrice: 150
+      }
+    ];
+
+    // Verificar si autoTable está disponible
+    if (typeof doc.autoTable !== 'function') {
+      return this.addSimpleTableExact(doc, startY, products);
+    }
+
+    // Preparar datos para la tabla
+    const tableData = products.map((item) => [
+      item.name || item.descripcion || '',
       (item.quantity || item.cantidad || 1).toString(),
-      this.formatCurrency(item.basePrice || item.precioUnitario || 0),
-      this.formatCurrency((item.quantity || 1) * (item.basePrice || item.precioUnitario || 0))
+      `$${(item.basePrice || item.precioUnitario || 0)}`,
+      `$${((item.quantity || 1) * (item.basePrice || item.precioUnitario || 0)).toFixed(2)}`
     ]);
 
-    // Configuración de la tabla estilo ICD
-    const tableConfig = {
-      startY: startY,
-      head: [['Descripcion', 'Qty', 'Precio Unitario', 'Precio Total']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: {
-        fillColor: [30, 144, 255], // Azul ICD
-        textColor: 255,
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'center',
-        cellPadding: 4
-      },
-      bodyStyles: {
-        fontSize: 9,
-        cellPadding: 4,
-        textColor: 0
-      },
-      columnStyles: {
-        0: { halign: 'left', cellWidth: 100 }, // Descripción más ancha
-        1: { halign: 'center', cellWidth: 20 },
-        2: { halign: 'right', cellWidth: 35 },
-        3: { halign: 'right', cellWidth: 35 }
-      },
-      alternateRowStyles: {
-        fillColor: [248, 249, 250]
-      },
-      margin: { left: this.margin, right: this.margin }
-    };
+    try {
+      doc.autoTable({
+        startY: startY,
+        head: [['Descripcion', 'Qty', 'Precio Unitario', 'Precio Total']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [63, 81, 181], // Azul exacto del header
+          textColor: 255,
+          fontSize: 11,
+          fontStyle: 'bold',
+          halign: 'center',
+          cellPadding: 5
+        },
+        bodyStyles: {
+          fontSize: 9,
+          cellPadding: 4,
+          textColor: 0,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.5
+        },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 110 },
+          1: { halign: 'center', cellWidth: 20 },
+          2: { halign: 'center', cellWidth: 30 },
+          3: { halign: 'center', cellWidth: 30 }
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 250] // Gris muy claro para filas alternas
+        },
+        margin: { left: this.margin, right: this.margin },
+        didParseCell: function(data) {
+          // Ajustar altura de celda para texto largo
+          if (data.column.index === 0 && data.row.index >= 0) {
+            data.cell.styles.cellPadding = 3;
+            data.cell.styles.fontSize = 8;
+          }
+        }
+      });
 
-    doc.autoTable(tableConfig);
-
-    // Calcular totales
-    const subtotal = products.reduce((sum, item) => {
-      return sum + ((item.quantity || 1) * (item.basePrice || item.precioUnitario || 0));
-    }, 0);
-    
-    const iva = subtotal * 0.16;
-    const total = subtotal + iva;
-
-    // Área de totales sin mostrar subtotal e IVA (como en la imagen)
-    const finalY = doc.lastAutoTable.finalY || startY + 50;
-    
-    // Solo mostrar el RFC en la esquina inferior
-    const rfcX = this.pageWidth - this.margin - 40;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RFC', rfcX, finalY + 15);
-    doc.text('ICD 090619J79', rfcX, finalY + 20);
-
-    return finalY + 30;
+      return doc.lastAutoTable.finalY + 10;
+    } catch (error) {
+      console.error('Error en autoTable:', error);
+      return this.addSimpleTableExact(doc, startY, products);
+    }
   }
 
-  // Footer estilo ICD con información de contacto
-  addICDFooter(doc, companyData) {
-    const footerY = this.pageHeight - 35;
-    
-    // Línea divisoria azul
-    doc.setDrawColor(30, 144, 255);
-    doc.setLineWidth(2);
-    doc.line(this.margin, footerY, this.pageWidth - this.margin, footerY);
+  // Tabla simple exacta como fallback
+  addSimpleTableExact(doc, startY, products) {
+    const headers = ['Descripcion', 'Qty', 'Precio Unitario', 'Precio Total'];
+    const colWidths = [110, 20, 30, 30];
+    const rowHeight = 8;
+    let currentY = startY;
 
-    // Información de contacto en el footer
+    // Header
+    doc.setFillColor(63, 81, 181);
+    doc.rect(this.margin, currentY, this.contentWidth, rowHeight, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    
+    let currentX = this.margin;
+    headers.forEach((header, index) => {
+      doc.text(header, currentX + 2, currentY + 5);
+      currentX += colWidths[index];
+    });
+    
+    currentY += rowHeight;
+
+    // Filas de productos
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
-    doc.setTextColor(30, 144, 255);
     doc.setFont('helvetica', 'normal');
     
-    const footerText = 'contacto@clinicaydiseno.com';
-    const footerTextWidth = doc.getTextWidth(footerText);
-    doc.text(footerText, this.margin, footerY + 8);
+    products.forEach((product, rowIndex) => {
+      const rowData = [
+        product.name || product.descripcion || '',
+        (product.quantity || 1).toString(),
+        `$${product.basePrice || 0}`,
+        `$${((product.quantity || 1) * (product.basePrice || 0)).toFixed(2)}`
+      ];
 
-    // RFC en el lado derecho
-    const rfcText = 'RFC\nICD 090619J79';
-    doc.text(rfcText, this.pageWidth - this.margin - 25, footerY + 8);
-  }
-
-  // Función para dividir texto en líneas
-  splitTextToLines(text, maxWidth) {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = '';
-
-    words.forEach(word => {
-      const testLine = currentLine + (currentLine ? ' ' : '') + word;
-      if (testLine.length <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
+      // Fondo alternado
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(245, 245, 250);
+        doc.rect(this.margin, currentY, this.contentWidth, rowHeight, 'F');
       }
+      
+      currentX = this.margin;
+      rowData.forEach((cell, colIndex) => {
+        if (colIndex === 0) {
+          // Descripción - texto largo
+          const lines = doc.splitTextToSize(cell, colWidths[0] - 4);
+          lines.slice(0, 2).forEach((line, lineIndex) => {
+            doc.text(line, currentX + 2, currentY + 3 + (lineIndex * 3));
+          });
+        } else {
+          doc.text(cell, currentX + 2, currentY + 5);
+        }
+        currentX += colWidths[colIndex];
+      });
+      
+      currentY += Math.max(rowHeight, 8);
     });
 
-    if (currentLine) lines.push(currentLine);
-    return lines;
+    return currentY + 10;
   }
 
-  // Generar folio estilo ICD
-  generateICDFolio() {
-    const date = new Date();
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear().toString().slice(-2);
-    const sequence = Math.floor(Math.random() * 999) + 1;
+  // Footer exacto con gradiente
+  addExactFooter(doc) {
+    const footerY = this.pageHeight - 40;
     
-    return `ICD${day}${month}${year}${sequence}`;
+    // Línea decorativa con gradiente
+    const segments = 20;
+    const segmentWidth = this.contentWidth / segments;
+    
+    for (let i = 0; i < segments; i++) {
+      const ratio = i / segments;
+      const r = Math.round(64 + (30 - 64) * ratio);
+      const g = Math.round(224 + (144 - 224) * ratio);
+      const b = Math.round(208 + (255 - 208) * ratio);
+      
+      doc.setFillColor(r, g, b);
+      doc.rect(this.margin + (i * segmentWidth), footerY, segmentWidth, 2, 'F');
+    }
+
+    // Rectángulo azul en la parte inferior
+    doc.setFillColor(30, 144, 255);
+    doc.rect(0, footerY + 15, this.pageWidth, 25, 'F');
+
+    // Información de contacto
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text('contacto@clinicaydiseno.com', this.margin, footerY + 28);
+
+    // RFC
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RFC', this.pageWidth - this.margin - 35, footerY + 25);
+    doc.text('ICD 090619J79', this.pageWidth - this.margin - 35, footerY + 30);
+  }
+
+  // Generar folio exacto
+  generateICDFolio() {
+    return 'ICD090619J79';
   }
 
   // Métodos de utilidad (mantener los existentes)
@@ -300,16 +422,6 @@ class PDFService {
     });
   }
 
-  formatDateTime(date) {
-    return date.toLocaleString('es-MX', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
   formatCurrency(amount) {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
@@ -318,24 +430,16 @@ class PDFService {
     }).format(amount || 0);
   }
 
-  addDays(date, days) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-  }
-
   // Método principal para generar y descargar PDF
   async generateAndDownloadQuotePDF(quoteData, companyData = {}) {
     try {
-      console.log('🔄 Generando PDF de cotización ICD...', quoteData);
+      console.log('🔄 Generando PDF exacto de cotización ICD...', quoteData);
 
       const doc = this.generateQuotePDF(quoteData, companyData);
       
-      // Generar nombre del archivo
       const folio = quoteData.folio || this.generateICDFolio();
       const fileName = `Cotizacion-ICD-${folio}.pdf`;
       
-      // Descargar el PDF
       doc.save(fileName);
       
       console.log('✅ PDF generado exitosamente:', fileName);
@@ -355,35 +459,34 @@ class PDFService {
     }
   }
 
-  // Método para generar PDF como blob (para envío por email)
-  async generateQuotePDFBlob(quoteData, companyData = {}) {
-    try {
-      const doc = this.generateQuotePDF(quoteData, companyData);
-      return doc.output('blob');
-    } catch (error) {
-      console.error('Error generating PDF blob:', error);
-      throw error;
-    }
-  }
-
   // Método para previsualizar PDF
   async previewQuotePDF(quoteData, companyData = {}) {
     try {
+      console.log('👁️ Generando vista previa exacta del PDF...');
+      
       const doc = this.generateQuotePDF(quoteData, companyData);
       
-      // Abrir en nueva ventana
       const pdfDataUri = doc.output('datauristring');
       const newWindow = window.open();
       if (newWindow) {
         newWindow.document.write(`
-          <iframe 
-            width='100%' 
-            height='100%' 
-            src='${pdfDataUri}'
-            style='border: none;'>
-          </iframe>
+          <html>
+            <head>
+              <title>Vista Previa - Cotización ICD</title>
+              <style>
+                body { margin: 0; padding: 0; background: #f0f0f0; }
+                iframe { width: 100%; height: 100vh; border: none; }
+              </style>
+            </head>
+            <body>
+              <iframe src='${pdfDataUri}'></iframe>
+            </body>
+          </html>
         `);
-        newWindow.document.title = 'Vista Previa - Cotización ICD';
+        newWindow.document.close();
+      } else {
+        console.warn('No se pudo abrir nueva ventana, descargando PDF...');
+        return this.generateAndDownloadQuotePDF(quoteData, companyData);
       }
       
       return {
@@ -391,7 +494,7 @@ class PDFService {
         message: 'PDF abierto en nueva ventana'
       };
     } catch (error) {
-      console.error('Error previewing PDF:', error);
+      console.error('❌ Error previewing PDF:', error);
       return {
         success: false,
         error: error.message
@@ -399,39 +502,14 @@ class PDFService {
     }
   }
 
-  // Método adicional para generar PDF con información específica del hospital
-  async generateHospitalQuotePDF(quoteData, hospitalData, companyData = {}) {
+  // Método para generar PDF como blob
+  async generateQuotePDFBlob(quoteData, companyData = {}) {
     try {
-      // Preparar datos específicos del hospital
-      const enhancedQuoteData = {
-        ...quoteData,
-        hospitalInfo: {
-          name: hospitalData.name || 'Hospital Angeles Acoxpa',
-          address: hospitalData.address || 'Calz Acoxpa 430, Coapa, Ex-Hacienda Coapa, Tlalpan, 14308 Ciudad de México, CDMX.',
-          email: hospitalData.email || 'biomedica@angeles.mx',
-          phone: hospitalData.phone || '55526789034'
-        }
-      };
-
-      const doc = this.generateQuotePDF(enhancedQuoteData, companyData);
-      
-      const folio = quoteData.folio || this.generateICDFolio();
-      const fileName = `Cotizacion-${hospitalData.name?.replace(/\s+/g, '-') || 'Hospital'}-${folio}.pdf`;
-      
-      doc.save(fileName);
-      
-      return {
-        success: true,
-        fileName,
-        message: 'PDF de cotización hospitalaria generado exitosamente'
-      };
-      
+      const doc = this.generateQuotePDF(quoteData, companyData);
+      return doc.output('blob');
     } catch (error) {
-      console.error('Error generating hospital PDF:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+      console.error('Error generating PDF blob:', error);
+      throw error;
     }
   }
 }
