@@ -14,7 +14,6 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
 
   const menuItems = [
     { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { id: 'perfil', path: '/perfil', icon: User, label: 'Perfil' },
     { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Cotizar' },
     { id: 'clientes', path: '/clientes', icon: FileText, label: 'Clientes' },
     { id: 'historial', path: '/historial', icon: History, label: 'Historial de cotizaciones' },
