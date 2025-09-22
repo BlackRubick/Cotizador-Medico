@@ -1,8 +1,9 @@
-// src/components/molecules/ClientForm/ClientForm.jsx - ACTUALIZADO
+// src/components/molecules/ClientForm/ClientForm.jsx - ACTUALIZADO CON ENCARGADOS
 import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import Input from '../../atoms/Input';
 import Button from '../../atoms/Button';
+import EncargadosManager from '../EncargadosManager/EncargadosManager';
 
 const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,8 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     fechaInstalacion: client?.fechaInstalacion || '',
     ultimoMantenimiento: client?.ultimoMantenimiento || '',
     estatusAbril2025: client?.estatusAbril2025 || '',
-    estatusInicio26: client?.estatusInicio26 || ''
+    estatusInicio26: client?.estatusInicio26 || '',
+    encargados: client?.encargados || [] // Nuevo campo para encargados
   });
 
   const [errors, setErrors] = useState({});
@@ -91,6 +93,11 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
         newErrors.ultimoMantenimiento = 'Fecha de último mantenimiento inválida';
       }
     }
+
+    // Validación de encargados
+    if (formData.encargados.length === 0) {
+      newErrors.encargados = 'Debe agregar al menos un encargado';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -114,6 +121,22 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     // Limpiar error de API
     if (apiError) {
       setApiError('');
+    }
+  };
+
+  // Nuevo handler para encargados
+  const handleEncargadosChange = (newEncargados) => {
+    setFormData(prev => ({
+      ...prev,
+      encargados: newEncargados
+    }));
+
+    // Limpiar error de encargados si hay al menos uno
+    if (newEncargados.length > 0 && errors.encargados) {
+      setErrors(prev => ({
+        ...prev,
+        encargados: ''
+      }));
     }
   };
 
@@ -149,11 +172,9 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     }
   };
 
-
-
   return (
     <>
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-800">
             {isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}
@@ -281,6 +302,20 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
             </div>
           </div>
 
+          {/* Encargados - NUEVA SECCIÓN */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <EncargadosManager
+              encargados={formData.encargados}
+              onChange={handleEncargadosChange}
+            />
+            {errors.encargados && (
+              <p className="text-red-500 text-sm mt-2 flex items-center space-x-1">
+                <AlertCircle size={16} />
+                <span>{errors.encargados}</span>
+              </p>
+            )}
+          </div>
+
           {/* Información del Equipo */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Información del Equipo</h3>
@@ -390,8 +425,6 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
               />
             </div>
           </div>
-
-
 
           <div className="flex space-x-4 pt-4">
             <Button 

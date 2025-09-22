@@ -112,12 +112,26 @@ class ClientService {
       throw new Error('Los campos empresaResponsable, dependencia, hospital, estado, ciudad, codigoPostal, direccion, equipo, marca, modelo y numeroSerie son requeridos');
     }
 
+    // Validación de encargados
+    if (!clientData.encargados || clientData.encargados.length === 0) {
+      throw new Error('Debe agregar al menos un encargado del hospital');
+    }
+
+    // Validar que cada encargado tenga al menos nombre
+    const encargadosValidos = clientData.encargados.filter(enc => enc.nombre && enc.nombre.trim());
+    if (encargadosValidos.length === 0) {
+      throw new Error('Debe agregar al menos un encargado con nombre válido');
+    }
+
+    // Usar el primer encargado para los campos principales del backend
+    const encargadoPrincipal = encargadosValidos[0];
+
     // Mapear datos del frontend al formato del backend
     const mappedData = {
       name: clientData.empresaResponsable.trim(),
-      contact: clientData.dependencia.trim(),
-      email: `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`, // Email generado
-      phone: clientData.codigoPostal.trim(),
+      contact: encargadoPrincipal.nombre.trim(), // Usar nombre del encargado principal
+      email: encargadoPrincipal.email?.trim() || `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`, // Email del encargado o generado
+      phone: encargadoPrincipal.telefono?.trim() || clientData.codigoPostal.trim(), // Teléfono del encargado o código postal como fallback
       street: clientData.direccion.trim(),
       city: clientData.ciudad.trim(),
       state: clientData.estado.trim(),
@@ -125,6 +139,7 @@ class ClientService {
       country: 'México',
       clientType: 'Hospital',
       notes: JSON.stringify({
+        // Datos del hospital y equipo
         empresaResponsable: clientData.empresaResponsable,
         dependencia: clientData.dependencia,
         hospital: clientData.hospital,
@@ -136,11 +151,20 @@ class ClientService {
         fechaInstalacion: clientData.fechaInstalacion,
         ultimoMantenimiento: clientData.ultimoMantenimiento,
         estatusAbril2025: clientData.estatusAbril2025,
-        estatusInicio26: clientData.estatusInicio26
+        estatusInicio26: clientData.estatusInicio26,
+        // NUEVO: Array de encargados completo
+        encargados: encargadosValidos.map(enc => ({
+          id: enc.id,
+          nombre: enc.nombre.trim(),
+          cargo: enc.cargo?.trim() || '',
+          telefono: enc.telefono?.trim() || '',
+          email: enc.email?.trim() || '',
+          fechaRegistro: new Date().toISOString()
+        }))
       })
     };
 
-    console.log('Mapped data for backend:', mappedData);
+    console.log('Mapped data for backend with encargados:', mappedData);
 
     const response = await this.makeRequest('/clients', {
       method: 'POST',
@@ -152,11 +176,27 @@ class ClientService {
 
   // Actualizar cliente
   async updateClient(id, clientData) {
+    console.log('Updating client with data:', clientData);
+
+    // Validación de encargados
+    if (!clientData.encargados || clientData.encargados.length === 0) {
+      throw new Error('Debe mantener al menos un encargado del hospital');
+    }
+
+    // Validar que cada encargado tenga al menos nombre
+    const encargadosValidos = clientData.encargados.filter(enc => enc.nombre && enc.nombre.trim());
+    if (encargadosValidos.length === 0) {
+      throw new Error('Debe mantener al menos un encargado con nombre válido');
+    }
+
+    // Usar el primer encargado para los campos principales del backend
+    const encargadoPrincipal = encargadosValidos[0];
+
     const mappedData = {
       name: clientData.empresaResponsable.trim(),
-      contact: clientData.dependencia.trim(),
-      email: `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`,
-      phone: clientData.codigoPostal.trim(),
+      contact: encargadoPrincipal.nombre.trim(),
+      email: encargadoPrincipal.email?.trim() || `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`,
+      phone: encargadoPrincipal.telefono?.trim() || clientData.codigoPostal.trim(),
       street: clientData.direccion.trim(),
       city: clientData.ciudad.trim(),
       state: clientData.estado.trim(),
@@ -164,6 +204,7 @@ class ClientService {
       country: 'México',
       clientType: 'Hospital',
       notes: JSON.stringify({
+        // Datos del hospital y equipo
         empresaResponsable: clientData.empresaResponsable,
         dependencia: clientData.dependencia,
         hospital: clientData.hospital,
@@ -175,9 +216,20 @@ class ClientService {
         fechaInstalacion: clientData.fechaInstalacion,
         ultimoMantenimiento: clientData.ultimoMantenimiento,
         estatusAbril2025: clientData.estatusAbril2025,
-        estatusInicio26: clientData.estatusInicio26
+        estatusInicio26: clientData.estatusInicio26,
+        // ACTUALIZADO: Array de encargados con preservación de fechas
+        encargados: encargadosValidos.map(enc => ({
+          id: enc.id,
+          nombre: enc.nombre.trim(),
+          cargo: enc.cargo?.trim() || '',
+          telefono: enc.telefono?.trim() || '',
+          email: enc.email?.trim() || '',
+          fechaRegistro: enc.fechaRegistro || new Date().toISOString() // Preservar fecha existente
+        }))
       })
     };
+
+    console.log('Mapped update data for backend with encargados:', mappedData);
 
     const response = await this.makeRequest(`/clients/${id}`, {
       method: 'PUT',
@@ -202,6 +254,98 @@ class ClientService {
     return response;
   }
 
+  // NUEVOS MÉTODOS PARA MANEJAR ENCARGADOS
+
+  // Obtener encargados de un cliente específico
+  async getClientEncargados(clientId) {
+    try {
+      const client = await this.getClient(clientId);
+      const frontendClient = this.mapBackendToFrontend(client);
+      return frontendClient.encargados || [];
+    } catch (error) {
+      console.error('Error getting client encargados:', error);
+      throw error;
+    }
+  }
+
+  // Agregar encargado a un cliente existente
+  async addEncargadoToClient(clientId, encargadoData) {
+    try {
+      // Obtener cliente actual
+      const client = await this.getClient(clientId);
+      const frontendClient = this.mapBackendToFrontend(client);
+      
+      // Agregar nuevo encargado
+      const newEncargado = {
+        id: Date.now(),
+        nombre: encargadoData.nombre.trim(),
+        cargo: encargadoData.cargo?.trim() || '',
+        telefono: encargadoData.telefono?.trim() || '',
+        email: encargadoData.email?.trim() || '',
+        fechaRegistro: new Date().toISOString()
+      };
+
+      frontendClient.encargados = [...(frontendClient.encargados || []), newEncargado];
+      
+      // Actualizar cliente
+      return await this.updateClient(clientId, frontendClient);
+    } catch (error) {
+      console.error('Error adding encargado to client:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar encargado específico
+  async updateClientEncargado(clientId, encargadoId, encargadoData) {
+    try {
+      // Obtener cliente actual
+      const client = await this.getClient(clientId);
+      const frontendClient = this.mapBackendToFrontend(client);
+      
+      // Actualizar encargado específico
+      frontendClient.encargados = (frontendClient.encargados || []).map(enc => 
+        enc.id === encargadoId 
+          ? {
+              ...enc,
+              nombre: encargadoData.nombre.trim(),
+              cargo: encargadoData.cargo?.trim() || '',
+              telefono: encargadoData.telefono?.trim() || '',
+              email: encargadoData.email?.trim() || ''
+            }
+          : enc
+      );
+      
+      // Actualizar cliente
+      return await this.updateClient(clientId, frontendClient);
+    } catch (error) {
+      console.error('Error updating client encargado:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar encargado específico
+  async removeEncargadoFromClient(clientId, encargadoId) {
+    try {
+      // Obtener cliente actual
+      const client = await this.getClient(clientId);
+      const frontendClient = this.mapBackendToFrontend(client);
+      
+      // Verificar que no sea el último encargado
+      if (frontendClient.encargados.length <= 1) {
+        throw new Error('No se puede eliminar el último encargado. Debe haber al menos uno.');
+      }
+      
+      // Eliminar encargado específico
+      frontendClient.encargados = (frontendClient.encargados || []).filter(enc => enc.id !== encargadoId);
+      
+      // Actualizar cliente
+      return await this.updateClient(clientId, frontendClient);
+    } catch (error) {
+      console.error('Error removing encargado from client:', error);
+      throw error;
+    }
+  }
+
   // Métodos auxiliares para mapear datos
   extractStreetFromAddress(fullAddress) {
     if (!fullAddress) return '';
@@ -223,7 +367,7 @@ class ClientService {
     return typeMap[frontendType] || 'Hospital';
   }
 
-  // Mapear datos del backend al frontend
+  // Mapear datos del backend al frontend - ACTUALIZADO CON ENCARGADOS
   mapBackendToFrontend(backendClient) {
     // Intentar parsear los datos adicionales desde notes
     let additionalData = {};
@@ -233,6 +377,24 @@ class ClientService {
       }
     } catch (error) {
       console.warn('Error parsing client notes:', error);
+    }
+
+    // Mapear encargados con validación
+    let encargados = [];
+    if (additionalData.encargados && Array.isArray(additionalData.encargados)) {
+      encargados = additionalData.encargados.filter(enc => enc.nombre && enc.nombre.trim());
+    }
+
+    // Si no hay encargados en notes, crear uno basado en los datos principales del backend
+    if (encargados.length === 0) {
+      encargados = [{
+        id: 1,
+        nombre: backendClient.contact || 'Encargado Principal',
+        cargo: 'Contacto Principal',
+        telefono: backendClient.phone || '',
+        email: backendClient.email || '',
+        fechaRegistro: backendClient.createdAt || new Date().toISOString()
+      }];
     }
 
     return {
@@ -253,6 +415,9 @@ class ClientService {
       ultimoMantenimiento: additionalData.ultimoMantenimiento || '',
       estatusAbril2025: additionalData.estatusAbril2025 || '',
       estatusInicio26: additionalData.estatusInicio26 || '',
+      // NUEVO: Array de encargados
+      encargados: encargados,
+      // Campos adicionales del backend
       tipo: backendClient.clientType,
       estado: backendClient.status === 'active' ? 'activo' : 'inactivo',
       fechaCreacion: backendClient.createdAt,
@@ -260,6 +425,34 @@ class ClientService {
       totalCotizaciones: backendClient.totalQuotes,
       montoTotal: backendClient.totalAmount
     };
+  }
+
+  // MÉTODO AUXILIAR: Obtener encargado principal
+  getEncargadoPrincipal(encargados) {
+    if (!encargados || encargados.length === 0) return null;
+    
+    // Buscar encargado con cargo de director o similar
+    const director = encargados.find(enc => 
+      enc.cargo && (
+        enc.cargo.toLowerCase().includes('director') ||
+        enc.cargo.toLowerCase().includes('jefe') ||
+        enc.cargo.toLowerCase().includes('responsable')
+      )
+    );
+    
+    return director || encargados[0]; // Retornar director o el primero
+  }
+
+  // MÉTODO AUXILIAR: Formatear información de encargados para mostrar
+  formatEncargadosInfo(encargados) {
+    if (!encargados || encargados.length === 0) return 'Sin encargados';
+    
+    if (encargados.length === 1) {
+      const enc = encargados[0];
+      return `${enc.nombre}${enc.cargo ? ` (${enc.cargo})` : ''}`;
+    }
+    
+    return `${encargados.length} encargados: ${encargados.map(e => e.nombre).join(', ')}`;
   }
 }
 
