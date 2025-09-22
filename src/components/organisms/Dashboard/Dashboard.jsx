@@ -6,7 +6,7 @@ import Input from '../../atoms/Input';
 import QuoteCard from '../../molecules/QuoteCard';
 import FilterPanel from '../../molecules/FilterPanel';
 
-const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => {
+const Dashboard = ({ quotes, loading = false, error = null, onCreateQuote, onFilterQuotes, onSelectQuote, onRefresh }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -32,10 +32,17 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
     };
   }, [showFilter]);
 
-  const filteredQuotes = quotes.filter(quote =>
-    quote.razonSocial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quote.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredQuotes = quotes.filter(quote => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      quote.razonSocial?.toLowerCase().includes(searchLower) ||
+      quote.cliente?.toLowerCase().includes(searchLower) ||
+      quote.clientInfoName?.toLowerCase().includes(searchLower) ||
+      quote.folio?.toLowerCase().includes(searchLower) ||
+      quote.encargado?.toLowerCase().includes(searchLower) ||
+      quote.contacto?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const recentQuotes = filteredQuotes.slice(0, 6);
 
@@ -110,7 +117,18 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Cotizaciones</h3>
-                <p className="text-3xl font-bold text-blue-800 mt-2">{quotes.length}</p>
+                <p className="text-3xl font-bold text-blue-800 mt-2">
+                  {loading ? (
+                    <div className="animate-pulse bg-blue-200 h-8 w-16 rounded"></div>
+                  ) : (
+                    quotes.length
+                  )}
+                </p>
+                {quotes.some(q => q.estadoLocal) && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    {quotes.filter(q => q.estadoLocal).length} locales
+                  </p>
+                )}
               </div>
               <div className="bg-blue-200 rounded-full p-3">
                 <FileText className="text-blue-600" size={24} />
@@ -123,7 +141,15 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
               <div>
                 <h3 className="text-sm font-medium text-green-600 uppercase tracking-wide">Confirmadas</h3>
                 <p className="text-3xl font-bold text-green-800 mt-2">
-                  {quotes.filter(q => q.estado === 'confirmado').length}
+                  {loading ? (
+                    <div className="animate-pulse bg-green-200 h-8 w-16 rounded"></div>
+                  ) : (
+                    quotes.filter(q => 
+                      q.estado?.toLowerCase() === 'confirmado' || 
+                      q.estado?.toLowerCase() === 'confirmed' ||
+                      q.status?.toLowerCase() === 'confirmed'
+                    ).length
+                  )}
                 </p>
               </div>
               <div className="bg-green-200 rounded-full p-3">
@@ -137,7 +163,15 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
               <div>
                 <h3 className="text-sm font-medium text-yellow-600 uppercase tracking-wide">Pendientes</h3>
                 <p className="text-3xl font-bold text-yellow-800 mt-2">
-                  {quotes.filter(q => q.estado === 'pendiente').length}
+                  {loading ? (
+                    <div className="animate-pulse bg-yellow-200 h-8 w-16 rounded"></div>
+                  ) : (
+                    quotes.filter(q => 
+                      q.estado?.toLowerCase() === 'pendiente' || 
+                      q.estado?.toLowerCase() === 'pending' ||
+                      q.status?.toLowerCase() === 'pending'
+                    ).length
+                  )}
                 </p>
               </div>
               <div className="bg-yellow-200 rounded-full p-3">
@@ -151,7 +185,11 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
               <div>
                 <h3 className="text-sm font-medium text-purple-600 uppercase tracking-wide">Valor Total</h3>
                 <p className="text-3xl font-bold text-purple-800 mt-2">
-                  ${quotes.reduce((total, quote) => total + (quote.total || 0), 0).toLocaleString()}
+                  {loading ? (
+                    <div className="animate-pulse bg-purple-200 h-8 w-24 rounded"></div>
+                  ) : (
+                    `$${quotes.reduce((total, quote) => total + (parseFloat(quote.total) || 0), 0).toLocaleString('es-MX')}`
+                  )}
                 </p>
               </div>
               <div className="bg-purple-200 rounded-full p-3">
@@ -164,21 +202,50 @@ const Dashboard = ({ quotes, onCreateQuote, onFilterQuotes, onSelectQuote }) => 
         {/* Recent Quotes */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Cotizaciones Recientes</h2>
-            {recentQuotes.length > 0 && (
-              <Button
-                variant="ghost"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                Ver todas
-              </Button>
-            )}
+            <div className="flex items-center space-x-3">
+              <h2 className="text-2xl font-bold text-gray-800">Cotizaciones Recientes</h2>
+              {loading && (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              )}
+            </div>
+
+
           </div>
           
-          {recentQuotes.length > 0 ? (
+          {error ? (
+            <div className="text-center py-16">
+              <div className="bg-red-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+                <FileText className="text-red-400" size={40} />
+              </div>
+              <h3 className="text-xl font-semibold text-red-700 mb-2">Error al cargar cotizaciones</h3>
+              <p className="text-red-500 mb-6 max-w-md mx-auto">{error}</p>
+              <Button 
+                onClick={onRefresh} 
+                className="bg-red-600 hover:bg-red-700 px-8 py-3 rounded-xl"
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="bg-gray-100 rounded-xl p-6 animate-pulse">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gray-300 h-6 w-32 rounded"></div>
+                    <div className="bg-gray-300 h-6 w-20 rounded"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="bg-gray-300 h-4 w-full rounded"></div>
+                    <div className="bg-gray-300 h-4 w-3/4 rounded"></div>
+                  </div>
+                  <div className="mt-4 bg-gray-300 h-8 w-24 rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : recentQuotes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {recentQuotes.map(quote => (
-                <div key={quote.id} className="transform hover:scale-105 transition-all duration-200">
+                <div key={quote.id || quote.folio} className="transform hover:scale-105 transition-all duration-200">
                   <QuoteCard
                     quote={quote}
                     onClick={() => onSelectQuote(quote)}

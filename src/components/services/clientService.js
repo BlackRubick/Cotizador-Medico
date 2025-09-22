@@ -419,7 +419,7 @@ class ClientService {
       encargados: encargados,
       // Campos adicionales del backend
       tipo: backendClient.clientType,
-      estado: backendClient.status === 'active' ? 'activo' : 'inactivo',
+      estadoCliente: backendClient.status === 'active' ? 'activo' : 'inactivo', // Renombrado para evitar conflicto
       fechaCreacion: backendClient.createdAt,
       ultimaCotizacion: backendClient.lastQuoteDate,
       totalCotizaciones: backendClient.totalQuotes,

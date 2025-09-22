@@ -17,7 +17,6 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
     { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización', color: 'from-green-500 to-green-600' },
     { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes', color: 'from-purple-500 to-purple-600' },
     { id: 'historial', path: '/historial', icon: History, label: 'Historial', color: 'from-orange-500 to-orange-600' },
-    { id: 'revisar', path: '/revisar-cotizaciones', icon: Calendar, label: 'Revisar Cotizaciones', color: 'from-red-500 to-red-600' },
   ];
 
   return (
@@ -59,7 +58,6 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
                 Cotizador
               </h1>
-              <p className="text-sm text-slate-400 font-medium">Médico Profesional</p>
             </div>
           </div>
 

@@ -199,12 +199,24 @@ class QuoteService {
   formatDate(dateString) {
     if (!dateString) return '';
     
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        console.warn('Fecha inválida en quoteService:', dateString);
+        return '';
+      }
+      
+      return date.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formateando fecha en quoteService:', error);
+      return '';
+    }
   }
 
   // Validar datos de cotización antes de enviar

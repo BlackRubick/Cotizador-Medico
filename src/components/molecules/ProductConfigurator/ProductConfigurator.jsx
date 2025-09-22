@@ -430,7 +430,7 @@ const ProductConfigurator = ({ categoryId, categoryName, onBack }) => {
                         </div>
                       )}
 
-                      {/* Stock info mejorado */}
+                      {/* Stock info mejorado 
                       {product.stock && (
                         <div className="mt-3">
                           {product.stock.isInStock ? (
@@ -450,7 +450,7 @@ const ProductConfigurator = ({ categoryId, categoryName, onBack }) => {
                             </div>
                           )}
                         </div>
-                      )}
+                      )}*/}
                     </div>
                     
                     <div className="flex flex-col items-end space-y-4 ml-6">

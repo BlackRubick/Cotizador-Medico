@@ -1,7 +1,8 @@
-// src/components/pages/HistoryPage/HistoryPage.jsx - ACTUALIZADO CON API REAL
+// src/components/pages/HistoryPage/HistoryPage.jsx - ACTUALIZADO CON API REAL Y ALMACENAMIENTO LOCAL
 import React, { useState, useEffect } from 'react';
 import HistoryViewer from '../../organisms/HistoryViewer';
 import quoteService from '../../services/quoteService';
+import localStorageService from '../../services/locastorageService';
 
 const HistoryPage = () => {
   const [quotes, setQuotes] = useState([]);
@@ -20,37 +21,73 @@ const HistoryPage = () => {
       
       console.log('🔄 Cargando historial de cotizaciones...');
       
-      const response = await quoteService.getQuotes({
-        // Parámetros para obtener todas las cotizaciones
-        page: 1,
-        limit: 100, // Obtener hasta 100 cotizaciones para el historial
-        // Opcional: filtrar solo cotizaciones enviadas/confirmadas
-        // status: 'sent,confirmed,rejected'
+      let mappedQuotes = [];
+      
+      // 1. Cargar cotizaciones locales primero (siempre disponibles)
+      try {
+        const localQuotes = localStorageService.getLocalQuotes();
+        const formattedLocalQuotes = localQuotes.map(quote => 
+          localStorageService.formatQuoteForHistory(quote)
+        );
+        mappedQuotes = [...formattedLocalQuotes];
+        console.log('✅ Cotizaciones locales cargadas:', formattedLocalQuotes.length);
+      } catch (localError) {
+        console.warn('⚠️ Error cargando cotizaciones locales:', localError);
+      }
+      
+      // 2. Intentar cargar cotizaciones del servidor
+      try {
+        const response = await quoteService.getQuotes({
+          page: 1,
+          limit: 100,
+        });
+        
+        if (response.success) {
+          // Mapear datos del backend al formato del frontend
+          const serverQuotes = response.data.map(quote => 
+            quoteService.mapBackendToFrontend(quote)
+          );
+          
+          // Combinar cotizaciones locales y del servidor
+          // Las locales van primero para mostrar las más recientes
+          mappedQuotes = [...mappedQuotes, ...serverQuotes];
+          
+          console.log('✅ Cotizaciones del servidor cargadas:', serverQuotes.length);
+        } else {
+          throw new Error(response.message || 'Error al cargar cotizaciones del servidor');
+        }
+      } catch (serverError) {
+        console.warn('⚠️ Error cargando cotizaciones del servidor:', serverError.message);
+        
+        // Si solo tenemos cotizaciones locales, mostrar advertencia pero continuar
+        if (mappedQuotes.length > 0) {
+          setError(`Mostrando solo cotizaciones locales. Error del servidor: ${serverError.message}`);
+        } else {
+          // Si no hay cotizaciones locales y falla el servidor
+          if (serverError.message.includes('unauthorized') || serverError.message.includes('token')) {
+            console.log('Token inválido, redirigir al login');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return;
+          }
+          throw serverError;
+        }
+      }
+      
+      // 3. Ordenar por fecha de creación (más recientes primero)
+      mappedQuotes.sort((a, b) => {
+        const dateA = new Date(a.fechaCreacion || a.fechaEnvio || 0);
+        const dateB = new Date(b.fechaCreacion || b.fechaEnvio || 0);
+        return dateB - dateA;
       });
       
-      if (response.success) {
-        // Mapear datos del backend al formato del frontend
-        const mappedQuotes = response.data.map(quote => 
-          quoteService.mapBackendToFrontend(quote)
-        );
-        
-        console.log('✅ Cotizaciones cargadas:', mappedQuotes.length);
-        setQuotes(mappedQuotes);
-      } else {
-        throw new Error(response.message || 'Error al cargar cotizaciones');
-      }
+      setQuotes(mappedQuotes);
+      console.log('✅ Total de cotizaciones cargadas:', mappedQuotes.length);
+      
     } catch (err) {
       console.error('❌ Error loading quotes:', err);
       setError(err.message || 'Error al cargar las cotizaciones');
-      
-      // Si hay error de autenticación, redirigir al login
-      if (err.message.includes('unauthorized') || err.message.includes('token')) {
-        console.log('Token inválido, redirigir al login');
-        // Opcional: limpiar token y redirigir
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-      }
     } finally {
       setLoading(false);
     }

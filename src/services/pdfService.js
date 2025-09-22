@@ -62,8 +62,9 @@ class PDFService {
       day: 'numeric'
     });
 
-    const subtotal = quoteData.cartItems.reduce((sum, item) => 
-      sum + (item.quantity * item.basePrice), 0
+    const cartItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+    const subtotal = cartItems.reduce((sum, item) => 
+      sum + ((item.quantity || 1) * (item.basePrice || 0)), 0
     );
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
@@ -411,18 +412,18 @@ class PDFService {
                   </tr>
                 </thead>
                 <tbody>
-                  ${quoteData.cartItems.map((item, index) => `
+                  ${cartItems.map((item, index) => `
                     <tr>
                       <td class="text-center">${index + 1}</td>
-                      <td class="text-center font-bold">${item.code}</td>
+                      <td class="text-center font-bold">${item.code || 'N/A'}</td>
                       <td>
-                        <div class="font-bold">${item.name}</div>
-                        <div style="font-size: 11px; color: #000000; margin-top: 4px;">${item.description}</div>
+                        <div class="font-bold">${item.name || 'Producto sin nombre'}</div>
+                        <div style="font-size: 11px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
                         ${item.brand ? `<div style="font-size: 10px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
                       </td>
-                      <td class="text-center">${item.quantity}</td>
-                      <td class="text-right price">$${item.basePrice.toLocaleString('es-MX')}</td>
-                      <td class="text-right price font-bold">$${(item.quantity * item.basePrice).toLocaleString('es-MX')}</td>
+                      <td class="text-center">${item.quantity || 1}</td>
+                      <td class="text-right price">$${(item.basePrice || 0).toLocaleString('es-MX')}</td>
+                      <td class="text-right price font-bold">$${((item.quantity || 1) * (item.basePrice || 0)).toLocaleString('es-MX')}</td>
                     </tr>
                   `).join('')}
                 </tbody>

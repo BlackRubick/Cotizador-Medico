@@ -1,13 +1,41 @@
 import React, { useState } from 'react';
-import { Filter, Download, Mail } from 'lucide-react';
+import { Filter, Download, Mail, Trash2 } from 'lucide-react';
 import Card from '../../atoms/Card';
 import Button from '../../atoms/Button';
 import HistoryTable from '../../molecules/HistoryTable';
 import FilterPanel from '../../molecules/FilterPanel';
+import localStorageService from '../../../services/localStorageService';
 
-const HistoryViewer = ({ quotes, onEdit, onSendEmail, onFilter }) => {
+const HistoryViewer = ({ quotes, onEdit, onSendEmail, onFilter, onRefresh }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [filteredQuotes, setFilteredQuotes] = useState(quotes);
+
+  const handleClearLocalQuotes = () => {
+    const localQuotesCount = quotes.filter(q => q.estadoLocal).length;
+    
+    if (localQuotesCount === 0) {
+      alert('No hay cotizaciones locales para eliminar.');
+      return;
+    }
+
+    const confirmClear = window.confirm(
+      `¿Estás seguro de que deseas eliminar las ${localQuotesCount} cotizaciones guardadas localmente?\n\nEsta acción no se puede deshacer.`
+    );
+
+    if (confirmClear) {
+      const result = localStorageService.clearAllLocalQuotes();
+      
+      if (result.success) {
+        alert(`✅ Se eliminaron ${localQuotesCount} cotizaciones locales exitosamente.`);
+        // Recargar el historial
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        alert('❌ Error al eliminar cotizaciones locales: ' + result.error);
+      }
+    }
+  };
 
   const handleFilter = (filters) => {
     let filtered = quotes;
@@ -81,16 +109,55 @@ const HistoryViewer = ({ quotes, onEdit, onSendEmail, onFilter }) => {
 
       {/* Actions */}
       <div className="flex justify-between items-center">
-        <p className="text-gray-600">
-          Mostrando {filteredQuotes.length} de {quotes.length} cotizaciones
-        </p>
-        <Button
-          onClick={handleSendAutoEmail}
-          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
-        >
-          <Mail size={20} />
-          <span>Envío Automático</span>
-        </Button>
+        <div className="space-y-1">
+          <p className="text-gray-600">
+            Mostrando {filteredQuotes.length} de {quotes.length} cotizaciones
+          </p>
+          {quotes.some(q => q.estadoLocal) && (
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <p className="text-sm text-purple-600">
+                {quotes.filter(q => q.estadoLocal).length} cotizaciones guardadas localmente
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="flex space-x-2">
+
+          {quotes.some(q => q.estadoLocal) && (
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => {
+                  const stats = quotes.reduce((acc, q) => {
+                    if (q.estadoLocal) acc.local++;
+                    else acc.servidor++;
+                    return acc;
+                  }, { local: 0, servidor: 0 });
+                  
+                  alert(`📊 Estadísticas del historial:
+• Cotizaciones locales: ${stats.local}
+• Cotizaciones del servidor: ${stats.servidor}
+• Total: ${quotes.length}`);
+                }}
+                variant="secondary"
+                className="flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Estadísticas</span>
+              </Button>
+              <Button
+                onClick={handleClearLocalQuotes}
+                variant="secondary"
+                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 size={16} />
+                <span>Limpiar Locales</span>
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}

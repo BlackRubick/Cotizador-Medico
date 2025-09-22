@@ -2,6 +2,7 @@
 import React from 'react';
 import { Edit, Mail, Eye, Calendar, User, Building2 } from 'lucide-react';
 import StatusBadge from '../../atoms/StatusBadge';
+import pdfService from '../../../services/pdfService';
 
 const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
   // Función para mapear estados del backend a español
@@ -62,6 +63,10 @@ const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        return dateString; // Devolver original si no es válida
+      }
       return date.toLocaleDateString('es-MX', {
         day: '2-digit',
         month: '2-digit',
@@ -146,8 +151,20 @@ const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
 
               {/* Folio */}
               <td className="py-4 px-4">
-                <div className="font-mono text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded inline-block">
-                  {quote.folio || 'N/A'}
+                <div className="flex items-center space-x-2">
+                  <div className={`font-mono text-sm px-2 py-1 rounded inline-block ${
+                    quote.estadoLocal 
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200' 
+                      : 'bg-blue-50 text-blue-700'
+                  }`}>
+                    {quote.folio || 'N/A'}
+                  </div>
+                  {quote.estadoLocal && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-xs text-purple-600 font-medium">LOCAL</span>
+                    </div>
+                  )}
                 </div>
               </td>
 
@@ -192,34 +209,65 @@ const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
               {/* Acciones */}
               <td className="py-4 px-4">
                 <div className="flex items-center justify-center space-x-2">
-                  {/* Botón Ver/Editar */}
+                  {/* Botón Ver PDF */}
                   <button
-                    onClick={() => onEdit(quote)}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Ver/Editar cotización"
-                  >
-                    <Edit size={16} />
-                  </button>
-
-                  {/* Botón Enviar Email (solo si hay email) */}
-                  {quote.correo && (
-                    <button
-                      onClick={() => onSendEmail(quote)}
-                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title={`Enviar a ${quote.correo}`}
-                    >
-                      <Mail size={16} />
-                    </button>
-                  )}
-
-                  {/* Botón Ver Detalles */}
-                  <button
-                    onClick={() => {
-                      // TODO: Implementar vista de detalles
-                      alert(`Ver detalles de cotización ${quote.folio}`);
+                    onClick={async () => {
+                      try {
+                        console.log('📄 Generando vista previa del PDF para:', quote.folio);
+                        
+                        // Preparar datos de la cotización para PDF
+                        const productos = Array.isArray(quote.productos) ? quote.productos : 
+                                        Array.isArray(quote.products) ? quote.products : [];
+                        
+                        console.log('📊 Datos de la cotización:', quote);
+                        console.log('🛒 Productos encontrados:', productos);
+                        
+                        const quoteDataForPDF = {
+                          folio: quote.folio || 'SIN_FOLIO',
+                          clientName: quote.razonSocial || quote.clientInfoName || quote.cliente || 'Cliente no especificado',
+                          clientContact: quote.encargado || quote.clientInfoContact || quote.contacto || 'N/A',
+                          email: quote.correo || quote.clientInfoEmail || quote.email || 'sin-email@ejemplo.com',
+                          phone: quote.numero || quote.clientInfoPhone || quote.telefono || quote.phone || 'N/A',
+                          clientAddress: quote.direccion || quote.clientInfoAddress || 'Dirección no especificada',
+                          clientPosition: quote.puesto || quote.clientInfoPosition || 'N/A',
+                          cartItems: productos.map(p => ({
+                            id: p.id || p.productId || Math.random().toString(36),
+                            name: p.name || p.descripcion || p.equipo || 'Producto sin nombre',
+                            description: p.descripcion || p.name || p.description || 'Sin descripción',
+                            quantity: parseInt(p.quantity || p.cantidad || 1),
+                            basePrice: parseFloat(p.basePrice || p.unitPrice || p.precio || 0),
+                            code: p.code || p.codigo || 'SIN_CODIGO',
+                            brand: p.brand || p.marca || 'Sin marca'
+                          })),
+                          fecha: quote.fecha || new Date().toLocaleDateString('es-MX')
+                        };
+                        
+                        console.log('📄 Datos preparados para PDF:', quoteDataForPDF);
+                        
+                        // Datos de empresa por defecto (usar el primero si no está especificado)
+                        const defaultCompany = {
+                          id: 'conduit-life',
+                          name: 'CONDUIT LIFE',
+                          fullName: 'CONDUIT LIFE S.A. DE C.V.',
+                          address: 'Av. Principal 123, Tuxtla Gutiérrez, Chiapas',
+                          phone: '+52 961 123 4567',
+                          email: 'contacto@conduitlife.com',
+                          rfc: 'CL123456789'
+                        };
+                        
+                        const result = await pdfService.previewQuotePDF(quoteDataForPDF, defaultCompany);
+                        
+                        if (!result.success) {
+                          throw new Error(result.error);
+                        }
+                        
+                      } catch (error) {
+                        console.error('❌ Error mostrando PDF:', error);
+                        alert('Error al mostrar PDF: ' + error.message);
+                      }
                     }}
                     className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                    title="Ver detalles"
+                    title="Ver PDF"
                   >
                     <Eye size={16} />
                   </button>
