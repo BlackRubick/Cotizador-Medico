@@ -3,7 +3,7 @@
 // Configuración de la API
 export const API_CONFIG = {
   // URL base de la API - Vite usa import.meta.env
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://3.130.238.21:5000/api',
   
   // Timeout para requests
   TIMEOUT: 30000, // Aumentado a 30 segundos para operaciones complejas
