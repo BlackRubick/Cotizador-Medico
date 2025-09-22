@@ -48,30 +48,58 @@ const ClientesPage = () => {
       setError(null);
       
       // Validaciones básicas en el frontend
-      if (!clientData.nombre?.trim()) {
-        throw new Error('El nombre es requerido');
+      if (!clientData.empresaResponsable?.trim()) {
+        throw new Error('La empresa responsable es requerida');
       }
-      if (!clientData.contacto?.trim()) {
-        throw new Error('El contacto es requerido');
+      if (!clientData.dependencia?.trim()) {
+        throw new Error('La dependencia es requerida');
       }
-      if (!clientData.email?.trim()) {
-        throw new Error('El email es requerido');
+      if (!clientData.hospital?.trim()) {
+        throw new Error('El hospital es requerido');
       }
-      if (!clientData.telefono?.trim()) {
-        throw new Error('El teléfono es requerido');
+      if (!clientData.estado?.trim()) {
+        throw new Error('El estado es requerido');
+      }
+      if (!clientData.ciudad?.trim()) {
+        throw new Error('La ciudad es requerida');
+      }
+      if (!clientData.codigoPostal?.trim()) {
+        throw new Error('El código postal es requerido');
+      }
+      if (!clientData.direccion?.trim()) {
+        throw new Error('La dirección es requerida');
+      }
+      if (!clientData.equipo?.trim()) {
+        throw new Error('El equipo es requerido');
+      }
+      if (!clientData.marca?.trim()) {
+        throw new Error('La marca es requerida');
+      }
+      if (!clientData.modelo?.trim()) {
+        throw new Error('El modelo es requerido');
+      }
+      if (!clientData.numeroSerie?.trim()) {
+        throw new Error('El número de serie es requerido');
       }
       
-      // Validar formato de email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(clientData.email)) {
-        throw new Error('El formato del email no es válido');
+      // Validar formato de código postal (5 dígitos)
+      const cpRegex = /^\d{5}$/;
+      if (clientData.codigoPostal && !cpRegex.test(clientData.codigoPostal)) {
+        throw new Error('El código postal debe tener 5 dígitos');
       }
       
-      // Validar RFC si se proporciona
-      if (clientData.rfc && clientData.rfc.trim()) {
-        const rfcRegex = /^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/;
-        if (!rfcRegex.test(clientData.rfc.toUpperCase())) {
-          throw new Error('El formato del RFC no es válido (Ejemplo: ABC123456789)');
+      // Validar fechas si se proporcionan
+      if (clientData.fechaInstalacion && clientData.fechaInstalacion.trim()) {
+        const fechaInstalacion = new Date(clientData.fechaInstalacion);
+        if (isNaN(fechaInstalacion.getTime())) {
+          throw new Error('La fecha de instalación no es válida');
+        }
+      }
+      
+      if (clientData.ultimoMantenimiento && clientData.ultimoMantenimiento.trim()) {
+        const fechaMantenimiento = new Date(clientData.ultimoMantenimiento);
+        if (isNaN(fechaMantenimiento.getTime())) {
+          throw new Error('La fecha del último mantenimiento no es válida');
         }
       }
       

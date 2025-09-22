@@ -6,9 +6,9 @@ import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 import Card from '../../atoms/Card';
 import { useCart } from '../../../context/CartContext';
-import quoteService from '../../services/quoteService';
-import clientService from '../../services/clientService';
-import pdfService from '../../services/pdfService';
+import quoteService from '../../../services/quoteService';
+import clientService from '../../../services/clientService';
+import pdfService from '../../../services/pdfService';
 
 const QuoteBuilder = ({ onBack }) => {
   const { cartItems, quoteInfo, setQuoteInfo, clearCart } = useCart();
@@ -407,67 +407,102 @@ const QuoteBuilder = ({ onBack }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          className="flex items-center space-x-2"
-          disabled={isSubmitting}
-        >
-          <ArrowLeft size={20} />
-          <span>Volver al Carrito</span>
-        </Button>
-        <h1 className="text-2xl font-bold text-gray-800">Generar Cotización</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header profesional con gradiente */}
+      <div className="bg-gradient-to-r from-slate-700 to-slate-800 text-white shadow-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={onBack}
+                className="flex items-center space-x-2 text-white hover:bg-white/10 border-white/20"
+                disabled={isSubmitting}
+              >
+                <ArrowLeft size={20} />
+                <span>Volver al Carrito</span>
+              </Button>
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+                  <Send className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-extrabold tracking-tight">Generar Cotización</h1>
+
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+                {cartItems.length} {cartItems.length === 1 ? 'producto' : 'productos'}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Mensajes de éxito */}
-      {successMessage && (
-        <Card className="border-green-200 bg-green-50">
-          <div className="flex items-start space-x-3">
-            <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-            <div>
-              <h4 className="text-green-800 font-medium">Éxito</h4>
-              <p className="text-green-700">{successMessage}</p>
-            </div>
-          </div>
-        </Card>
-      )}
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-      {/* Error de API */}
-      {apiError && (
-        <Card className="border-red-200 bg-red-50">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
-            <div>
-              <h4 className="text-red-800 font-medium">Error</h4>
-              <p className="text-red-700">{apiError}</p>
+        {/* Mensajes de éxito mejorados */}
+        {successMessage && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-lg p-6 shadow-sm">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-green-800 font-semibold text-lg">Operación Exitosa</h4>
+                <p className="text-green-700 mt-1">{successMessage}</p>
+              </div>
             </div>
           </div>
-        </Card>
-      )}
+        )}
+
+        {/* Error de API mejorado */}
+        {apiError && (
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg p-6 shadow-sm">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-red-800 font-semibold text-lg">Error en el Sistema</h4>
+                <p className="text-red-700 mt-1">{apiError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Company and Client Information */}
         <div className="lg:col-span-2 space-y-6">
           {/* Información de la Empresa Vendedora */}
-          <Card>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center space-x-3 mb-6">
-              <Building className="w-6 h-6 text-green-600" />
-              <h2 className="text-lg font-semibold">Empresa Vendedora</h2>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                <Building className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Empresa Vendedora</h2>
+                <p className="text-sm text-gray-500">Selecciona la empresa que realizará la cotización</p>
+              </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Seleccionar Empresa *
                 </label>
                 <select
                   name="sellerCompany"
                   value={quoteInfo.sellerCompany || ''}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 shadow-sm"
                   disabled={isSubmitting}
                 >
                   <option value="">-- Selecciona una empresa --</option>
@@ -478,35 +513,85 @@ const QuoteBuilder = ({ onBack }) => {
                   ))}
                 </select>
                 {errors.sellerCompany && (
-                  <p className="mt-1 text-sm text-red-600">{errors.sellerCompany}</p>
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.sellerCompany}
+                  </p>
                 )}
               </div>
 
               {quoteInfo.sellerCompany && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Building className="w-5 h-5 text-green-600" />
-                    <span className="font-medium text-green-800">
+                <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Building className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="font-bold text-blue-900 text-lg">
                       {getSelectedCompanyName()}
                     </span>
                   </div>
                   {getSelectedCompanyData() && (
-                    <div className="text-sm text-green-700 space-y-1">
-                      <p>{getSelectedCompanyData().fullName}</p>
-                      <p>{getSelectedCompanyData().address}</p>
-                      <p>{getSelectedCompanyData().phone} | {getSelectedCompanyData().email}</p>
+                    <div className="text-sm text-blue-800 space-y-2 ml-11">
+                      <p className="font-medium">{getSelectedCompanyData().fullName}</p>
+                      <p className="flex items-center">
+                        📍 {getSelectedCompanyData().address}
+                      </p>
+                      <p className="flex items-center">
+                        📞 {getSelectedCompanyData().phone}
+                      </p>
+                      <p className="flex items-center">
+                        ✉️ {getSelectedCompanyData().email}
+                      </p>
+                      <div className="mt-3 p-3 bg-white/50 rounded-lg border border-blue-300">
+                        <p className="text-xs font-semibold text-blue-900 mb-1">📄 Plantilla PDF:</p>
+                        <p className="text-xs text-blue-700">
+                          {getSelectedCompanyData().id.toUpperCase()}.JPEG
+                        </p>
+                        <div className="mt-2">
+                          <img 
+                            src={(() => {
+                              const fileNameMap = {
+                                'conduit-life': 'CONDUIT-LIFE',
+                                'escala-biomedica': 'ESCALA-BIOMEDICA', 
+                                'ingenieria-clinica': 'INGENIERIA-CLINICA-DISEÑO',
+                                'biosystems-hls': 'Biosystems-HLS'
+                              };
+                              const fileName = fileNameMap[getSelectedCompanyData().id];
+                              return `/plantillas/${fileName}.jpeg`;
+                            })()}
+                            alt="Vista previa de plantilla"
+                            className="w-16 h-10 object-cover rounded border"
+                            style={{ opacity: 0.7 }}
+                            onError={(e) => {
+                              console.log('❌ Error cargando plantilla:', e.target.src);
+                              // Intentar con extensión mayúscula
+                              if (e.target.src.includes('.jpeg')) {
+                                e.target.src = e.target.src.replace('.jpeg', '.JPEG');
+                              } else {
+                                e.target.style.display = 'none';
+                              }
+                            }}
+                            onLoad={(e) => {
+                              console.log('✅ Plantilla cargada:', e.target.src);
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          </Card>
-
-          {/* Información del Cliente */}
-          <Card>
+          </div>          {/* Información del Cliente */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center space-x-3 mb-6">
-              <User className="w-6 h-6 text-blue-600" />
-              <h2 className="text-lg font-semibold">Información del Cliente</h2>
+              <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+                <User className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Información del Cliente</h2>
+                <p className="text-sm text-gray-500">Selecciona un cliente existente o ingresa datos nuevos</p>
+              </div>
             </div>
             
             {/* Cliente seleccionado o búsqueda */}
@@ -654,11 +739,15 @@ const QuoteBuilder = ({ onBack }) => {
                 disabled={isSubmitting}
               />
             </div>
-          </Card>
+          </div>
 
-          {/* Quote Items */}
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Productos Cotizados</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Productos Cotizados</h2>
+                <p className="text-sm text-gray-500">Resumen de los productos incluidos en la cotización</p>
+              </div>
+            </div>
             {cartItems.length > 0 ? (
               <div className="space-y-3">
                 {cartItems.map(item => (
@@ -694,39 +783,14 @@ const QuoteBuilder = ({ onBack }) => {
             {errors.products && (
               <p className="mt-2 text-sm text-red-600">{errors.products}</p>
             )}
-          </Card>
+          </div>
 
-          {/* Terms and Conditions Preview */}
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Condiciones de Venta</h2>
-            <div className="space-y-3 text-sm">
-              <div>
-                <strong>Precios:</strong> LOS PRECIOS NO INCLUYEN IVA (16%)
-              </div>
-              <div>
-                <strong>Moneda:</strong> Pesos Mexicanos
-              </div>
-              <div>
-                <strong>Condiciones de Pago:</strong> 100% Anticipado a la entrega. (Transferencia Bancaria)
-              </div>
-              <div>
-                <strong>Tiempo de Entrega:</strong> 15 días hábiles
-              </div>
-              <div>
-                <strong>Garantía:</strong> 12 meses sobre defectos de fabricación. No aplica garantía en partes colocadas por personal no certificado.
-              </div>
-              <div>
-                <strong>Observaciones:</strong> Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.
-              </div>
-            </div>
-          </Card>
+
         </div>
 
-        {/* Summary and Actions */}
         <div className="space-y-4">
           <CartSummary />
           
-          {/* Resumen de la empresa seleccionada */}
           {quoteInfo.sellerCompany && (
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <div className="flex items-center space-x-2 mb-2">
@@ -741,6 +805,45 @@ const QuoteBuilder = ({ onBack }) => {
           
           {/* Botones de acción PDF */}
           <div className="space-y-3">
+            {/* Botón de debug temporal */}
+            <Button 
+              onClick={() => {
+                const template = sellerCompanies.find(c => c.id === quoteInfo.sellerCompany);
+                if (template) {
+                  // Mapeo correcto de nombres de archivos
+                  const fileNameMap = {
+                    'conduit-life': 'CONDUIT-LIFE',
+                    'escala-biomedica': 'ESCALA-BIOMEDICA', 
+                    'ingenieria-clinica': 'INGENIERIA-CLINICA-DISEÑO',
+                    'biosystems-hls': 'Biosystems-HLS'
+                  };
+                  
+                  const fileName = fileNameMap[template.id];
+                  const paths = [
+                    `/plantillas/${fileName}.JPEG`,
+                    `/plantillas/${fileName}.jpeg`,
+                    `/plantillas/${fileName}.JPG`,
+                    `/plantillas/${fileName}.jpg`,
+                    `/plantillas/${fileName}.PNG`,
+                    `/plantillas/${fileName}.png`
+                  ];
+                  
+                  console.log('🔍 Verificando plantillas para:', template.name);
+                  console.log('📁 Nombre de archivo base:', fileName);
+                  paths.forEach(path => {
+                    const img = new Image();
+                    img.onload = () => console.log('✅ ENCONTRADA:', path, `${img.naturalWidth}x${img.naturalHeight}`);
+                    img.onerror = () => console.log('❌ NO ENCONTRADA:', path);
+                    img.src = path;
+                  });
+                }
+              }}
+              variant="ghost"
+              className="w-full text-xs bg-gray-50 text-gray-600 hover:bg-gray-100"
+            >
+              🔍 Debug Plantillas
+            </Button>
+            
             <Button 
               onClick={handlePreviewPDF}
               variant="secondary"
@@ -783,24 +886,6 @@ const QuoteBuilder = ({ onBack }) => {
               <span>{isSubmitting ? 'Guardando...' : 'Guardar Borrador'}</span>
             </Button>
           </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-2">Información de Envío</h4>
-            <p className="text-sm text-blue-600">
-              La cotización será enviada por correo electrónico al cliente con todos los detalles y condiciones.
-            </p>
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-800 mb-2">Próximos Pasos</h4>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• La cotización se guardará en el sistema</li>
-              <li>• Se enviará automáticamente por email</li>
-              <li>• Podrás hacer seguimiento en el historial</li>
-              <li>• El cliente podrá responder directamente</li>
-            </ul>
-          </div>
-
           {generatedQuote && (
             <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
               <h4 className="font-medium text-indigo-800 mb-2">PDF Disponible</h4>
@@ -828,6 +913,7 @@ const QuoteBuilder = ({ onBack }) => {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

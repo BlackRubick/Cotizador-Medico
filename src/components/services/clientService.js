@@ -32,12 +32,36 @@ class ClientService {
       console.log('Request config:', config);
       
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      let data;
+      let responseText;
+      
+      try {
+        // Primero obtener el texto de respuesta
+        responseText = await response.text();
+        
+        // Intentar parsearlo como JSON
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Response is not valid JSON:', responseText);
+        
+        // Si es un error 429, crear un objeto de error apropiado
+        if (response.status === 429) {
+          data = { message: 'Too Many Requests - Rate limit exceeded' };
+        } else {
+          data = { message: responseText || 'Error del servidor' };
+        }
+      }
 
       console.log('Response status:', response.status);
       console.log('Response data:', data);
 
       if (!response.ok) {
+        // Manejo especial para rate limiting
+        if (response.status === 429) {
+          throw new Error('Too Many Requests - El servidor está limitando las peticiones. Intenta de nuevo en unos momentos.');
+        }
+        
         // Mejorar el manejo de errores para mostrar más detalles
         let errorMessage = data.message || `HTTP error! status: ${response.status}`;
         
@@ -80,25 +104,40 @@ class ClientService {
   async createClient(clientData) {
     console.log('Creating client with data:', clientData);
     
-    // Validaciones básicas en el frontend
-    if (!clientData.nombre || !clientData.contacto || !clientData.email || !clientData.telefono) {
-      throw new Error('Los campos nombre, contacto, email y teléfono son requeridos');
+    // Validaciones básicas en el frontend con los nuevos campos
+    if (!clientData.empresaResponsable || !clientData.dependencia || !clientData.hospital || 
+        !clientData.estado || !clientData.ciudad || !clientData.codigoPostal || 
+        !clientData.direccion || !clientData.equipo || !clientData.marca || 
+        !clientData.modelo || !clientData.numeroSerie) {
+      throw new Error('Los campos empresaResponsable, dependencia, hospital, estado, ciudad, codigoPostal, direccion, equipo, marca, modelo y numeroSerie son requeridos');
     }
 
     // Mapear datos del frontend al formato del backend
     const mappedData = {
-      name: clientData.nombre.trim(),
-      contact: clientData.contacto.trim(),
-      email: clientData.email.trim().toLowerCase(),
-      phone: clientData.telefono.trim(),
-      street: this.extractStreetFromAddress(clientData.direccion) || '',
-      city: 'Tuxtla Gutiérrez',
-      state: 'Chiapas',
-      zipCode: '29000',
+      name: clientData.empresaResponsable.trim(),
+      contact: clientData.dependencia.trim(),
+      email: `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`, // Email generado
+      phone: clientData.codigoPostal.trim(),
+      street: clientData.direccion.trim(),
+      city: clientData.ciudad.trim(),
+      state: clientData.estado.trim(),
+      zipCode: clientData.codigoPostal.trim(),
       country: 'México',
-      rfc: clientData.rfc ? clientData.rfc.trim().toUpperCase() : '',
-      clientType: this.mapClientType(clientData.tipo),
-      notes: clientData.notas || ''
+      clientType: 'Hospital',
+      notes: JSON.stringify({
+        empresaResponsable: clientData.empresaResponsable,
+        dependencia: clientData.dependencia,
+        hospital: clientData.hospital,
+        contrato: clientData.contrato,
+        equipo: clientData.equipo,
+        marca: clientData.marca,
+        modelo: clientData.modelo,
+        numeroSerie: clientData.numeroSerie,
+        fechaInstalacion: clientData.fechaInstalacion,
+        ultimoMantenimiento: clientData.ultimoMantenimiento,
+        estatusAbril2025: clientData.estatusAbril2025,
+        estatusInicio26: clientData.estatusInicio26
+      })
     };
 
     console.log('Mapped data for backend:', mappedData);
@@ -114,18 +153,30 @@ class ClientService {
   // Actualizar cliente
   async updateClient(id, clientData) {
     const mappedData = {
-      name: clientData.nombre,
-      contact: clientData.contacto,
-      email: clientData.email,
-      phone: clientData.telefono,
-      street: this.extractStreetFromAddress(clientData.direccion),
-      city: 'Tuxtla Gutiérrez',
-      state: 'Chiapas',
-      zipCode: '29000',
+      name: clientData.empresaResponsable.trim(),
+      contact: clientData.dependencia.trim(),
+      email: `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`,
+      phone: clientData.codigoPostal.trim(),
+      street: clientData.direccion.trim(),
+      city: clientData.ciudad.trim(),
+      state: clientData.estado.trim(),
+      zipCode: clientData.codigoPostal.trim(),
       country: 'México',
-      rfc: clientData.rfc,
-      clientType: this.mapClientType(clientData.tipo),
-      notes: clientData.notas || ''
+      clientType: 'Hospital',
+      notes: JSON.stringify({
+        empresaResponsable: clientData.empresaResponsable,
+        dependencia: clientData.dependencia,
+        hospital: clientData.hospital,
+        contrato: clientData.contrato,
+        equipo: clientData.equipo,
+        marca: clientData.marca,
+        modelo: clientData.modelo,
+        numeroSerie: clientData.numeroSerie,
+        fechaInstalacion: clientData.fechaInstalacion,
+        ultimoMantenimiento: clientData.ultimoMantenimiento,
+        estatusAbril2025: clientData.estatusAbril2025,
+        estatusInicio26: clientData.estatusInicio26
+      })
     };
 
     const response = await this.makeRequest(`/clients/${id}`, {
@@ -174,14 +225,34 @@ class ClientService {
 
   // Mapear datos del backend al frontend
   mapBackendToFrontend(backendClient) {
+    // Intentar parsear los datos adicionales desde notes
+    let additionalData = {};
+    try {
+      if (backendClient.notes) {
+        additionalData = JSON.parse(backendClient.notes);
+      }
+    } catch (error) {
+      console.warn('Error parsing client notes:', error);
+    }
+
     return {
       id: backendClient.id,
-      nombre: backendClient.name,
-      contacto: backendClient.contact,
-      telefono: backendClient.phone,
-      email: backendClient.email,
-      direccion: backendClient.fullAddress || `${backendClient.street}, ${backendClient.city}, ${backendClient.state}`,
-      rfc: backendClient.rfc,
+      empresaResponsable: additionalData.empresaResponsable || backendClient.name,
+      dependencia: additionalData.dependencia || backendClient.contact,
+      hospital: additionalData.hospital || backendClient.name,
+      estado: additionalData.estado || backendClient.state,
+      ciudad: additionalData.ciudad || backendClient.city,
+      codigoPostal: additionalData.codigoPostal || backendClient.zipCode,
+      direccion: additionalData.direccion || backendClient.street,
+      contrato: additionalData.contrato || '',
+      equipo: additionalData.equipo || '',
+      marca: additionalData.marca || '',
+      modelo: additionalData.modelo || '',
+      numeroSerie: additionalData.numeroSerie || '',
+      fechaInstalacion: additionalData.fechaInstalacion || '',
+      ultimoMantenimiento: additionalData.ultimoMantenimiento || '',
+      estatusAbril2025: additionalData.estatusAbril2025 || '',
+      estatusInicio26: additionalData.estatusInicio26 || '',
       tipo: backendClient.clientType,
       estado: backendClient.status === 'active' ? 'activo' : 'inactivo',
       fechaCreacion: backendClient.createdAt,

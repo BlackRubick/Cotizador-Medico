@@ -1,59 +1,95 @@
 // src/components/molecules/ClientForm/ClientForm.jsx - ACTUALIZADO
 import React, { useState } from 'react';
-import { X, Save, AlertCircle, Activity } from 'lucide-react';
+import { X, Save, AlertCircle } from 'lucide-react';
 import Input from '../../atoms/Input';
 import Button from '../../atoms/Button';
-import ClientEquipmentModal from '../ClientEquipmentModal';
 
 const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
   const [formData, setFormData] = useState({
-    nombre: client?.nombre || '',
-    contacto: client?.contacto || '',
-    telefono: client?.telefono || '',
-    email: client?.email || '',
+    empresaResponsable: client?.empresaResponsable || '',
+    dependencia: client?.dependencia || '',
+    hospital: client?.hospital || '',
+    estado: client?.estado || '',
+    ciudad: client?.ciudad || '',
+    codigoPostal: client?.codigoPostal || '',
     direccion: client?.direccion || '',
-    rfc: client?.rfc || '',
-    tipo: client?.tipo || 'Hospital'
+    contrato: client?.contrato || '',
+    equipo: client?.equipo || '',
+    marca: client?.marca || '',
+    modelo: client?.modelo || '',
+    numeroSerie: client?.numeroSerie || '',
+    fechaInstalacion: client?.fechaInstalacion || '',
+    ultimoMantenimiento: client?.ultimoMantenimiento || '',
+    estatusAbril2025: client?.estatusAbril2025 || '',
+    estatusInicio26: client?.estatusInicio26 || ''
   });
 
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showEquipmentModal, setShowEquipmentModal] = useState(false);
-
-  const clientTypes = [
-    'Hospital',
-    'Clínica', 
-    'Laboratorio',
-    'Centro Diagnóstico',
-    'Consultorio',
-    'Otro'
-  ];
 
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es requerido';
+    if (!formData.empresaResponsable.trim()) {
+      newErrors.empresaResponsable = 'La empresa responsable es requerida';
     }
     
-    if (!formData.contacto.trim()) {
-      newErrors.contacto = 'El contacto es requerido';
+    if (!formData.dependencia.trim()) {
+      newErrors.dependencia = 'La dependencia es requerida';
     }
     
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+    if (!formData.hospital.trim()) {
+      newErrors.hospital = 'El hospital es requerido';
     }
     
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es requerido';
+    if (!formData.estado.trim()) {
+      newErrors.estado = 'El estado es requerido';
+    }
+    
+    if (!formData.ciudad.trim()) {
+      newErrors.ciudad = 'La ciudad es requerida';
+    }
+    
+    if (!formData.codigoPostal.trim()) {
+      newErrors.codigoPostal = 'El código postal es requerido';
+    } else if (!/^\d{5}$/.test(formData.codigoPostal)) {
+      newErrors.codigoPostal = 'El código postal debe tener 5 dígitos';
+    }
+    
+    if (!formData.direccion.trim()) {
+      newErrors.direccion = 'La dirección es requerida';
+    }
+    
+    if (!formData.equipo.trim()) {
+      newErrors.equipo = 'El equipo es requerido';
+    }
+    
+    if (!formData.marca.trim()) {
+      newErrors.marca = 'La marca es requerida';
+    }
+    
+    if (!formData.modelo.trim()) {
+      newErrors.modelo = 'El modelo es requerido';
+    }
+    
+    if (!formData.numeroSerie.trim()) {
+      newErrors.numeroSerie = 'El número de serie es requerido';
     }
 
-    // Validación de RFC (opcional pero si se proporciona debe ser válido)
-    if (formData.rfc && !/^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/.test(formData.rfc.toUpperCase())) {
-      newErrors.rfc = 'RFC inválido (formato: ABC123456789)';
+    // Validaciones de fechas (opcionales)
+    if (formData.fechaInstalacion && formData.fechaInstalacion.trim()) {
+      const fechaInstalacion = new Date(formData.fechaInstalacion);
+      if (isNaN(fechaInstalacion.getTime())) {
+        newErrors.fechaInstalacion = 'Fecha de instalación inválida';
+      }
+    }
+    
+    if (formData.ultimoMantenimiento && formData.ultimoMantenimiento.trim()) {
+      const fechaMantenimiento = new Date(formData.ultimoMantenimiento);
+      if (isNaN(fechaMantenimiento.getTime())) {
+        newErrors.ultimoMantenimiento = 'Fecha de último mantenimiento inválida';
+      }
     }
     
     setErrors(newErrors);
@@ -64,7 +100,7 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'rfc' ? value.toUpperCase() : value
+      [name]: value
     }));
     
     // Limpiar errores cuando el usuario empiece a escribir
@@ -113,13 +149,7 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
     }
   };
 
-  const handleManageEquipment = () => {
-    if (!isEditing) {
-      alert('Primero debes guardar el cliente para poder gestionar sus equipos');
-      return;
-    }
-    setShowEquipmentModal(true);
-  };
+
 
   return (
     <>
@@ -148,115 +178,220 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Nombre de la Empresa"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              error={errors.nombre}
-              disabled={loading}
-              required
-              placeholder="Ej: Hospital General de Tuxtla"
-            />
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="tipo"
-                value={formData.tipo}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Información General */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Información General</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Empresa Responsable"
+                name="empresaResponsable"
+                value={formData.empresaResponsable}
                 onChange={handleChange}
+                error={errors.empresaResponsable}
                 disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
                 required
-              >
-                {clientTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
+                placeholder="Ej: Hospital General de Tuxtla"
+              />
+              
+              <Input
+                label="Dependencia"
+                name="dependencia"
+                value={formData.dependencia}
+                onChange={handleChange}
+                error={errors.dependencia}
+                disabled={loading}
+                required
+                placeholder="Ej: Secretaría de Salud"
+              />
+              
+              <Input
+                label="Hospital"
+                name="hospital"
+                value={formData.hospital}
+                onChange={handleChange}
+                error={errors.hospital}
+                disabled={loading}
+                required
+                placeholder="Ej: Hospital Regional de Alta Especialidad"
+              />
+              
+              <Input
+                label="Contrato"
+                name="contrato"
+                value={formData.contrato}
+                onChange={handleChange}
+                error={errors.contrato}
+                disabled={loading}
+                placeholder="Número de contrato (opcional)"
+              />
             </div>
-            
-            <Input
-              label="Contacto Principal"
-              name="contacto"
-              value={formData.contacto}
-              onChange={handleChange}
-              error={errors.contacto}
-              disabled={loading}
-              required
-              placeholder="Ej: Dr. Eduardo Ramírez"
-            />
-            
-            <Input
-              label="RFC"
-              name="rfc"
-              value={formData.rfc}
-              onChange={handleChange}
-              error={errors.rfc}
-              disabled={loading}
-              placeholder="Ej: ABC123456789"
-              maxLength={13}
-            />
-            
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              disabled={loading}
-              required
-              placeholder="contacto@empresa.com"
-            />
-            
-            <Input
-              label="Teléfono"
-              name="telefono"
-              value={formData.telefono}
-              onChange={handleChange}
-              error={errors.telefono}
-              disabled={loading}
-              required
-              placeholder="+52 961 123 4567"
-            />
           </div>
-          
-          <Input
-            label="Dirección"
-            name="direccion"
-            value={formData.direccion}
-            onChange={handleChange}
-            disabled={loading}
-            placeholder="Dirección completa"
-          />
 
-          {/* Sección de Equipos Biomédicos */}
-          {isEditing && (
-            <div className="border-t pt-4 mt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">Equipos Biomédicos</h3>
-                  <p className="text-sm text-gray-600">
-                    Gestiona los equipos biomédicos asociados a este cliente
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  onClick={handleManageEquipment}
-                  variant="secondary"
-                  className="flex items-center space-x-2 bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
-                  disabled={loading}
-                >
-                  <Activity size={16} />
-                  <span>Gestionar Equipos</span>
-                </Button>
-              </div>
+          {/* Ubicación */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Ubicación</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                label="Estado"
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                error={errors.estado}
+                disabled={loading}
+                required
+                placeholder="Ej: Chiapas"
+              />
+              
+              <Input
+                label="Ciudad/Localidad"
+                name="ciudad"
+                value={formData.ciudad}
+                onChange={handleChange}
+                error={errors.ciudad}
+                disabled={loading}
+                required
+                placeholder="Ej: Tuxtla Gutiérrez"
+              />
+              
+              <Input
+                label="Código Postal"
+                name="codigoPostal"
+                value={formData.codigoPostal}
+                onChange={handleChange}
+                error={errors.codigoPostal}
+                disabled={loading}
+                required
+                placeholder="Ej: 29000"
+                maxLength={5}
+              />
             </div>
-          )}
+            
+            <div className="mt-4">
+              <Input
+                label="Dirección"
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleChange}
+                error={errors.direccion}
+                disabled={loading}
+                required
+                placeholder="Dirección completa"
+              />
+            </div>
+          </div>
+
+          {/* Información del Equipo */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Información del Equipo</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Equipo"
+                name="equipo"
+                value={formData.equipo}
+                onChange={handleChange}
+                error={errors.equipo}
+                disabled={loading}
+                required
+                placeholder="Ej: Ventilador Mecánico"
+              />
+              
+              <Input
+                label="Marca"
+                name="marca"
+                value={formData.marca}
+                onChange={handleChange}
+                error={errors.marca}
+                disabled={loading}
+                required
+                placeholder="Ej: Philips"
+              />
+              
+              <Input
+                label="Modelo"
+                name="modelo"
+                value={formData.modelo}
+                onChange={handleChange}
+                error={errors.modelo}
+                disabled={loading}
+                required
+                placeholder="Ej: V60 Plus"
+              />
+              
+              <Input
+                label="Número de Serie"
+                name="numeroSerie"
+                value={formData.numeroSerie}
+                onChange={handleChange}
+                error={errors.numeroSerie}
+                disabled={loading}
+                required
+                placeholder="Ej: VP60-2023-001"
+              />
+            </div>
+          </div>
+
+          {/* Fechas y Estatus */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Fechas y Estatus</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha de Instalación
+                </label>
+                <input
+                  type="date"
+                  name="fechaInstalacion"
+                  value={formData.fechaInstalacion}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
+                />
+                {errors.fechaInstalacion && (
+                  <p className="text-red-500 text-sm mt-1">{errors.fechaInstalacion}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Último Mantenimiento
+                </label>
+                <input
+                  type="date"
+                  name="ultimoMantenimiento"
+                  value={formData.ultimoMantenimiento}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:opacity-50"
+                />
+                {errors.ultimoMantenimiento && (
+                  <p className="text-red-500 text-sm mt-1">{errors.ultimoMantenimiento}</p>
+                )}
+              </div>
+              
+              <Input
+                label="Estatus Abril 2025"
+                name="estatusAbril2025"
+                value={formData.estatusAbril2025}
+                onChange={handleChange}
+                error={errors.estatusAbril2025}
+                disabled={loading}
+                placeholder="Ej: Activo, Inactivo, Mantenimiento"
+              />
+              
+              <Input
+                label="Estatus Inicio 26"
+                name="estatusInicio26"
+                value={formData.estatusInicio26}
+                onChange={handleChange}
+                error={errors.estatusInicio26}
+                disabled={loading}
+                placeholder="Estatus proyectado para 2026"
+              />
+            </div>
+          </div>
+
+
 
           <div className="flex space-x-4 pt-4">
             <Button 
@@ -288,31 +423,7 @@ const ClientForm = ({ client = null, onSave, onCancel, isEditing = false }) => {
           </div>
         </form>
 
-        {/* Información adicional para nuevos clientes */}
-        {!isEditing && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start space-x-3">
-              <Activity className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-blue-800 font-medium">Equipos Biomédicos</h4>
-                <p className="text-blue-700 text-sm mt-1">
-                  Después de guardar el cliente, podrás agregar y gestionar sus equipos biomédicos 
-                  desde la sección de equipos.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Modal de equipos */}
-      {showEquipmentModal && (
-        <ClientEquipmentModal
-          client={client}
-          isOpen={showEquipmentModal}
-          onClose={() => setShowEquipmentModal(false)}
-        />
-      )}
     </>
   );
 };

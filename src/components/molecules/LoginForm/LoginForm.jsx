@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../../context/AuthContext'; // Cambia useAuth por useAuthContext
+import { useAuthContext } from '../../../context/AuthContext';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 
 const LoginForm = () => {
   const navigate = useNavigate();
-  const { login } = useAuthContext(); // Usar useAuthContext
+  const { login } = useAuthContext(); 
   const [formData, setFormData] = useState({
     username: '',
     password: ''
