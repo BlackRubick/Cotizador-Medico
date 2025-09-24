@@ -13,7 +13,7 @@ import pdfService from '../../../services/pdfService';
 import localStorageService from '../../../services/localStorageService';
 
 const QuoteBuilder = ({ onBack }) => {
-  const { cartItems, quoteInfo, setQuoteInfo, clearCart } = useCart();
+  const { cartItems, quoteInfo, setQuoteInfo, clearCart, setCartItems } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState([]);
@@ -24,8 +24,9 @@ const QuoteBuilder = ({ onBack }) => {
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [generatedQuote, setGeneratedQuote] = useState(null);
+  const [isEditingMode, setIsEditingMode] = useState(false);
+  const [editingQuoteData, setEditingQuoteData] = useState(null);
 
-  // Opciones de empresas vendedoras (actualizadas con datos reales)
   const sellerCompanies = [
     { 
       id: 'conduit-life', 
@@ -61,24 +62,41 @@ const QuoteBuilder = ({ onBack }) => {
       id: 'biosystems-hls', 
       name: 'Biosystems HLS',
       fullName: 'BIOSYSTEMS HEALTH & LIFE SCIENCES S.A. DE C.V.',
-      address: 'Av. Insurgentes 789, Tuxtla Gutiérrez, Chiapas',
-      phone: '+52 961 345 6789',
-      email: 'info@biosystemshls.com',
-      website: 'www.biosystemshls.com',
-      rfc: 'BIO820305GHI'
+      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP:16030',
+      rfc: 'BHL130614LQ4',
     }
   ];
 
-  // Cargar clientes al montar el componente
+  // Cargar clientes al montar el componente y verificar datos de edición
   useEffect(() => {
-    loadClients();
-    // Establecer empresa por defecto
-    if (!quoteInfo.sellerCompany) {
-      setQuoteInfo(prev => ({
-        ...prev,
-        sellerCompany: 'ingenieria-clinica' // ICD como empresa por defecto según la imagen
-      }));
-    }
+    console.log('🚀 QuoteBuilder montado, iniciando carga...');
+    
+    const initializeComponent = async () => {
+      try {
+        // Primero verificar si hay datos de edición
+        const editingData = localStorage.getItem('editingQuote');
+        console.log('🔍 Datos de edición disponibles:', !!editingData);
+        
+        // Cargar clientes
+        await loadClients();
+        
+        // Cargar datos de edición si existen
+        loadEditingQuoteData();
+        
+        // Establecer empresa por defecto solo si no estamos editando
+        if (!quoteInfo.sellerCompany && !editingData) {
+          setQuoteInfo(prev => ({
+            ...prev,
+            sellerCompany: 'ingenieria-clinica' // ICD como empresa por defecto según la imagen
+          }));
+        }
+      } catch (error) {
+        console.error('❌ Error inicializando QuoteBuilder:', error);
+        setApiError('Error al inicializar: ' + error.message);
+      }
+    };
+
+    initializeComponent();
   }, []);
 
   const loadClients = async () => {
@@ -92,6 +110,86 @@ const QuoteBuilder = ({ onBack }) => {
     } catch (error) {
       console.error('❌ Error loading clients:', error);
       setApiError('Error al cargar clientes: ' + error.message);
+    }
+  };
+
+  // Cargar datos de cotización para editar
+  const loadEditingQuoteData = () => {
+    try {
+      const editingData = localStorage.getItem('editingQuote');
+      console.log('🔍 Verificando datos de edición en localStorage:', !!editingData);
+      
+      if (editingData) {
+        const parsedData = JSON.parse(editingData);
+        console.log('📝 Datos de cotización encontrados para edición:', parsedData);
+        
+        // Establecer modo edición
+        setIsEditingMode(true);
+        setEditingQuoteData(parsedData);
+        
+        // Cargar información del cliente en el formulario
+        if (parsedData.clientInfo) {
+          console.log('👤 Cargando información del cliente:', parsedData.clientInfo);
+          setQuoteInfo(prev => ({
+            ...prev,
+            clientName: parsedData.clientInfo.clientName || '',
+            clientContact: parsedData.clientInfo.clientContact || '',
+            email: parsedData.clientInfo.email || '',
+            phone: parsedData.clientInfo.phone || '',
+            clientAddress: parsedData.clientInfo.clientAddress || '',
+            clientPosition: parsedData.clientInfo.clientPosition || '',
+            sellerCompany: parsedData.sellerCompanyId || 'ingenieria-clinica'
+          }));
+        }
+        
+        // Cargar productos al carrito
+        if (parsedData.cartItems && Array.isArray(parsedData.cartItems)) {
+          console.log('🛒 Cargando productos al carrito:', parsedData.cartItems);
+          
+          // Usar setTimeout para asegurar que el estado se actualice correctamente
+          setTimeout(() => {
+            // Limpiar carrito actual
+            clearCart();
+            
+            // Mapear productos al formato del carrito y agregarlos
+            const cartItemsFormatted = parsedData.cartItems.map(item => ({
+              ...item,
+              totalPrice: item.quantity * item.basePrice,
+              selectedAccessories: item.selectedAccessories || []
+            }));
+            
+            console.log('📦 Productos formateados para el carrito:', cartItemsFormatted);
+            setCartItems(cartItemsFormatted);
+            
+            // Mostrar mensaje de éxito
+            setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. ${parsedData.cartItems.length} productos cargados.`);
+            
+            // Auto-cerrar el mensaje de éxito después de 8 segundos
+            setTimeout(() => setSuccessMessage(''), 8000);
+            
+          }, 100);
+        } else {
+          // Si no hay productos, mostrar mensaje
+          console.log('⚠️ No se encontraron productos en la cotización para editar');
+          setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. Sin productos.`);
+          setTimeout(() => setSuccessMessage(''), 5000);
+        }
+        
+        // NO eliminar los datos de localStorage aún, los eliminaremos cuando se guarde/actualice
+        console.log('ℹ️ Datos de edición mantenidos en localStorage para referencia');
+        
+      } else {
+        console.log('ℹ️ No hay datos de edición en localStorage');
+        setIsEditingMode(false);
+        setEditingQuoteData(null);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando datos de edición:', error);
+      setApiError('Error al cargar datos para edición: ' + error.message);
+      // Limpiar datos corruptos
+      localStorage.removeItem('editingQuote');
+      setIsEditingMode(false);
+      setEditingQuoteData(null);
     }
   };
 
@@ -193,6 +291,22 @@ const QuoteBuilder = ({ onBack }) => {
     }
     
     console.log('✅ Información del hospital actualizada como cliente');
+  };
+
+  // Función para seleccionar un contacto específico del hospital
+  const handleContactSelect = (encargado) => {
+    console.log('👤 Contacto seleccionado:', encargado);
+    
+    // Actualizar solo los datos del contacto, mantener el resto del hospital
+    setQuoteInfo({
+      ...quoteInfo,
+      clientContact: encargado.nombre,
+      email: encargado.email || '',
+      phone: encargado.telefono || '',
+      clientPosition: encargado.cargo || ''
+    });
+    
+    console.log('✅ Datos del contacto actualizados en el formulario');
   };
 
   // Función actualizada para filtrar clientes por hospital principalmente
@@ -322,24 +436,49 @@ const QuoteBuilder = ({ onBack }) => {
         }
       };
 
-      console.log('💾 Guardando cotización como borrador:', quoteData);
-      
-      const response = await quoteService.createQuote(quoteData);
-      
-      if (response.success) {
-        setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
-        setSuccessMessage(`✅ Cotización ${response.data.folio} guardada como borrador exitosamente`);
-        console.log('✅ Quote saved:', response.data);
+      if (isEditingMode && editingQuoteData) {
+        // Modo edición: actualizar cotización existente
+        console.log('✏️ Actualizando cotización existente:', editingQuoteData.quoteId, quoteData);
         
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 5000);
+        const response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
+        
+        if (response.success) {
+          setGeneratedQuote({ ...quoteData, id: editingQuoteData.quoteId, folio: editingQuoteData.folio });
+          setSuccessMessage(`✅ Cotización ${editingQuoteData.folio} actualizada exitosamente`);
+          console.log('✅ Quote updated:', response.data);
+          
+          // Limpiar datos de edición
+          localStorage.removeItem('editingQuote');
+          setIsEditingMode(false);
+          setEditingQuoteData(null);
+          
+          setTimeout(() => {
+            setSuccessMessage('');
+          }, 5000);
+        } else {
+          throw new Error(response.message || 'Error al actualizar cotización');
+        }
       } else {
-        throw new Error(response.message || 'Error al guardar cotización');
+        // Modo normal: crear nueva cotización
+        console.log('💾 Guardando nueva cotización como borrador:', quoteData);
+        
+        const response = await quoteService.createQuote(quoteData);
+        
+        if (response.success) {
+          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+          setSuccessMessage(`✅ Cotización ${response.data.folio} guardada como borrador exitosamente`);
+          console.log('✅ Quote saved:', response.data);
+          
+          setTimeout(() => {
+            setSuccessMessage('');
+          }, 5000);
+        } else {
+          throw new Error(response.message || 'Error al guardar cotización');
+        }
       }
     } catch (error) {
       console.error('❌ Error saving quote:', error);
-      setApiError(error.message || 'Error al guardar la cotización');
+      setApiError(error.message || `Error al ${isEditingMode ? 'actualizar' : 'guardar'} la cotización`);
     } finally {
       setIsSubmitting(false);
     }
@@ -423,19 +562,19 @@ const QuoteBuilder = ({ onBack }) => {
         const contactName = quoteInfo.clientContact || selectedClient?.contact;
         const companyName = selectedSellerCompany?.name || 'Nuestra empresa';
         
-        const whatsappMessage = `🏥 *Cotización ${quoteFolio}*
+        const whatsappMessage = `*Cotización ${quoteFolio}*
 
 Estimado/a ${contactName},
 
 Esperamos se encuentre bien. Por medio del presente, nos es grato hacerle llegar la cotización solicitada para ${hospitalName}.
 
-📋 *Detalles de la cotización:*
+*Detalles de la cotización:*
 • Folio: ${quoteFolio}
 • Fecha: ${new Date().toLocaleDateString('es-MX')}
 • Productos: ${cartItems.length} artículo${cartItems.length !== 1 ? 's' : ''}
 • Hospital: ${hospitalName}
 
-📄 Adjunto encontrará el PDF con todos los detalles, especificaciones técnicas y condiciones comerciales.
+Adjunto encontrará el PDF con todos los detalles, especificaciones técnicas y condiciones comerciales.
 
 Quedamos a su disposición para cualquier duda o aclaración.
 
@@ -570,7 +709,14 @@ ${companyName}`;
                   <Send className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-extrabold tracking-tight">Generar Cotización</h1>
+                  <h1 className="text-3xl font-extrabold tracking-tight">
+                    {isEditingMode ? `Editar Cotización` : 'Generar Cotización'}
+                    {isEditingMode && editingQuoteData && (
+                      <span className="text-lg font-normal ml-2 opacity-75">
+                        {editingQuoteData.folio}
+                      </span>
+                    )}
+                  </h1>
                 </div>
               </div>
             </div>
@@ -614,6 +760,48 @@ ${companyName}`;
               </div>
               <div className="flex-1">
                 <h4 className="text-red-800 font-semibold text-lg">Error en el Sistema</h4>
+
+        {/* DEBUG: Botón temporal para verificar datos de edición */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-yellow-800 font-medium">🔧 Debug: Verificar datos de edición</span>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  const editData = localStorage.getItem('editingQuote');
+                  const cartCount = cartItems.length;
+                  const hasClientInfo = !!(quoteInfo.clientName || quoteInfo.email);
+                  
+                  alert(`📊 Estado actual:
+• Datos en localStorage: ${editData ? '✅ SÍ' : '❌ NO'}
+• Productos en carrito: ${cartCount}
+• Info del cliente: ${hasClientInfo ? '✅ SÍ' : '❌ NO'}
+• Cliente: ${quoteInfo.clientName || 'Sin nombre'}
+• Email: ${quoteInfo.email || 'Sin email'}
+• Empresa: ${quoteInfo.sellerCompany || 'Sin empresa'}`);
+                  
+                  if (editData) {
+                    console.log('🔍 Datos completos en localStorage:', JSON.parse(editData));
+                  }
+                  console.log('🛒 Carrito actual:', cartItems);
+                  console.log('👤 Info del cliente actual:', quoteInfo);
+                }}
+                className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-sm hover:bg-yellow-300"
+              >
+                Verificar Estado
+              </button>
+              <button
+                onClick={() => {
+                  console.log('🔄 Reintentando cargar datos de edición...');
+                  loadEditingQuoteData();
+                }}
+                className="px-3 py-1 bg-blue-200 text-blue-800 rounded text-sm hover:bg-blue-300"
+              >
+                Recargar Datos
+              </button>
+            </div>
+          </div>
+        </div>
                 <p className="text-red-700 mt-1">{apiError}</p>
               </div>
             </div>
@@ -701,23 +889,6 @@ ${companyName}`;
                           <p className="text-blue-800">{selectedClient.empresaResponsable || 'No especificado'}</p>
                         </div>
                         
-                        <div>
-                          <span className="text-blue-600 font-medium">Contacto Principal:</span>
-                          <p className="text-blue-800">{selectedClient.contact}</p>
-                        </div>
-                        
-                        <div>
-                          <span className="text-blue-600 font-medium">Email:</span>
-                          <p className="text-blue-800">{selectedClient.email}</p>
-                        </div>
-                        
-                        {selectedClient.phone && (
-                          <div>
-                            <span className="text-blue-600 font-medium">Teléfono:</span>
-                            <p className="text-blue-800">{selectedClient.phone}</p>
-                          </div>
-                        )}
-                        
                         {selectedClient.fullAddress && (
                           <div className="md:col-span-2">
                             <span className="text-blue-600 font-medium">Dirección:</span>
@@ -725,6 +896,87 @@ ${companyName}`;
                           </div>
                         )}
                       </div>
+
+                      {/* Selector de contacto principal si hay múltiples encargados */}
+                      {selectedClient.encargados && selectedClient.encargados.length > 1 && (
+                        <div className="mt-4 p-3 bg-white border border-blue-300 rounded-lg">
+                          <label className="block text-sm font-medium text-blue-700 mb-2">
+                            Seleccionar Contacto Principal ({selectedClient.encargados.length} disponibles):
+                          </label>
+                          <div className="space-y-2">
+                            {selectedClient.encargados.map((encargado, index) => (
+                              <div
+                                key={encargado.id || index}
+                                onClick={() => handleContactSelect(encargado)}
+                                className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                  quoteInfo.clientContact === encargado.nombre
+                                    ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2">
+                                      <User className="w-4 h-4 text-blue-600" />
+                                      <span className="font-medium text-blue-900">{encargado.nombre}</span>
+                                      {quoteInfo.clientContact === encargado.nombre && (
+                                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
+                                          Seleccionado
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="mt-1 space-y-1 text-sm text-gray-600">
+                                      {encargado.cargo && (
+                                        <div className="flex items-center space-x-2">
+                                          <Briefcase className="w-3 h-3" />
+                                          <span>{encargado.cargo}</span>
+                                        </div>
+                                      )}
+                                      {encargado.email && (
+                                        <div className="flex items-center space-x-2">
+                                          <Mail className="w-3 h-3" />
+                                          <span>{encargado.email}</span>
+                                        </div>
+                                      )}
+                                      {encargado.telefono && (
+                                        <div className="flex items-center space-x-2">
+                                          <Phone className="w-3 h-3" />
+                                          <span>{encargado.telefono}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mostrar datos del contacto seleccionado */}
+                      {selectedClient.encargados && selectedClient.encargados.length === 1 && (
+                        <div className="mt-4 p-3 bg-white border border-blue-300 rounded-lg">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <User className="w-4 h-4 text-blue-600" />
+                            <span className="text-blue-600 font-medium">Contacto Principal:</span>
+                          </div>
+                          <div className="space-y-1 text-sm text-blue-800 ml-6">
+                            <div className="font-medium">{selectedClient.contact}</div>
+                            {selectedClient.email && (
+                              <div className="flex items-center space-x-2">
+                                <Mail className="w-3 h-3" />
+                                <span>{selectedClient.email}</span>
+                              </div>
+                            )}
+                            {selectedClient.phone && (
+                              <div className="flex items-center space-x-2">
+                                <Phone className="w-3 h-3" />
+                                <span>{selectedClient.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                     </div>
                     <Button
@@ -836,8 +1088,16 @@ ${companyName}`;
                                       </div>
                                     )}
                                     
-                                    <div className="text-xs text-gray-400 truncate mt-1">
-                                      Empresa: {empresaResponsable}
+                                    <div className="flex items-center justify-between mt-1">
+                                      <div className="text-xs text-gray-400 truncate">
+                                        Empresa: {empresaResponsable}
+                                      </div>
+                                      {encargados.length > 1 && (
+                                        <div className="flex items-center space-x-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                          <User className="w-3 h-3" />
+                                          <span>{encargados.length} contactos</span>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1023,7 +1283,12 @@ ${companyName}`;
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.465 3.63"/>
                 </svg>
-                <span>{isSubmitting ? 'Enviando por WhatsApp...' : 'Enviar por WhatsApp'}</span>
+                <span>
+                  {isSubmitting 
+                    ? (isEditingMode ? 'Actualizando y Enviando...' : 'Enviando por WhatsApp...') 
+                    : (isEditingMode ? 'Actualizar y Enviar' : 'Enviar por WhatsApp')
+                  }
+                </span>
               </Button>
               
               <Button 
@@ -1033,7 +1298,12 @@ ${companyName}`;
                 className="w-full flex items-center justify-center space-x-2"
               >
                 <Save size={20} />
-                <span>{isSubmitting ? 'Guardando...' : 'Guardar Borrador'}</span>
+                <span>
+                  {isSubmitting 
+                    ? (isEditingMode ? 'Actualizando...' : 'Guardando...') 
+                    : (isEditingMode ? 'Actualizar Cotización' : 'Guardar Borrador')
+                  }
+                </span>
               </Button>
             </div>
             {generatedQuote && (

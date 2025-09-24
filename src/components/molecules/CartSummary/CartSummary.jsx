@@ -10,8 +10,8 @@ const CartSummary = ({ showDetails = true }) => {
   const total = subtotal + tax;
 
   return (
-    <div className="bg-white rounded-lg border p-6 space-y-4">
-      <h3 className="font-semibold text-lg">Resumen</h3>
+    <div className="bg-white rounded-lg border p-4 sm:p-6 space-y-3 sm:space-y-4">
+      <h3 className="font-semibold text-base sm:text-lg">Resumen de Cotización</h3>
       
       {showDetails && (
         <div className="space-y-2">
@@ -27,13 +27,16 @@ const CartSummary = ({ showDetails = true }) => {
         </div>
       )}
       
-      <div className="flex justify-between font-semibold text-lg">
+      <div className="flex justify-between font-semibold text-lg sm:text-xl bg-gray-50 p-3 rounded-lg">
         <span>Total</span>
-        <PriceTag price={total} className="text-xl" />
+        <PriceTag price={total} className="text-lg sm:text-xl" />
       </div>
       
-      <div className="text-xs text-gray-500 mt-2">
-        Material: {getItemCount()} productos
+      <div className="text-xs text-gray-500">
+        <div className="flex justify-between">
+          <span>Material médico:</span>
+          <span>{getItemCount()} productos</span>
+        </div>
       </div>
     </div>
   );

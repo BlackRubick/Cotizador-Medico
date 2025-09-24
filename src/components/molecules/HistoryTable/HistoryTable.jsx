@@ -1,10 +1,10 @@
 // src/components/molecules/HistoryTable/HistoryTable.jsx - ACTUALIZADO
 import React from 'react';
-import { Edit, Mail, Eye, Calendar, User, Building2 } from 'lucide-react';
+import { Edit, Mail, Eye, Calendar, User, Building2, Trash2 } from 'lucide-react';
 import StatusBadge from '../../atoms/StatusBadge';
 import pdfService from '../../../services/pdfService';
 
-const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
+const HistoryTable = ({ quotes, onEdit, onSendEmail, onDelete, loading = false }) => {
   // Función para mapear estados del backend a español
   const getStatusLabel = (status) => {
     const statusMap = {
@@ -209,6 +209,33 @@ const HistoryTable = ({ quotes, onEdit, onSendEmail, loading = false }) => {
               {/* Acciones */}
               <td className="py-4 px-4">
                 <div className="flex items-center justify-center space-x-2">
+                  {/* Botón Editar */}
+                  <button
+                    onClick={() => onEdit && onEdit(quote)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar cotización"
+                  >
+                    <Edit size={16} />
+                  </button>
+
+                  {/* Botón Eliminar */}
+                  <button
+                    onClick={() => onDelete && onDelete(quote)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Eliminar cotización"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+
+                  {/* Botón Enviar Email */}
+                  <button
+                    onClick={() => onSendEmail && onSendEmail(quote)}
+                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    title="Enviar por email"
+                  >
+                    <Mail size={16} />
+                  </button>
+
                   {/* Botón Ver PDF */}
                   <button
                     onClick={async () => {

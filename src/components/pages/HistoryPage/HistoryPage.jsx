@@ -1,10 +1,12 @@
 // src/components/pages/HistoryPage/HistoryPage.jsx - ACTUALIZADO CON API REAL Y ALMACENAMIENTO LOCAL
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import HistoryViewer from '../../organisms/HistoryViewer';
 import quoteService from '../../services/quoteService';
 import localStorageService from '../../services/locastorageService';
 
 const HistoryPage = () => {
+  const navigate = useNavigate();
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,20 +97,77 @@ const HistoryPage = () => {
 
   const handleEdit = async (quote) => {
     try {
-      console.log('✏️ Editando cotización:', quote);
+      console.log('✏️ handleEdit llamado desde HistoryPage:', quote);
       
-      // Aquí puedes implementar la lógica de edición
-      // Por ejemplo, abrir un modal de edición o navegar a una página de edición
-      
-      // Placeholder: mostrar alerta por ahora
-      const confirmEdit = window.confirm(`¿Deseas editar la cotización ${quote.folio}?`);
+      const confirmEdit = window.confirm(
+        `¿Deseas editar la cotización ${quote.folio}?\n\nSe abrirá el editor de cotizaciones con los datos actuales.`
+      );
       
       if (confirmEdit) {
-        // TODO: Implementar navegación a página de edición
-        alert(`Función de edición para ${quote.folio} - Por implementar`);
-        
-        // Opcional: navegar a página de edición
-        // navigate(`/cotizaciones/${quote.id}/editar`);
+        try {
+          // Preparar datos completos para la edición
+          const productos = Array.isArray(quote.productos) ? quote.productos : 
+                          Array.isArray(quote.products) ? quote.products : [];
+          
+          console.log('📊 Productos de la cotización para edición:', productos);
+          
+          const editData = {
+            isEditing: true,
+            quoteId: quote.id,
+            folio: quote.folio,
+            // Información del cliente
+            clientInfo: {
+              clientName: quote.razonSocial || quote.clientInfoName || quote.cliente,
+              clientContact: quote.encargado || quote.clientInfoContact || quote.contacto,
+              email: quote.correo || quote.clientInfoEmail || quote.email,
+              phone: quote.numero || quote.clientInfoPhone || quote.telefono || quote.phone,
+              clientAddress: quote.direccion || quote.clientInfoAddress,
+              clientPosition: quote.puesto || quote.clientInfoPosition
+            },
+            // Productos de la cotización (mapear al formato del carrito)
+            cartItems: productos.map(p => ({
+              id: p.id || p.productId || Math.random().toString(36),
+              name: p.name || p.descripcion || p.equipo || 'Producto sin nombre',
+              description: p.descripcion || p.name || p.description || 'Sin descripción',
+              quantity: parseInt(p.quantity || p.cantidad || 1),
+              basePrice: parseFloat(p.basePrice || p.unitPrice || p.precio || 0),
+              code: p.code || p.codigo || 'SIN_CODIGO',
+              brand: p.brand || p.marca || 'Sin marca',
+              // Campos adicionales que puedan existir
+              category: p.category || p.categoria,
+              compatibility: p.compatibility || p.compatibilidad
+            })),
+            // Términos y condiciones
+            terms: quote.condiciones || quote.terms || {},
+            // Información de la empresa vendedora
+            sellerCompany: quote.empresa || 'CONDUIT LIFE',
+            sellerCompanyId: quote.sellerCompanyId || 'conduit-life'
+          };
+          
+          console.log('💾 Guardando datos de edición en localStorage:', editData);
+          localStorage.setItem('editingQuote', JSON.stringify(editData));
+          
+          // Verificar que se guardó correctamente
+          const savedData = localStorage.getItem('editingQuote');
+          console.log('✅ Datos guardados verificados:', !!savedData, savedData ? 'Tamaño:' + savedData.length : '');
+          console.log('📋 Vista previa de datos guardados:', savedData ? JSON.parse(savedData) : null);
+          
+          // Mostrar alerta temporal para debugging
+          alert(`🔧 DEBUG: Datos preparados para edición:
+• Folio: ${editData.folio}
+• Cliente: ${editData.clientInfo.clientName}
+• Productos: ${editData.cartItems.length}
+• Navegando a: /cotizar
+          
+Presiona OK para continuar...`);
+          
+          // Usar React Router para navegar
+          navigate('/cotizar');
+          
+        } catch (editError) {
+          console.error('❌ Error preparando edición:', editError);
+          alert('Error al preparar la edición: ' + editError.message);
+        }
       }
     } catch (error) {
       console.error('❌ Error editing quote:', error);
@@ -149,6 +208,59 @@ const HistoryPage = () => {
     } catch (error) {
       console.error('❌ Error sending email:', error);
       alert('Error al enviar email: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (quote) => {
+    try {
+      console.log('🗑️ handleDelete llamado desde HistoryPage:', quote);
+      
+      const confirmDelete = window.confirm(
+        `¿Estás seguro de que deseas eliminar la cotización ${quote.folio}?\n\nEsta acción no se puede deshacer.`
+      );
+      
+      if (confirmDelete) {
+        setLoading(true);
+        
+        try {
+          // Intentar eliminar del servidor si tiene ID del servidor
+          if (quote.id && !quote.id.toString().startsWith('local-')) {
+            const response = await quoteService.deleteQuote(quote.id);
+            
+            if (!response.success) {
+              throw new Error(response.message || 'Error al eliminar del servidor');
+            }
+            
+            console.log('✅ Cotización eliminada del servidor');
+          } else {
+            // Es una cotización local, eliminarla del localStorage
+            localStorageService.deleteLocalQuote(quote.id);
+            console.log('✅ Cotización local eliminada');
+          }
+          
+          // Actualizar la lista local
+          setQuotes(prev => prev.filter(q => q.id !== quote.id));
+          
+          alert(`✅ Cotización ${quote.folio} eliminada exitosamente`);
+          
+        } catch (deleteError) {
+          console.error('❌ Error eliminando cotización:', deleteError);
+          
+          // Si falla eliminar del servidor pero es una cotización que existe localmente también
+          if (quote.id.toString().startsWith('local-')) {
+            localStorageService.deleteLocalQuote(quote.id);
+            setQuotes(prev => prev.filter(q => q.id !== quote.id));
+            alert(`⚠️ Cotización eliminada localmente. Error del servidor: ${deleteError.message}`);
+          } else {
+            throw deleteError;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error deleting quote:', error);
+      alert('Error al eliminar cotización: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -305,9 +417,11 @@ const HistoryPage = () => {
       <HistoryViewer
         quotes={quotes}
         onEdit={handleEdit}
+        onDelete={handleDelete}
         onSendEmail={handleSendEmail}
         onFilter={handleFilter}
         loading={loading}
+        onRefresh={loadQuotes}
       />
     </div>
   );

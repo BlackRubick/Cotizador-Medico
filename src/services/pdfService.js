@@ -92,11 +92,12 @@ class PDFService {
 
           .quote-container {
             position: relative;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
+            width: 216mm;
+            min-height: 279mm;
+            padding: 15mm;
             background: white;
             overflow: hidden;
+            box-sizing: border-box;
           }
           
           .template-image {
@@ -139,9 +140,9 @@ class PDFService {
 
           .header {
             position: absolute;
-            top: 200px;
-            left: 40px;
-            right: 40px;
+            top: 180px;
+            left: 30px;
+            right: 30px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -198,8 +199,8 @@ class PDFService {
 
           .section {
             position: absolute;
-            left: 40px;
-            right: 40px;
+            left: 30px;
+            right: 30px;
             background: transparent;
             padding: 15px;
             border-radius: 0;
@@ -207,11 +208,11 @@ class PDFService {
           }
           
           .section.client-section {
-            top: 350px;
+            top: 320px;
           }
           
           .section.products-section {
-            top: 520px;
+            top: 480px;
             height: auto;
             overflow-y: visible;
           }
@@ -333,7 +334,20 @@ class PDFService {
             .quote-container {
               box-shadow: none;
               margin: 0;
+              width: 216mm !important;
+              height: 279mm !important;
             }
+            
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+          }
+          
+          /* Asegurar que el contenido no se desborde */
+          .content {
+            max-width: 186mm; /* 216mm - 30mm padding total */
+            max-height: 249mm; /* 279mm - 30mm padding total */
           }
         </style>
       </head>
@@ -495,23 +509,47 @@ class PDFService {
 
       console.log('📸 Generando PDF desde ventana temporal...');
       
-      // Capturar la ventana temporal
+      // Capturar la ventana temporal con configuración optimizada para carta
       const canvas = await html2canvas(tempWindow.document.body, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        width: 816, // 216mm * 3.78 (conversión mm a pixels aprox)
+        height: 1056, // 279mm * 3.78
+        windowWidth: 816,
+        windowHeight: 1056
       });
 
       console.log('📄 Creando archivo PDF...');
       
-      // Crear PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Crear PDF en tamaño carta (Letter)
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      const pageWidth = 216; // Letter width in mm (8.5 inches)
+      const pageHeight = 279; // Letter height in mm (11 inches)
+      
+      // Calcular dimensiones manteniendo aspecto pero ajustando a página carta
+      const canvasAspectRatio = canvas.width / canvas.height;
+      const pageAspectRatio = pageWidth / pageHeight;
+      
+      let imgWidth, imgHeight;
+      
+      if (canvasAspectRatio > pageAspectRatio) {
+        // Canvas es más ancho, ajustar por ancho
+        imgWidth = pageWidth;
+        imgHeight = pageWidth / canvasAspectRatio;
+      } else {
+        // Canvas es más alto, ajustar por alto
+        imgHeight = pageHeight;
+        imgWidth = pageHeight * canvasAspectRatio;
+      }
+      
+      // Centrar la imagen en la página
+      const x = (pageWidth - imgWidth) / 2;
+      const y = (pageHeight - imgHeight) / 2;
 
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, imgWidth, imgHeight);
 
       // Generar nombre de archivo
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;

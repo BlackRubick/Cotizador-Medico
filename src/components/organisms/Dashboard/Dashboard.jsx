@@ -58,13 +58,7 @@ const Dashboard = ({ quotes, loading = false, error = null, onCreateQuote, onFil
               </h1>
               <p className="text-gray-600 text-lg">Gestiona tus cotizaciones de manera eficiente</p>
             </div>
-            <Button 
-              onClick={onCreateQuote} 
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 px-6 py-3 rounded-xl"
-            >
-              <Plus size={20} />
-              <span className="font-semibold">Nueva Cotización</span>
-            </Button>
+
           </div>
         </div>
 

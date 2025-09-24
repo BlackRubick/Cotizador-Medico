@@ -233,12 +233,13 @@ export const CartProvider = ({ children }) => {
   };
 
   const value = {
-    // Estado
+        // State
     cartItems,
     quoteInfo,
     
     // Setters
     setQuoteInfo,
+    setCartItems,
     
     // Funciones de manipulación del carrito
     addToCart,

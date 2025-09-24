@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, Download, Mail, Trash2 } from 'lucide-react';
 import Card from '../../atoms/Card';
 import Button from '../../atoms/Button';
@@ -6,9 +6,14 @@ import HistoryTable from '../../molecules/HistoryTable';
 import FilterPanel from '../../molecules/FilterPanel';
 import localStorageService from '../../../services/localStorageService';
 
-const HistoryViewer = ({ quotes, onEdit, onSendEmail, onFilter, onRefresh }) => {
+const HistoryViewer = ({ quotes, onEdit, onSendEmail, onDelete, onFilter, onRefresh }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [filteredQuotes, setFilteredQuotes] = useState(quotes);
+
+  // Actualizar filteredQuotes cuando cambien las quotes
+  useEffect(() => {
+    setFilteredQuotes(quotes);
+  }, [quotes]);
 
   const handleClearLocalQuotes = () => {
     const localQuotesCount = quotes.filter(q => q.estadoLocal).length;
@@ -171,6 +176,7 @@ const HistoryViewer = ({ quotes, onEdit, onSendEmail, onFilter, onRefresh }) => 
             quotes={filteredQuotes}
             onEdit={onEdit}
             onSendEmail={onSendEmail}
+            onDelete={onDelete}
           />
         </div>
       </Card>

@@ -104,38 +104,30 @@ class ClientService {
   async createClient(clientData) {
     console.log('Creating client with data:', clientData);
     
-    // Validaciones básicas en el frontend con los nuevos campos
-    if (!clientData.empresaResponsable || !clientData.dependencia || !clientData.hospital || 
-        !clientData.estado || !clientData.ciudad || !clientData.codigoPostal || 
-        !clientData.direccion || !clientData.equipo || !clientData.marca || 
-        !clientData.modelo || !clientData.numeroSerie) {
-      throw new Error('Los campos empresaResponsable, dependencia, hospital, estado, ciudad, codigoPostal, direccion, equipo, marca, modelo y numeroSerie son requeridos');
+    // ========== VALIDACIONES BÁSICAS OPCIONALES ==========
+    // Solo validar que tenga al menos empresa responsable o nombre
+    if (!clientData.empresaResponsable && !clientData.name) {
+      throw new Error('El nombre de la empresa o cliente es requerido');
     }
 
-    // Validación de encargados
-    if (!clientData.encargados || clientData.encargados.length === 0) {
-      throw new Error('Debe agregar al menos un encargado del hospital');
-    }
+    // ========== ENCARGADOS OPCIONALES ==========
+    // Los encargados ahora son completamente opcionales
+    const encargadosValidos = (clientData.encargados || []).filter(enc => enc.nombre && enc.nombre.trim());
+    console.log(`👥 Procesando ${encargadosValidos.length} encargado(s) válido(s) de ${(clientData.encargados || []).length} proporcionado(s)`);
 
-    // Validar que cada encargado tenga al menos nombre
-    const encargadosValidos = clientData.encargados.filter(enc => enc.nombre && enc.nombre.trim());
-    if (encargadosValidos.length === 0) {
-      throw new Error('Debe agregar al menos un encargado con nombre válido');
-    }
+    // Usar el primer encargado si existe, sino usar datos generales
+    const encargadoPrincipal = encargadosValidos.length > 0 ? encargadosValidos[0] : null;
 
-    // Usar el primer encargado para los campos principales del backend
-    const encargadoPrincipal = encargadosValidos[0];
-
-    // Mapear datos del frontend al formato del backend
+    // Mapear datos del frontend al formato del backend (TODOS LOS CAMPOS OPCIONALES)
     const mappedData = {
-      name: clientData.empresaResponsable.trim(),
-      contact: encargadoPrincipal.nombre.trim(), // Usar nombre del encargado principal
-      email: encargadoPrincipal.email?.trim() || `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`, // Email del encargado o generado
-      phone: encargadoPrincipal.telefono?.trim() || clientData.codigoPostal.trim(), // Teléfono del encargado o código postal como fallback
-      street: clientData.direccion.trim(),
-      city: clientData.ciudad.trim(),
-      state: clientData.estado.trim(),
-      zipCode: clientData.codigoPostal.trim(),
+      name: (clientData.empresaResponsable || clientData.name || '').trim(),
+      contact: encargadoPrincipal?.nombre?.trim() || clientData.dependencia?.trim() || 'Contacto General',
+      email: encargadoPrincipal?.email?.trim() || this.generateEmail(clientData),
+      phone: encargadoPrincipal?.telefono?.trim() || this.generatePhone(clientData),
+      street: (clientData.direccion || clientData.street || '').trim(),
+      city: (clientData.ciudad || clientData.city || '').trim(),
+      state: (clientData.estado || clientData.state || '').trim(),
+      zipCode: (clientData.codigoPostal || clientData.zipCode || '').trim(),
       country: 'México',
       clientType: 'Hospital',
       notes: JSON.stringify({
@@ -176,31 +168,24 @@ class ClientService {
 
   // Actualizar cliente
   async updateClient(id, clientData) {
-    console.log('Updating client with data:', clientData);
+    console.log('📝 Updating client with data:', clientData);
 
-    // Validación de encargados
-    if (!clientData.encargados || clientData.encargados.length === 0) {
-      throw new Error('Debe mantener al menos un encargado del hospital');
-    }
+    // ========== ENCARGADOS OPCIONALES EN UPDATE ==========
+    const encargadosValidos = (clientData.encargados || []).filter(enc => enc.nombre && enc.nombre.trim());
+    console.log(`👥 Actualizando con ${encargadosValidos.length} encargado(s) válido(s)`);
 
-    // Validar que cada encargado tenga al menos nombre
-    const encargadosValidos = clientData.encargados.filter(enc => enc.nombre && enc.nombre.trim());
-    if (encargadosValidos.length === 0) {
-      throw new Error('Debe mantener al menos un encargado con nombre válido');
-    }
-
-    // Usar el primer encargado para los campos principales del backend
-    const encargadoPrincipal = encargadosValidos[0];
+    // Usar el primer encargado si existe, sino usar datos generales
+    const encargadoPrincipal = encargadosValidos.length > 0 ? encargadosValidos[0] : null;
 
     const mappedData = {
-      name: clientData.empresaResponsable.trim(),
-      contact: encargadoPrincipal.nombre.trim(),
-      email: encargadoPrincipal.email?.trim() || `${clientData.numeroSerie.trim().toLowerCase()}@hospital.com`,
-      phone: encargadoPrincipal.telefono?.trim() || clientData.codigoPostal.trim(),
-      street: clientData.direccion.trim(),
-      city: clientData.ciudad.trim(),
-      state: clientData.estado.trim(),
-      zipCode: clientData.codigoPostal.trim(),
+      name: (clientData.empresaResponsable || clientData.name || '').trim(),
+      contact: encargadoPrincipal?.nombre?.trim() || clientData.dependencia?.trim() || 'Contacto General',
+      email: encargadoPrincipal?.email?.trim() || this.generateEmail(clientData),
+      phone: encargadoPrincipal?.telefono?.trim() || this.generatePhone(clientData),
+      street: (clientData.direccion || clientData.street || '').trim(),
+      city: (clientData.ciudad || clientData.city || '').trim(),
+      state: (clientData.estado || clientData.state || '').trim(),
+      zipCode: (clientData.codigoPostal || clientData.zipCode || '').trim(),
       country: 'México',
       clientType: 'Hospital',
       notes: JSON.stringify({
@@ -453,6 +438,29 @@ class ClientService {
     }
     
     return `${encargados.length} encargados: ${encargados.map(e => e.nombre).join(', ')}`;
+  }
+
+  // ========== FUNCIONES AUXILIARES PARA GENERAR DATOS ==========
+
+  // Generar email automáticamente
+  generateEmail(clientData) {
+    if (clientData.email && clientData.email.trim() !== '') {
+      return clientData.email.toLowerCase().trim();
+    }
+
+    // Generar email basado en número de serie o nombre
+    const baseEmail = clientData.numeroSerie || clientData.empresaResponsable || 'cliente';
+    return `${baseEmail.toString().trim().toLowerCase().replace(/\s+/g, '.')}@hospital.com`;
+  }
+
+  // Generar teléfono automáticamente  
+  generatePhone(clientData) {
+    if (clientData.phone && clientData.phone.trim() !== '') {
+      return clientData.phone.trim();
+    }
+
+    // Usar código postal como fallback para teléfono
+    return (clientData.codigoPostal || clientData.zipCode || '0000000000').toString();
   }
 }
 
