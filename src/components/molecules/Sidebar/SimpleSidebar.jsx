@@ -31,10 +31,6 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
-      // Rutas de prueba temporales
-      { id: 'test-cotizar', path: '/test-cotizar', icon: ShoppingCart, label: '🧪 Test Cotizar' },
-      { id: 'test-clientes', path: '/test-clientes', icon: Users, label: '🧪 Test Clientes' },
-      { id: 'test-historial', path: '/test-historial', icon: History, label: '🧪 Test Historial' },
     ];
   }
 
@@ -66,13 +62,6 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
             <h1 className="text-xl font-bold">Cotizador</h1>
           </div>
 
-          {/* Debug info */}
-          <div className="bg-red-500/20 p-2 rounded mb-4 text-xs">
-            <p>Usuario: {user?.nombre || 'N/A'}</p>
-            <p>Rol: {userRole}</p>
-            <p>Items: {menuItems.length}</p>
-          </div>
-
           {/* Menu Items */}
           <nav className="space-y-2 flex-1">
             {menuItems.map((item) => {
@@ -81,30 +70,14 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
                 <NavLink
                   key={item.id}
                   to={item.path}
-                  className={({ isActive }) => {
-                    const className = `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={({ isActive }) => 
+                    `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive 
                         ? 'bg-blue-600 text-white' 
                         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`;
-                    
-                    // Debug log para navegación
-                    console.log('NavLink render:', {
-                      itemPath: item.path,
-                      itemLabel: item.label,
-                      isActive,
-                      className
-                    });
-                    
-                    return className;
-                  }}
-                  onClick={(e) => {
-                    console.log('NavLink clicked:', {
-                      itemPath: item.path,
-                      itemLabel: item.label,
-                      event: e
-                    });
-                    
+                    }`
+                  }
+                  onClick={() => {
                     if (window.innerWidth < 1024 && isOpen) {
                       onToggle();
                     }

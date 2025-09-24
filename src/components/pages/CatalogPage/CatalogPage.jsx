@@ -1,6 +1,5 @@
 import React from 'react';
 import ProductCatalog from '../../organisms/ProductCatalog';
-import PageDebug from '../../PageDebug';
 import { useNavigate } from 'react-router-dom';
 
 const CatalogPage = () => {
@@ -11,10 +10,7 @@ const CatalogPage = () => {
   };
 
   return (
-    <div>
-      <PageDebug pageName="Catálogo / Nueva Cotización" />
-      <ProductCatalog onCategorySelect={handleCategorySelect} />
-    </div>
+    <ProductCatalog onCategorySelect={handleCategorySelect} />
   );
 };
 

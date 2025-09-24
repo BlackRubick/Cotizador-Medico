@@ -5,17 +5,7 @@ import { useUserRole } from '../hooks/useUserRole';
 
 const RoleBasedRedirect = () => {
   const { isAuthenticated, loading } = useAuthContext();
-  const { getDefaultRoute, userRole, isAdmin, user } = useUserRole();
-  
-  // Debug logs temporales
-  console.log('RoleBasedRedirect Debug:', {
-    user,
-    userRole,
-    isAdmin,
-    defaultRoute: getDefaultRoute(),
-    isAuthenticated,
-    loading
-  });
+  const { getDefaultRoute } = useUserRole();
   
   if (loading) {
     return (

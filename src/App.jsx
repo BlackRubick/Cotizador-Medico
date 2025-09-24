@@ -18,7 +18,6 @@ import HistoryPage from './components/pages/HistoryPage';
 import QuotePage from './components/pages/QuotePage';
 import ClientesPage from './components/pages/ClientesPage';
 import QuoteReviewPage from './components/pages/QuoteReviewPage';
-import TestPage from './components/pages/TestPage';
 
 function App() {
   return (
@@ -90,32 +89,6 @@ function App() {
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
                     <ClientesPage />
-                  </RoleBasedRoute>
-                } 
-              />
-              
-              {/* Rutas de prueba temporales */}
-              <Route 
-                path="test-cotizar" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestPage pageName="Test Cotizar" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="test-clientes" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestPage pageName="Test Clientes" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="test-historial" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestPage pageName="Test Historial" />
                   </RoleBasedRoute>
                 } 
               />

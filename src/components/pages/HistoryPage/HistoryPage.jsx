@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HistoryViewer from '../../organisms/HistoryViewer';
-import PageDebug from '../../PageDebug';
 import quoteService from '../../services/quoteService';
 import localStorageService from '../../services/locastorageService';
 
@@ -438,8 +437,6 @@ const HistoryPage = () => {
 
   return (
     <div>
-      <PageDebug pageName="Historial" />
-      
       {/* Mostrar error como banner si hay cotizaciones cargadas */}
       {error && quotes.length > 0 && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
