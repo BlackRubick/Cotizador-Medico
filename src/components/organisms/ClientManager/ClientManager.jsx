@@ -285,14 +285,7 @@ const ClientManager = ({ clients, onSave, onDelete }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <h1 className="text-2xl font-bold text-gray-800">Gestión de Clientes</h1>
         <div className="flex space-x-2">
-          <Button
-            variant="secondary"
-            onClick={handleExport}
-            className="flex items-center space-x-2"
-          >
-            <Download size={20} />
-            <span>Exportar</span>
-          </Button>
+
           
           {/* Input oculto para importar Excel */}
           <input
@@ -304,24 +297,7 @@ const ClientManager = ({ clients, onSave, onDelete }) => {
             disabled={importLoading}
           />
           
-          <Button
-            variant="secondary"
-            onClick={() => document.getElementById('excel-import').click()}
-            disabled={importLoading}
-            className="flex items-center space-x-2"
-          >
-            {importLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Importando...</span>
-              </>
-            ) : (
-              <>
-                <Upload size={20} />
-                <span>Importar Excel</span>
-              </>
-            )}
-          </Button>
+
 
           <Button
             onClick={() => setShowForm(true)}
