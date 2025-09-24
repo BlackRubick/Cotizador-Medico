@@ -31,6 +31,10 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
+      // Rutas de prueba temporales
+      { id: 'test-cotizar', path: '/test-cotizar', icon: ShoppingCart, label: '🧪 Test Cotizar' },
+      { id: 'test-clientes', path: '/test-clientes', icon: Users, label: '🧪 Test Clientes' },
+      { id: 'test-historial', path: '/test-historial', icon: History, label: '🧪 Test Historial' },
     ];
   }
 
