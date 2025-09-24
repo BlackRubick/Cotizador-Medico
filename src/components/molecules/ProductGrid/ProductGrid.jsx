@@ -71,9 +71,17 @@ const ProductGrid = ({ onCategorySelect, forceReload }) => {
             }
           })
         );
-        
-        console.log('✅ Categorías con conteo de productos:', categoriesWithProducts);
-        setCategories(categoriesWithProducts);
+        // Agregar la categoría especial 'Todos' al inicio
+        const totalProductsCount = categoriesWithProducts.reduce((acc, cat) => acc + (cat.productCount || 0), 0);
+        const allCategory = {
+          id: 'todos',
+          name: 'Todos',
+          description: 'Todos los productos de todas las categorías',
+          image: '/api/placeholder/150/150',
+          productCount: totalProductsCount,
+          isActive: true
+        };
+        setCategories([allCategory, ...categoriesWithProducts]);
         return; 
       }
       
