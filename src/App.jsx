@@ -41,13 +41,13 @@ function App() {
             >
               {/* Rutas simplificadas - SIN protección por roles por ahora */}
               <Route index element={<RoleBasedRedirect />} />
-              <Route path="dashboard" element={<TestContentPage title="Dashboard Administrativo" />} />
-              <Route path="cotizar/*" element={<TestContentPage title="Nueva Cotización" />} />
-              <Route path="cotizar" element={<TestContentPage title="Nueva Cotización" />} />
-              <Route path="historial" element={<TestContentPage title="Historial de Cotizaciones" />} />
-              <Route path="clientes" element={<TestContentPage title="Gestión de Clientes" />} />
-              <Route path="perfil" element={<TestContentPage title="Perfil de Usuario" />} />
-              <Route path="revisar-cotizaciones" element={<TestContentPage title="Revisar Cotizaciones" />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="cotizar/*" element={<QuotePage />} />
+              <Route path="cotizar" element={<QuotePage />} />
+              <Route path="historial" element={<HistoryPage />} />
+              <Route path="clientes" element={<ClientesPage />} />
+              <Route path="perfil" element={<ProfilePage />} />
+              <Route path="revisar-cotizaciones" element={<QuoteReviewPage />} />
             </Route>
 
             {/* Catch all route - redirección inteligente basada en roles */}
