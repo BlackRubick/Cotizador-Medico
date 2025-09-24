@@ -1,5 +1,5 @@
 import React from 'react';
-import PageDebug from '../../PageDebug';
+import PageDebug from '../PageDebug';
 import { useUserRole } from '../../hooks/useUserRole';
 
 const TestPage = ({ pageName = "Prueba" }) => {
