@@ -6,6 +6,7 @@ import CartSummary from '../../molecules/CartSummary';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 import Card from '../../atoms/Card';
+import EmailButton from '../../atoms/EmailButton';
 import { useCart } from '../../../context/CartContext';
 import quoteService from '../../../services/quoteService';
 import clientService from '../../../services/clientService';
@@ -1387,6 +1388,26 @@ ${companyName}`;
                   }
                 </span>
               </Button>
+              
+              {/* Botón de Email */}
+              {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
+                <EmailButton
+                  quoteData={{
+                    number: generatedQuote?.folio || `COT-${Date.now()}`,
+                    date: new Date().toLocaleDateString('es-ES'),
+                    total: cartItems.reduce((total, item) => total + item.precio * item.cantidad, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
+                    items: cartItems
+                  }}
+                  clientData={{
+                    name: selectedClient?.nombre || selectedClient?.name,
+                    email: selectedClient?.email || selectedClient?.correo
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  variant="primary"
+                >
+                  Enviar por Email
+                </EmailButton>
+              )}
               
               <Button 
                 onClick={handleSaveQuote}
