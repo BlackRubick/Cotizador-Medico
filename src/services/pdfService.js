@@ -229,12 +229,14 @@ class PDFService {
           }
           .section.client-section {
             top: 210px; /* +30px más abajo */
+            margin-bottom: 32px; /* Espacio extra debajo de cliente */
           }
           .section.products-section {
             top: 290px; /* +30px más abajo */
             height: auto;
             overflow: visible;
             max-height: calc(279mm - 290px - 20px);
+            margin-top: 32px; /* Espacio extra arriba de productos */
           }
           .section-title {
             font-size: 12px;
@@ -412,8 +414,6 @@ class PDFService {
             <br />
             <!-- Productos -->
             <div class="section products-section">
-              <br />
-              <br />
               <h2 class="section-title">Productos y Servicios</h2>
               <table class="products-table">
                 <thead>
