@@ -723,9 +723,48 @@ class PDFService {
   // Función para previsualizar PDF
   async previewQuotePDF(quoteData, sellerCompany) {
     try {
-      // Generar el PDF igual que en la descarga
-      await this.generateAndDownloadQuotePDF(quoteData, sellerCompany);
-      alert('La vista previa ahora es igual al PDF descargable. Descarga el PDF para ver el resultado final.');
+      console.log('👁️ Iniciando vista previa del PDF con plantilla:', sellerCompany.id);
+      // Precargar la imagen de la plantilla ANTES de crear el HTML
+      console.log('🖼️ Precargando plantilla antes de crear vista previa...');
+      const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+      if (templateImg) {
+        console.log('✅ Plantilla precargada exitosamente');
+      } else {
+        console.warn('⚠️ No se pudo precargar la plantilla, continuando sin imagen de fondo');
+      }
+      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
+      // Crear nueva ventana con mejor configuración
+      const previewWindow = window.open('', '_blank', 
+        'width=900,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+      );
+      if (previewWindow) {
+        // Escribir el contenido
+        previewWindow.document.write(htmlContent);
+        previewWindow.document.close();
+        // Esperar a que se cargue completamente la ventana
+        previewWindow.addEventListener('load', () => {
+          console.log('📄 Vista previa cargada completamente');
+          // Verificar si las imágenes se cargaron en la nueva ventana
+          const images = previewWindow.document.querySelectorAll('img');
+          console.log(`🖼️ Imágenes en vista previa: ${images.length}`);
+          images.forEach((img, index) => {
+            if (img.complete && img.naturalWidth > 0) {
+              console.log(`✅ Imagen ${index + 1} ya cargada en vista previa`);
+            } else {
+              console.log(`⏳ Esperando carga de imagen ${index + 1} en vista previa`);
+              img.onload = () => {
+                console.log(`✅ Imagen ${index + 1} cargada en vista previa`);
+              };
+              img.onerror = () => {
+                console.warn(`❌ Error cargando imagen ${index + 1} en vista previa`);
+              };
+            }
+          });
+        });
+        previewWindow.focus();
+      } else {
+        throw new Error('No se pudo abrir la ventana de vista previa. Verifique que no esté bloqueada por el navegador.');
+      }
       return { success: true };
     } catch (error) {
       console.error('❌ Error en vista previa:', error);
