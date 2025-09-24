@@ -237,10 +237,10 @@ class PDFService {
             max-height: calc(279mm - 290px - 20px);
           }
           .section-title {
-            font-size: 12px; /* antes 14px */
+            font-size: 12px;
             font-weight: bold;
             color: #000000;
-            margin-bottom: 16px; /* antes 6px, ahora más separación */
+            margin-bottom: 24px; /* más separación visual */
             padding-bottom: 2px;
             border-bottom: 1px solid #00000030;
           }
@@ -256,6 +256,9 @@ class PDFService {
             margin-bottom: 3px;
             font-size: 10px; /* antes 12px */
           }
+          .client-row.first-row {
+            margin-top: 8px; /* separación extra después del título */
+          }
           .client-label {
             font-weight: bold;
             width: 80px; /* antes 100px */
@@ -269,6 +272,7 @@ class PDFService {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            margin-top: 16px; /* separación extra después del título de productos */
             box-shadow: none;
             border-radius: 0;
             overflow: visible;
@@ -375,8 +379,8 @@ class PDFService {
             <br />
             <!-- Cliente -->
             <div class="section client-section">
-              <h2 class="section-title">Información del Cliente<br /></h2>
-              <div class="client-row">
+              <h2 class="section-title">Información del Cliente</h2>
+              <div class="client-row first-row">
                 <span class="client-label">Cliente:</span>
                 <span class="client-value">${quoteData.clientName}</span>
               </div>
@@ -408,7 +412,7 @@ class PDFService {
             <br />
             <!-- Productos -->
             <div class="section products-section">
-              <h2 class="section-title">Productos y Servicios<br /></h2>
+              <h2 class="section-title">Productos y Servicios</h2>
               <table class="products-table">
                 <thead>
                   <tr>
