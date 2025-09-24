@@ -142,37 +142,65 @@ const QuoteBuilder = ({ onBack }) => {
           }));
         }
         
-        // Cargar productos al carrito
-        if (parsedData.cartItems && Array.isArray(parsedData.cartItems)) {
-          console.log('🛒 Cargando productos al carrito:', parsedData.cartItems);
-          
-          // Usar setTimeout para asegurar que el estado se actualice correctamente
-          setTimeout(() => {
-            // Limpiar carrito actual
-            clearCart();
+        // Cargar productos al carrito - SOLO si el carrito está vacío o no se ha navegado desde edición
+        const navigatingFromEdit = localStorage.getItem('navigatingFromEdit');
+        const currentCartItemsCount = cartItems.length;
+        
+        console.log('🔍 Estado del carrito:', {
+          navegandoDesdeEdicion: !!navigatingFromEdit,
+          productosEnCarritoActual: currentCartItemsCount,
+          productosEnDatosEdicion: parsedData.cartItems?.length || 0
+        });
+        
+        // Solo sobrescribir el carrito si:
+        // 1. No venimos de agregar productos (navigatingFromEdit es null)
+        // 2. O el carrito está vacío
+        if (!navigatingFromEdit || currentCartItemsCount === 0) {
+          if (parsedData.cartItems && Array.isArray(parsedData.cartItems)) {
+            console.log('🛒 Cargando productos originales al carrito:', parsedData.cartItems);
             
-            // Mapear productos al formato del carrito y agregarlos
-            const cartItemsFormatted = parsedData.cartItems.map(item => ({
-              ...item,
-              totalPrice: item.quantity * item.basePrice,
-              selectedAccessories: item.selectedAccessories || []
-            }));
-            
-            console.log('📦 Productos formateados para el carrito:', cartItemsFormatted);
-            setCartItems(cartItemsFormatted);
-            
-            // Mostrar mensaje de éxito
-            setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. ${parsedData.cartItems.length} productos cargados.`);
-            
-            // Auto-cerrar el mensaje de éxito después de 8 segundos
-            setTimeout(() => setSuccessMessage(''), 8000);
-            
-          }, 100);
+            // Usar setTimeout para asegurar que el estado se actualice correctamente
+            setTimeout(() => {
+              // Limpiar carrito actual
+              clearCart();
+              
+              // Mapear productos al formato del carrito y agregarlos
+              const cartItemsFormatted = parsedData.cartItems.map(item => ({
+                ...item,
+                totalPrice: item.quantity * item.basePrice,
+                selectedAccessories: item.selectedAccessories || []
+              }));
+              
+              console.log('📦 Productos formateados para el carrito:', cartItemsFormatted);
+              setCartItems(cartItemsFormatted);
+              
+              // Mostrar mensaje de éxito
+              setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. ${parsedData.cartItems.length} productos cargados.`);
+              
+              // Auto-cerrar el mensaje de éxito después de 8 segundos
+              setTimeout(() => setSuccessMessage(''), 8000);
+              
+            }, 100);
+          } else {
+            // Si no hay productos, mostrar mensaje
+            console.log('⚠️ No se encontraron productos en la cotización para editar');
+            setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. Sin productos.`);
+            setTimeout(() => setSuccessMessage(''), 5000);
+          }
         } else {
-          // Si no hay productos, mostrar mensaje
-          console.log('⚠️ No se encontraron productos en la cotización para editar');
-          setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. Sin productos.`);
-          setTimeout(() => setSuccessMessage(''), 5000);
+          // Venimos de agregar productos, mantener el carrito actual
+          console.log('🔄 Manteniendo productos actuales del carrito (se agregaron productos adicionales)');
+          console.log('📦 Productos actuales en carrito:', currentCartItemsCount);
+          
+          // Mostrar mensaje indicando que se mantuvieron los productos agregados
+          const productosOriginales = parsedData.cartItems?.length || 0;
+          const productosAgregados = Math.max(0, currentCartItemsCount - productosOriginales);
+          
+          setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. ${currentCartItemsCount} productos total (${productosOriginales} originales + ${productosAgregados} agregados).`);
+          setTimeout(() => setSuccessMessage(''), 8000);
+          
+          // Limpiar el flag para futuras navegaciones
+          localStorage.removeItem('navigatingFromEdit');
         }
         
         // NO eliminar los datos de localStorage aún, los eliminaremos cuando se guarde/actualice
@@ -438,7 +466,9 @@ const QuoteBuilder = ({ onBack }) => {
 
       if (isEditingMode && editingQuoteData) {
         // Modo edición: actualizar cotización existente
-        console.log('✏️ Actualizando cotización existente:', editingQuoteData.quoteId, quoteData);
+        console.log('✏️ Actualizando cotización existente:', editingQuoteData.quoteId);
+        console.log('📦 Productos que se van a guardar (actuales del carrito):', cartItems);
+        console.log('📊 Total de productos a guardar:', cartItems.length);
         
         const response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
         
@@ -515,7 +545,9 @@ const QuoteBuilder = ({ onBack }) => {
         }
       };
 
-      console.log('📤 Creando cotización y preparando envío por WhatsApp:', quoteData);
+      console.log('📤 Creando cotización y preparando envío por WhatsApp');
+      console.log('📦 Productos que se van a enviar (actuales del carrito):', cartItems);
+      console.log('📊 Total de productos a enviar:', cartItems.length);
       
       let quoteFolio = null;
       let quoteId = null;
@@ -803,47 +835,7 @@ ${companyName}`;
               <div className="flex-1">
                 <h4 className="text-red-800 font-semibold text-lg">Error en el Sistema</h4>
 
-        {/* DEBUG: Botón temporal para verificar datos de edición */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <span className="text-yellow-800 font-medium">🔧 Debug: Verificar datos de edición</span>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => {
-                  const editData = localStorage.getItem('editingQuote');
-                  const cartCount = cartItems.length;
-                  const hasClientInfo = !!(quoteInfo.clientName || quoteInfo.email);
-                  
-                  alert(`📊 Estado actual:
-• Datos en localStorage: ${editData ? '✅ SÍ' : '❌ NO'}
-• Productos en carrito: ${cartCount}
-• Info del cliente: ${hasClientInfo ? '✅ SÍ' : '❌ NO'}
-• Cliente: ${quoteInfo.clientName || 'Sin nombre'}
-• Email: ${quoteInfo.email || 'Sin email'}
-• Empresa: ${quoteInfo.sellerCompany || 'Sin empresa'}`);
-                  
-                  if (editData) {
-                    console.log('🔍 Datos completos en localStorage:', JSON.parse(editData));
-                  }
-                  console.log('🛒 Carrito actual:', cartItems);
-                  console.log('👤 Info del cliente actual:', quoteInfo);
-                }}
-                className="px-3 py-1 bg-yellow-200 text-yellow-800 rounded text-sm hover:bg-yellow-300"
-              >
-                Verificar Estado
-              </button>
-              <button
-                onClick={() => {
-                  console.log('🔄 Reintentando cargar datos de edición...');
-                  loadEditingQuoteData();
-                }}
-                className="px-3 py-1 bg-blue-200 text-blue-800 rounded text-sm hover:bg-blue-300"
-              >
-                Recargar Datos
-              </button>
-            </div>
-          </div>
-        </div>
+
                 <p className="text-red-700 mt-1">{apiError}</p>
               </div>
             </div>
