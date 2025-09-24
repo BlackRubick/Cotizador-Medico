@@ -247,6 +247,7 @@ class PDFService {
             border-bottom: 1px solid #00000030;
           }
           .section-title.space-below {
+            margin-top: 24px;
             margin-bottom: 40px;
             padding-bottom: 8px;
           }
