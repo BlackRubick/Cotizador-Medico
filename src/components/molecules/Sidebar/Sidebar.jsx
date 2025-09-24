@@ -2,22 +2,30 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, User, FileText, History, ShoppingCart, LogOut, Menu, X, Activity, Users, Calendar } from 'lucide-react';
 import { useAuthContext } from '../../../context/AuthContext';
+import { useUserRole } from '../../../hooks/useUserRole';
 
 const Sidebar = ({ isOpen = false, onToggle }) => {
   const navigate = useNavigate();
   const { logout } = useAuthContext();
+  const { userRole, isAdmin, hasAccess, getDisplayRole, user } = useUserRole();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const menuItems = [
-    { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard', color: 'from-blue-500 to-blue-600' },
-    { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización', color: 'from-green-500 to-green-600' },
-    { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes', color: 'from-purple-500 to-purple-600' },
-    { id: 'historial', path: '/historial', icon: History, label: 'Historial', color: 'from-orange-500 to-orange-600' },
+  // Definir elementos de menú basados en roles
+  const allMenuItems = [
+    { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard', color: 'from-blue-500 to-blue-600', roles: ['admin', 'administrador'] },
+    { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización', color: 'from-green-500 to-green-600', roles: ['admin', 'administrador', 'vendedor'] },
+    { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes', color: 'from-purple-500 to-purple-600', roles: ['admin', 'administrador', 'vendedor'] },
+    { id: 'historial', path: '/historial', icon: History, label: 'Historial', color: 'from-orange-500 to-orange-600', roles: ['admin', 'administrador', 'vendedor'] },
+    { id: 'perfil', path: '/perfil', icon: User, label: 'Perfil', color: 'from-indigo-500 to-indigo-600', roles: ['admin', 'administrador'] },
+    { id: 'revisar-cotizaciones', path: '/revisar-cotizaciones', icon: FileText, label: 'Revisar Cotizaciones', color: 'from-yellow-500 to-yellow-600', roles: ['admin', 'administrador'] },
   ];
+
+  // Filtrar elementos de menú según el rol del usuario
+  const menuItems = allMenuItems.filter(item => hasAccess(item.roles));
 
   return (
     <>
@@ -122,8 +130,12 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
                   <User size={20} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">Usuario</p>
-                  <p className="text-xs text-slate-400">Administrador</p>
+                  <p className="text-sm font-medium text-white">
+                    {user?.nombre || user?.name || 'Usuario'}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {getDisplayRole()}
+                  </p>
                 </div>
               </div>
             </div>

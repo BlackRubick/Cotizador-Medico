@@ -3,7 +3,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
+import RoleBasedRoute from './components/RoleBasedRoute';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
+import Layout from './components/Layout/Layout';
 
 // Auth Pages
 import LoginPage from './components/pages/LoginPage';
@@ -36,17 +38,64 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="perfil" element={<ProfilePage />} />
-              <Route path="cotizar/*" element={<QuotePage />} />
-              <Route path="historial" element={<HistoryPage />} />
-              <Route path="clientes" element={<ClientesPage />} />
-              <Route path="revisar-cotizaciones" element={<QuoteReviewPage />} />
+              {/* Redirección inteligente basada en roles */}
+              <Route index element={<RoleBasedRedirect />} />
+              
+              {/* Rutas solo para administradores */}
+              <Route 
+                path="dashboard" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
+                    <DashboardPage />
+                  </RoleBasedRoute>
+                } 
+              />
+              <Route 
+                path="perfil" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
+                    <ProfilePage />
+                  </RoleBasedRoute>
+                } 
+              />
+              <Route 
+                path="revisar-cotizaciones" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
+                    <QuoteReviewPage />
+                  </RoleBasedRoute>
+                } 
+              />
+              
+              {/* Rutas para administradores y vendedores */}
+              <Route 
+                path="cotizar/*" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
+                    <QuotePage />
+                  </RoleBasedRoute>
+                } 
+              />
+              <Route 
+                path="historial" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
+                    <HistoryPage />
+                  </RoleBasedRoute>
+                } 
+              />
+              <Route 
+                path="clientes" 
+                element={
+                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
+                    <ClientesPage />
+                  </RoleBasedRoute>
+                } 
+              />
             </Route>
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Catch all route - redirección inteligente basada en roles */}
+            <Route path="*" element={<RoleBasedRedirect />} />
           </Routes>
         </div>
       </Router>

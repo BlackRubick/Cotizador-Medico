@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../molecules/Sidebar';
+import Sidebar from '../molecules/Sidebar/Sidebar';
 import CartIcon from '../atoms/CartIcon';
+import RoleDebug from '../RoleDebug';
 import { CartProvider } from '../../context/CartContext';
 
 const Layout = () => {
@@ -21,6 +22,9 @@ const Layout = () => {
           </main>
           <CartIcon />
         </div>
+        
+        {/* Componente de debug para desarrollo */}
+        <RoleDebug />
       </div>
     </CartProvider>
   );
