@@ -77,15 +77,7 @@ const ProductCatalog = ({ onCategorySelect, onBack }) => {
           <h1 className="text-2xl font-bold text-gray-800">Catálogo de Productos</h1>
         </div>
         
-        <Button
-          onClick={handleReset}
-          variant="outline"
-          size="sm"
-          className="flex items-center space-x-2 text-gray-600"
-        >
-          <RefreshCw size={16} />
-          <span>Restablecer</span>
-        </Button>
+
       </div>
 
       {/* Banner de estado de carga */}
