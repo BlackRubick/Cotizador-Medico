@@ -70,6 +70,23 @@ class PDFService {
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
+    // Ajuste dinámico de estilos según cantidad de productos
+    let tableFontSize = 12;
+    let tableCellPadding = 8;
+    let tableHeaderPadding = 10;
+    let summaryFontSize = 16;
+    if (cartItems.length > 8 && cartItems.length <= 15) {
+      tableFontSize = 10;
+      tableCellPadding = 5;
+      tableHeaderPadding = 7;
+      summaryFontSize = 14;
+    } else if (cartItems.length > 15) {
+      tableFontSize = 8;
+      tableCellPadding = 3;
+      tableHeaderPadding = 5;
+      summaryFontSize = 12;
+    }
+
     return `
       <!DOCTYPE html>
       <html lang="es">
@@ -129,8 +146,6 @@ class PDFService {
             object-position: center center;
           }
 
-
-
           .content {
             position: absolute;
             z-index: 2;
@@ -141,8 +156,8 @@ class PDFService {
             padding: 0;
             margin: 0;
             background: transparent;
-            overflow-y: auto;
-            max-height: 259mm; /* 279mm - 2*10mm padding */
+            overflow: hidden;
+            max-height: 259mm;
           }
 
           .header {
@@ -221,10 +236,10 @@ class PDFService {
           .section.products-section {
             top: 480px;
             height: auto;
-            overflow-y: visible;
+            overflow: visible;
+            max-height: calc(279mm - 480px - 30px);
           }
           
-
 
           .section-title {
             font-size: 14px;
@@ -268,21 +283,22 @@ class PDFService {
             border-radius: 0;
             overflow: visible;
             background: transparent;
+            font-size: ${tableFontSize}px;
           }
 
           .products-table th {
             background: linear-gradient(135deg, ${template.colors.primary}, ${template.colors.primary}90);
             color: white;
-            padding: 10px 8px;
+            padding: ${tableHeaderPadding}px 6px;
             text-align: left;
             font-weight: bold;
-            font-size: 12px;
+            font-size: ${tableFontSize}px;
           }
 
           .products-table td {
-            padding: 8px;
+            padding: ${tableCellPadding}px 6px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: 11px;
+            font-size: ${tableFontSize}px;
             color: #000000;
           }
 
@@ -321,16 +337,15 @@ class PDFService {
             padding: 8px 15px;
             border-bottom: 1px solid #e5e7eb;
             color: #000000;
+            font-size: ${tableFontSize}px;
           }
 
           .summary-table .total-row {
             background: transparent;
             font-weight: bold;
-            font-size: 16px;
+            font-size: ${summaryFontSize}px;
             color: #000000;
           }
-
-
 
           .price {
             font-weight: bold;
@@ -351,10 +366,9 @@ class PDFService {
             }
           }
           
-          /* Asegurar que el contenido no se desborde */
           .content {
-            max-width: 186mm; /* 216mm - 30mm padding total */
-            max-height: 249mm; /* 279mm - 30mm padding total */
+            max-width: 186mm;
+            max-height: 249mm;
           }
         </style>
       </head>
@@ -439,8 +453,8 @@ class PDFService {
                       <td class="text-center font-bold">${item.code || 'N/A'}</td>
                       <td>
                         <div class="font-bold">${item.name || 'Producto sin nombre'}</div>
-                        <div style="font-size: 11px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
-                        ${item.brand ? `<div style="font-size: 10px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
+                        <div style="font-size: ${tableFontSize - 1}px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
+                        ${item.brand ? `<div style="font-size: ${tableFontSize - 2}px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
                       </td>
                       <td class="text-center">${item.quantity || 1}</td>
                       <td class="text-right price">$${(item.basePrice || 0).toLocaleString('es-MX')}</td>
@@ -466,10 +480,6 @@ class PDFService {
                 </tr>
               </table>
             </div>
-
-
-
-
           </div>
         </div>
       </body>
