@@ -17,8 +17,6 @@ import ProfilePage from './components/pages/ProfilePage';
 import HistoryPage from './components/pages/HistoryPage';
 import QuotePage from './components/pages/QuotePage';
 import ClientesPage from './components/pages/ClientesPage';
-import QuoteReviewPage from './components/pages/QuoteReviewPage';
-import TestContentPage from './components/TestContentPage';
 
 function App() {
   return (
@@ -46,11 +44,8 @@ function App() {
               <Route path="cotizar" element={<QuotePage />} />
               <Route path="historial" element={<HistoryPage />} />
               <Route path="clientes" element={<ClientesPage />} />
-              <Route path="perfil" element={<ProfilePage />} />
-              <Route path="revisar-cotizaciones" element={<QuoteReviewPage />} />
             </Route>
 
-            {/* Catch all route - redirección inteligente basada en roles */}
             <Route path="*" element={<RoleBasedRedirect />} />
           </Routes>
         </div>
