@@ -62,6 +62,12 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
             <h1 className="text-xl font-bold">Cotizador</h1>
           </div>
 
+          {/* Debug info */}
+          <div className="bg-red-500/20 p-2 rounded mb-4 text-xs">
+            <p>Usuario: {user?.nombre || 'N/A'}</p>
+            <p>Rol: {userRole}</p>
+            <p>Items: {menuItems.length}</p>
+          </div>
 
           {/* Menu Items */}
           <nav className="space-y-2 flex-1">
@@ -71,14 +77,30 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
                 <NavLink
                   key={item.id}
                   to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={({ isActive }) => {
+                    const className = `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive 
                         ? 'bg-blue-600 text-white' 
                         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`
-                  }
-                  onClick={() => {
+                    }`;
+                    
+                    // Debug log para navegación
+                    console.log('NavLink render:', {
+                      itemPath: item.path,
+                      itemLabel: item.label,
+                      isActive,
+                      className
+                    });
+                    
+                    return className;
+                  }}
+                  onClick={(e) => {
+                    console.log('NavLink clicked:', {
+                      itemPath: item.path,
+                      itemLabel: item.label,
+                      event: e
+                    });
+                    
                     if (window.innerWidth < 1024 && isOpen) {
                       onToggle();
                     }

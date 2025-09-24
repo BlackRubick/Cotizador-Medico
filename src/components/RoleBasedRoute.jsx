@@ -5,7 +5,16 @@ import { useUserRole } from '../hooks/useUserRole';
 
 const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, loading } = useAuthContext();
-  const { hasAccess, getDefaultRoute, isAdmin } = useUserRole();
+  const { hasAccess, getDefaultRoute, isAdmin, userRole } = useUserRole();
+
+  // Debug logs
+  console.log('RoleBasedRoute Debug:', {
+    allowedRoles,
+    userRole,
+    hasAccess: hasAccess(allowedRoles),
+    isAuthenticated,
+    loading
+  });
 
   if (loading) {
     return (
@@ -26,10 +35,12 @@ const RoleBasedRoute = ({ children, allowedRoles = [] }) => {
 
   // Verificar si el usuario tiene un rol permitido
   if (hasAccess(allowedRoles)) {
+    console.log('✅ Access granted to:', allowedRoles, 'for user role:', userRole);
     return children;
   }
 
   // Si el usuario no tiene permisos, redirigir a su página por defecto
+  console.log('❌ Access denied. Redirecting to:', getDefaultRoute());
   return <Navigate to={getDefaultRoute()} replace />;
 };
 

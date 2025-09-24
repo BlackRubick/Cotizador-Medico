@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClientManager from '../../organisms/ClientManager';
+import PageDebug from '../../PageDebug';
 import clientService from '../../services/clientService';
 
 const ClientesPage = () => {
@@ -252,6 +253,8 @@ const ClientesPage = () => {
 
   return (
     <div>
+      <PageDebug pageName="Clientes" />
+      
       {/* Mostrar error como banner si hay clientes cargados */}
       {error && clients.length > 0 && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
