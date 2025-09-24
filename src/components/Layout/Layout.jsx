@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../molecules/Sidebar/Sidebar';
+import SimpleSidebar from '../molecules/Sidebar/SimpleSidebar';
 import CartIcon from '../atoms/CartIcon';
 import RoleDebug from '../RoleDebug';
 import { CartProvider } from '../../context/CartContext';
@@ -11,7 +11,7 @@ const Layout = () => {
   return (
     <CartProvider>
       <div className="flex h-screen bg-gray-50">
-        <Sidebar
+        <SimpleSidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />

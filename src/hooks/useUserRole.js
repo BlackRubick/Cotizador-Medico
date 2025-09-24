@@ -6,13 +6,18 @@ export const useUserRole = () => {
   // Obtener rol del usuario con fallback a vendedor
   const userRole = (user?.role || user?.tipo_usuario || 'vendedor').toLowerCase();
   
-  const isAdmin = () => {
-    return userRole === 'admin' || userRole === 'administrador';
-  };
+  const isAdmin = userRole === 'admin' || userRole === 'administrador';
+  const isVendedor = userRole === 'vendedor';
   
-  const isVendedor = () => {
-    return userRole === 'vendedor';
-  };
+  // Debug logs temporales
+  console.log('useUserRole Debug:', {
+    user,
+    rawRole: user?.role,
+    rawTipoUsuario: user?.tipo_usuario,
+    processedRole: userRole,
+    isAdmin,
+    isVendedor
+  });
   
   const hasAccess = (allowedRoles = []) => {
     if (allowedRoles.length === 0) return true;
@@ -20,17 +25,17 @@ export const useUserRole = () => {
   };
   
   const getDefaultRoute = () => {
-    return isAdmin() ? '/dashboard' : '/cotizar';
+    return isAdmin ? '/dashboard' : '/cotizar';
   };
   
   const getDisplayRole = () => {
-    return isAdmin() ? 'Administrador' : 'Vendedor';
+    return isAdmin ? 'Administrador' : 'Vendedor';
   };
   
   return {
     userRole,
-    isAdmin: isAdmin(),
-    isVendedor: isVendedor(),
+    isAdmin,
+    isVendedor,
     hasAccess,
     getDefaultRoute,
     getDisplayRole,

@@ -25,7 +25,35 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
   ];
 
   // Filtrar elementos de menú según el rol del usuario
-  const menuItems = allMenuItems.filter(item => hasAccess(item.roles));
+  let menuItems;
+  try {
+    menuItems = allMenuItems.filter(item => hasAccess(item.roles));
+    
+    // Si no hay elementos después del filtro y el usuario es vendedor, mostrar elementos básicos
+    if (menuItems.length === 0 && userRole === 'vendedor') {
+      menuItems = allMenuItems.filter(item => 
+        item.roles.includes('vendedor')
+      );
+    }
+  } catch (error) {
+    console.error('Error filtering menu items:', error);
+    // Fallback: mostrar elementos básicos para vendedor
+    menuItems = [
+      { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización', color: 'from-green-500 to-green-600' },
+      { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes', color: 'from-purple-500 to-purple-600' },
+      { id: 'historial', path: '/historial', icon: History, label: 'Historial', color: 'from-orange-500 to-orange-600' },
+    ];
+  }
+
+  // Debug logs temporales
+  console.log('Sidebar Debug:', {
+    userRole,
+    isAdmin,
+    user,
+    allMenuItems: allMenuItems.length,
+    filteredMenuItems: menuItems.length,
+    menuItems: menuItems.map(item => item.label)
+  });
 
   return (
     <>
@@ -71,23 +99,33 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
 
           {/* Menu Items */}
           <nav className="space-y-3 flex-1">
-            {menuItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.id}
-                  to={item.path}
-                  style={{
-                    animationDelay: `${index * 100}ms`
-                  }}
-                  onClick={() => {
-                    // Cerrar sidebar en mobile después de hacer click
-                    if (window.innerWidth < 1024 && isOpen) {
-                      onToggle();
-                    }
-                  }}
-                >
-                  {({ isActive }) => (
+            {/* Debug info temporal */}
+            <div className="text-white text-xs bg-red-500/20 p-2 rounded mb-2">
+              Elementos: {menuItems.length} | Rol: {userRole}
+            </div>
+            
+            {menuItems.length === 0 ? (
+              <div className="text-white text-sm p-4">
+                No hay elementos de menú disponibles para tu rol: {userRole}
+              </div>
+            ) : (
+              menuItems.map((item, index) => {
+                const Icon = item.icon || ShoppingCart; // Fallback icon
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.path}
+                    style={{
+                      animationDelay: `${index * 100}ms`
+                    }}
+                    onClick={() => {
+                      // Cerrar sidebar en mobile después de hacer click
+                      if (window.innerWidth < 1024 && isOpen) {
+                        onToggle();
+                      }
+                    }}
+                  >
+                    {({ isActive }) => (
                     <div className={`group relative w-full flex items-center space-x-4 px-4 py-4 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
                       isActive 
                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-xl shadow-blue-600/25' 
@@ -119,7 +157,7 @@ const Sidebar = ({ isOpen = false, onToggle }) => {
                   )}
                 </NavLink>
               );
-            })}
+            }))}
           </nav>
 
           {/* User Profile Section */}
