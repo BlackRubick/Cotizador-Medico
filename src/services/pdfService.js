@@ -482,38 +482,138 @@ class PDFService {
     try {
       // Precargar la imagen de la plantilla
       const templateImg = await this.preloadTemplateImage(sellerCompany.id);
-      // Crear el HTML idéntico a la vista previa
-      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
-      // Crear un contenedor oculto en el DOM
-      let container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '216mm';
-      container.style.minHeight = '279mm';
-      container.innerHTML = htmlContent;
-      document.body.appendChild(container);
-      // Esperar a que carguen las imágenes
-      await this.waitForImages(container);
-      // Seleccionar el nodo principal
-      const quoteNode = container.querySelector('.quote-container');
-      // Renderizar a imagen
-      const canvas = await html2canvas(quoteNode, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      // Crear PDF y agregar la imagen
+      const cartItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+      const subtotal = cartItems.reduce((sum, item) => sum + ((item.quantity || 1) * (item.basePrice || 0)), 0);
+      const iva = subtotal * 0.16;
+      const total = subtotal + iva;
+      const currentDate = new Date().toLocaleDateString('es-MX', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+      // Crear PDF tamaño carta
       const pdf = new jsPDF('p', 'mm', 'letter');
       const pageWidth = 216;
       const pageHeight = 279;
-      // Calcular tamaño de la imagen en mm
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pageWidth;
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      // Descargar PDF
+      // Dibujar la plantilla de fondo en cada página
+      const drawBackground = () => {
+        if (templateImg && templateImg.base64) {
+          pdf.addImage(templateImg.base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+        }
+      };
+      drawBackground();
+      // Header empresa y cotización
+      pdf.setFontSize(18);
+      pdf.setTextColor(40);
+      pdf.text(sellerCompany.fullName, 15, 25);
+      pdf.setFontSize(10);
+      pdf.text(`Dirección: ${sellerCompany.address}`, 15, 32);
+      pdf.text(`Teléfono: ${sellerCompany.phone}`, 15, 37);
+      pdf.text(`Email: ${sellerCompany.email}`, 15, 42);
+      pdf.text(`RFC: ${sellerCompany.rfc}`, 15, 47);
+      pdf.setFontSize(16);
+      pdf.text('COTIZACIÓN', pageWidth - 60, 25);
+      pdf.setFontSize(12);
+      pdf.text(`Folio: ${quoteData.folio}`, pageWidth - 60, 32);
+      pdf.text(currentDate, pageWidth - 60, 37);
+      // Cliente
+      pdf.setFontSize(12);
+      pdf.text('Información del Cliente', 15, 60);
+      pdf.setFontSize(10);
+      let y = 66;
+      pdf.text(`Cliente: ${quoteData.clientName}`, 15, y); y += 6;
+      pdf.text(`Contacto: ${quoteData.clientContact || 'N/A'}`, 15, y); y += 6;
+      pdf.text(`Email: ${quoteData.email}`, 15, y); y += 6;
+      pdf.text(`Teléfono: ${quoteData.phone || 'N/A'}`, 15, y); y += 6;
+      if (quoteData.clientAddress) { pdf.text(`Dirección: ${quoteData.clientAddress}`, 15, y); y += 6; }
+      if (quoteData.clientPosition) { pdf.text(`Puesto: ${quoteData.clientPosition}`, 15, y); y += 6; }
+      // Tabla de productos con paginación
+      const tableStartY = y + 8;
+      autoTable(pdf, {
+        startY: tableStartY,
+        head: [[
+          '#', 'Código', 'Descripción', 'Cant.', 'Precio Unit.', 'Total'
+        ]],
+        body: cartItems.map((item, idx) => [
+          idx + 1,
+          item.code || 'N/A',
+          `${item.name || ''}\n${item.description || ''}${item.brand ? `\nMarca: ${item.brand}` : ''}`,
+          item.quantity || 1,
+          `$${(item.basePrice || 0).toLocaleString('es-MX')}`,
+          `$${((item.quantity || 1) * (item.basePrice || 0)).toLocaleString('es-MX')}`
+        ]),
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255 },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 22, halign: 'center' },
+          2: { cellWidth: 70 },
+          3: { cellWidth: 15, halign: 'center' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 25, halign: 'right' }
+        },
+        margin: { left: 15, right: 15 },
+        didDrawPage: drawBackground,
+        // Footer solo en la última página
+        didDrawCell: function (data) {
+          if (data.row.index === cartItems.length - 1 && data.column.index === 5) {
+            // Guardar la posición Y final de la tabla
+            pdf.lastTableFinalY = data.cell.y + data.cell.height;
+          }
+        }
+      });
+      // Resumen SIEMPRE en la última página, bien alineado
+      pdf.setPage(pdf.getNumberOfPages());
+      let summaryY = pdf.lastTableFinalY ? pdf.lastTableFinalY + 12 : pdf.lastAutoTable.finalY + 12;
+      pdf.setFontSize(12);
+      pdf.text('Resumen', pageWidth - 80, summaryY);
+      pdf.setFontSize(10);
+      summaryY += 6;
+      pdf.text(`Subtotal: $${subtotal.toLocaleString('es-MX')}`, pageWidth - 80, summaryY);
+      summaryY += 6;
+      pdf.text(`IVA (16%): $${iva.toLocaleString('es-MX')}`, pageWidth - 80, summaryY);
+      summaryY += 6;
+      pdf.setFontSize(12);
+      pdf.text(`TOTAL: $${total.toLocaleString('es-MX')} MXN`, pageWidth - 80, summaryY);
+      // Agregar Observaciones, Condiciones, Términos si existen
+      let extraY = summaryY + 14;
+      pdf.setFontSize(11);
+      pdf.setTextColor(40);
+      if (quoteData.observaciones) {
+        pdf.text('Observaciones:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitObs = pdf.splitTextToSize(quoteData.observaciones, pageWidth - 30);
+        pdf.text(splitObs, 15, extraY);
+        extraY += splitObs.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      if (quoteData.condiciones) {
+        pdf.text('Condiciones:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitCond = pdf.splitTextToSize(quoteData.condiciones, pageWidth - 30);
+        pdf.text(splitCond, 15, extraY);
+        extraY += splitCond.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      if (quoteData.terminos) {
+        pdf.text('Términos:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitTerm = pdf.splitTextToSize(quoteData.terminos, pageWidth - 30);
+        pdf.text(splitTerm, 15, extraY);
+        extraY += splitTerm.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      pdf.setTextColor(120);
+      // Footer solo en la última página
+      const footerY = pageHeight - 15;
+      pdf.setFontSize(9);
+      pdf.text(sellerCompany.email || 'contacto@empresa.com', 15, footerY);
+      pdf.text(sellerCompany.name, pageWidth / 2, footerY, { align: 'center' });
+      pdf.text('ICD 2025', pageWidth - 15, footerY, { align: 'right' });
+      // Guardar PDF
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
-      // Limpiar el DOM
-      document.body.removeChild(container);
       return { success: true, fileName };
     } catch (error) {
       console.error('❌ Error generando PDF:', error);
