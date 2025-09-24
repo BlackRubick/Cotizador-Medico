@@ -582,34 +582,34 @@ const QuoteBuilder = ({ onBack }) => {
       let quoteFolio = null;
       let quoteId = null;
       let savedInBD = false;
+      let wasEditingMode = isEditingMode && editingQuoteData; // Guardar antes de limpiar
       
       // Verificar si estamos en modo edición
       if (isEditingMode && editingQuoteData) {
-        // Modo edición: actualizar cotización existente primero
-        console.log('✏️ Actualizando cotización existente antes de enviar:', editingQuoteData.quoteId);
+        // Modo edición: actualizar cotización existente (copiado exactamente del botón "Actualizar")
+        console.log('✏️ Actualizando cotización existente:', editingQuoteData.quoteId);
+        console.log('📦 Productos que se van a guardar (actuales del carrito):', cartItems);
+        console.log('📊 Total de productos a guardar:', cartItems.length);
         
-        try {
-          const updateResponse = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
+        const response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
+        
+        if (response.success) {
+          setGeneratedQuote({ ...quoteData, id: editingQuoteData.quoteId, folio: editingQuoteData.folio });
+          console.log('✅ Quote updated:', response.data);
           
-          if (updateResponse.success) {
-            quoteFolio = editingQuoteData.folio;
-            quoteId = editingQuoteData.quoteId;
-            savedInBD = true;
-            console.log('✅ Cotización actualizada exitosamente:', quoteFolio);
-            
-            // Actualizar estado a 'sent'
-            await quoteService.updateQuoteStatus(quoteId, 'sent');
-            
-            // Limpiar datos de edición
-            localStorage.removeItem('editingQuote');
-            setIsEditingMode(false);
-            setEditingQuoteData(null);
-          } else {
-            throw new Error(updateResponse.message || 'Error al actualizar cotización');
-          }
-        } catch (updateError) {
-          console.error('❌ Error actualizando cotización:', updateError);
-          throw new Error('Error al actualizar cotización: ' + updateError.message);
+          // Limpiar datos de edición
+          localStorage.removeItem('editingQuote');
+          setIsEditingMode(false);
+          setEditingQuoteData(null);
+          
+          // Marcar que se debe recargar el historial
+          sessionStorage.setItem('reloadHistory', 'true');
+          
+          quoteFolio = editingQuoteData.folio;
+          quoteId = editingQuoteData.quoteId;
+          savedInBD = true;
+        } else {
+          throw new Error(response.message || 'Error al actualizar cotización');
         }
       } else {
         // Modo normal: crear nueva cotización (BD primero, local como respaldo)
@@ -699,7 +699,7 @@ ${companyName}`;
         
         setGeneratedQuote({ ...quoteData, id: quoteId, folio: quoteFolio });
         const storageType = savedInBD ? 'en base de datos' : 'localmente';
-        const actionType = (isEditingMode && editingQuoteData) ? 'actualizada' : 'guardada';
+        const actionType = wasEditingMode ? 'actualizada' : 'guardada';
         setSuccessMessage(`✅ Cotización ${quoteFolio} ${actionType} ${storageType} exitosamente. Se abrió WhatsApp para envío.`);
         console.log('✅ Quote saved and WhatsApp opened:', quoteFolio);
         
