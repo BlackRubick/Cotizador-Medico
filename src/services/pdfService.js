@@ -372,6 +372,7 @@ class PDFService {
                 <div class="quote-date">${currentDate}</div>
               </div>
             </div>
+            <br />
             <!-- Cliente -->
             <div class="section client-section">
               <h2 class="section-title">Información del Cliente</h2>
@@ -405,6 +406,7 @@ class PDFService {
                 </div>
                 ` : ''}
             </div>
+            <br />
             <!-- Productos -->
             <div class="section products-section">
               <h2 class="section-title">Productos y Servicios</h2>
