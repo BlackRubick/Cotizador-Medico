@@ -412,6 +412,8 @@ class PDFService {
             <br />
             <!-- Productos -->
             <div class="section products-section">
+              <br />
+              <br />
               <h2 class="section-title">Productos y Servicios</h2>
               <table class="products-table">
                 <thead>
