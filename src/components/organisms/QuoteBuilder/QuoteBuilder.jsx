@@ -484,9 +484,15 @@ const QuoteBuilder = ({ onBack }) => {
           setIsEditingMode(false);
           setEditingQuoteData(null);
           
+          // Marcar que se debe recargar el historial
+          sessionStorage.setItem('reloadHistory', 'true');
+          
           setTimeout(() => {
             setSuccessMessage('');
-          }, 5000);
+            
+            // Redirigir al historial después de actualizar para ver los cambios
+            navigate('/historial');
+          }, 2000);
         } else {
           throw new Error(response.message || 'Error al actualizar cotización');
         }
@@ -646,6 +652,8 @@ ${companyName}`;
         
         // 7. Redirigir al historial después de un momento
         setTimeout(() => {
+          // Marcar que se debe recargar el historial
+          sessionStorage.setItem('reloadHistory', 'true');
           clearCart();
           navigate('/historial');
         }, 3000);

@@ -16,6 +16,54 @@ const HistoryPage = () => {
     loadQuotes();
   }, []);
 
+  // Recargar cuando el componente se hace visible (detectar regreso de edición)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // La página se hizo visible, posiblemente regresamos de editar
+        console.log('📱 Página visible - verificando si hay que recargar...');
+        
+        // Verificar si hay un flag que indique que se actualizó una cotización
+        const shouldReload = sessionStorage.getItem('reloadHistory');
+        if (shouldReload) {
+          console.log('🔄 Recargando historial después de actualización...');
+          sessionStorage.removeItem('reloadHistory');
+          loadQuotes();
+        }
+      }
+    };
+
+    const handleWindowFocus = () => {
+      // Detectar cuando la ventana recupera el foco
+      const shouldReload = sessionStorage.getItem('reloadHistory');
+      if (shouldReload) {
+        console.log('🎯 Ventana recuperó el foco - recargando historial...');
+        sessionStorage.removeItem('reloadHistory');
+        loadQuotes();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, []);
+
+  // También verificar al cargar la página si hay que recargar
+  useEffect(() => {
+    const shouldReload = sessionStorage.getItem('reloadHistory');
+    if (shouldReload) {
+      console.log('🔄 Flag de recarga detectado al cargar historial');
+      sessionStorage.removeItem('reloadHistory');
+      // Forzar recarga inmediata
+      setLoading(true);
+      setTimeout(() => loadQuotes(), 100);
+    }
+  }, []);
+
   const loadQuotes = async () => {
     try {
       setLoading(true);
