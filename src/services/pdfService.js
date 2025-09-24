@@ -12,7 +12,7 @@ class PDFService {
         fallbackImages: ['/plantillas/CONDUIT-LIFE.JPEG', '/plantillas/CONDUIT-LIFE.jpg', '/plantillas/CONDUIT-LIFE.JPG', '/plantillas/CONDUIT-LIFE.png'],
         name: 'CONDUIT LIFE',
         colors: {
-          primary: '#1e40af', // Azul corporativo
+          primary: '#1e40af',
           secondary: '#64748b',
           accent: '#059669'
         }
@@ -22,7 +22,7 @@ class PDFService {
         fallbackImages: ['/plantillas/ESCALA-BIOMEDICA.JPEG', '/plantillas/ESCALA-BIOMEDICA.jpg', '/plantillas/ESCALA-BIOMEDICA.JPG', '/plantillas/ESCALA-BIOMEDICA.png'],
         name: 'ESCALA BIOMEDICA',
         colors: {
-          primary: '#dc2626', // Rojo corporativo
+          primary: '#dc2626',
           secondary: '#64748b',
           accent: '#059669'
         }
@@ -32,7 +32,7 @@ class PDFService {
         fallbackImages: ['/plantillas/INGENIERIA-CLINICA-DISEÑO.JPEG', '/plantillas/INGENIERIA-CLINICA-DISEÑO.jpg', '/plantillas/INGENIERIA-CLINICA-DISEÑO.JPG', '/plantillas/INGENIERIA-CLINICA-DISEÑO.png'],
         name: 'INGENIERIA CLINICA Y DISEÑO',
         colors: {
-          primary: '#7c3aed', // Morado corporativo
+          primary: '#7c3aed',
           secondary: '#64748b',
           accent: '#059669'
         }
@@ -42,7 +42,7 @@ class PDFService {
         fallbackImages: ['/plantillas/Biosystems-HLS.JPEG', '/plantillas/Biosystems-HLS.jpg', '/plantillas/Biosystems-HLS.JPG', '/plantillas/Biosystems-HLS.png'],
         name: 'Biosystems HLS',
         colors: {
-          primary: '#059669', // Verde corporativo
+          primary: '#059669',
           secondary: '#64748b',
           accent: '#dc2626'
         }
@@ -50,8 +50,37 @@ class PDFService {
     };
   }
 
-  // Función para crear el HTML de la cotización
-  createQuoteHTML(quoteData, sellerCompany, templateImageData = null) {
+  // NUEVA FUNCIÓN: Calcular productos por página
+  calculateItemsPerPage(itemsCount) {
+    // Estimación de altura por fila en mm (considerando fuente y padding)
+    const rowHeight = itemsCount > 15 ? 8 : itemsCount > 10 ? 9 : itemsCount > 5 ? 10 : 12;
+    
+    // Altura disponible para productos (página 279mm - header 60mm - client 40mm - totals 30mm - margins 40mm)
+    const availableHeight = 279 - 60 - 40 - 30 - 40; // ~109mm
+    
+    // Calcular cuántas filas caben
+    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
+    
+    console.log(`📊 Cálculo de paginación: ${itemsCount} productos, ${maxItemsPerPage} por página`);
+    
+    return Math.max(8, maxItemsPerPage); // Mínimo 8 productos por página
+  }
+
+  // NUEVA FUNCIÓN: Dividir productos en páginas
+  paginateProducts(cartItems) {
+    const itemsPerPage = this.calculateItemsPerPage(cartItems.length);
+    const pages = [];
+    
+    for (let i = 0; i < cartItems.length; i += itemsPerPage) {
+      pages.push(cartItems.slice(i, i + itemsPerPage));
+    }
+    
+    console.log(`📄 Productos divididos en ${pages.length} páginas`);
+    return pages;
+  }
+
+  // Función para crear el HTML de la cotización con PAGINACIÓN
+  createQuoteHTML(quoteData, sellerCompany, templateImageData = null, pageNumber = 1, totalPages = 1, productsForThisPage = null, showSummary = false) {
     const template = this.companyTemplates[sellerCompany.id];
     if (!template) {
       throw new Error('Plantilla no encontrada para la empresa seleccionada');
@@ -63,39 +92,38 @@ class PDFService {
       day: 'numeric'
     });
 
-    const cartItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
-    const subtotal = cartItems.reduce((sum, item) => 
+    // Usar productos específicos para esta página o todos los productos
+    const cartItems = productsForThisPage || (Array.isArray(quoteData.cartItems) ? quoteData.cartItems : []);
+    
+    // Calcular totales SIEMPRE con todos los productos
+    const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+    const subtotal = allItems.reduce((sum, item) => 
       sum + ((item.quantity || 1) * (item.basePrice || 0)), 0
     );
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
-    // Cálculo dinámico del tamaño de fuente y espaciado
-    const itemsCount = cartItems.length;
+    // Ajustar tamaños de fuente según la cantidad total de items
+    const totalItemsCount = allItems.length;
     let fontSize = 12;
     let rowPadding = 8;
     let headerHeight = 120;
-    let clientHeight = 100;
     let sectionSpacing = 20;
 
-    // Ajustar tamaños según la cantidad de items
-    if (itemsCount > 15) {
+    if (totalItemsCount > 15) {
       fontSize = 8;
       rowPadding = 4;
       headerHeight = 100;
-      clientHeight = 80;
       sectionSpacing = 15;
-    } else if (itemsCount > 10) {
+    } else if (totalItemsCount > 10) {
       fontSize = 9;
       rowPadding = 5;
       headerHeight = 110;
-      clientHeight = 90;
       sectionSpacing = 18;
-    } else if (itemsCount > 5) {
+    } else if (totalItemsCount > 5) {
       fontSize = 10;
       rowPadding = 6;
       headerHeight = 115;
-      clientHeight = 95;
       sectionSpacing = 19;
     }
 
@@ -105,7 +133,7 @@ class PDFService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cotización ${quoteData.folio}</title>
+        <title>Cotización ${quoteData.folio} - Página ${pageNumber}</title>
         <style>
           * {
             margin: 0;
@@ -124,13 +152,15 @@ class PDFService {
           .quote-container {
             position: relative;
             width: 216mm;
-            min-height: 279mm;
+            height: 279mm;
             max-width: 216mm;
+            max-height: 279mm;
             padding: 15mm;
             background: white;
             box-sizing: border-box;
             border-radius: 6px;
             box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            overflow: hidden;
           }
           
           .template-image {
@@ -153,7 +183,6 @@ class PDFService {
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: ${sectionSpacing}px;
           }
           
           .header {
@@ -161,11 +190,12 @@ class PDFService {
             justify-content: space-between;
             align-items: flex-start;
             min-height: ${headerHeight}px;
-            margin-top: 140px; /* Espacio para el logo de la plantilla */
+            margin-top: ${pageNumber === 1 ? '140px' : '20px'};
             padding: 15px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             backdrop-filter: blur(5px);
+            flex-shrink: 0;
           }
           
           .company-info {
@@ -219,12 +249,19 @@ class PDFService {
             color: #6b7280;
           }
           
+          .page-info {
+            font-size: ${fontSize - 1}px;
+            color: #6b7280;
+            margin-top: 5px;
+          }
+          
           .section {
             background: rgba(255, 255, 255, 0.95);
             padding: 20px;
             border-radius: 8px;
             backdrop-filter: blur(5px);
             margin-bottom: ${sectionSpacing}px;
+            flex-shrink: 0;
           }
           
           .section-title {
@@ -261,10 +298,16 @@ class PDFService {
             word-wrap: break-word;
           }
           
+          .products-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          }
+          
           .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
             background: white;
             border-radius: 8px;
             overflow: hidden;
@@ -319,9 +362,11 @@ class PDFService {
           }
           
           .summary-section {
-            margin-top: 20px;
+            margin-top: auto;
+            padding-top: 20px;
             display: flex;
             justify-content: flex-end;
+            flex-shrink: 0;
           }
           
           .summary-table {
@@ -352,6 +397,16 @@ class PDFService {
             color: #1f2937;
           }
           
+          .continuation-note {
+            text-align: center;
+            font-style: italic;
+            color: #6b7280;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 6px;
+          }
+          
           /* Estilos responsivos para impresión */
           @media print {
             .quote-container {
@@ -359,7 +414,7 @@ class PDFService {
               margin: 0;
               padding: 10mm;
               width: 216mm !important;
-              min-height: 279mm !important;
+              height: 279mm !important;
             }
             
             body {
@@ -371,12 +426,6 @@ class PDFService {
               opacity: 0.4;
             }
           }
-          
-          /* Ajustes para casos extremos */
-          .overflow-protection {
-            max-height: calc(279mm - 40mm);
-            overflow: hidden;
-          }
         </style>
       </head>
       <body>
@@ -386,7 +435,7 @@ class PDFService {
             `<img src="${window.location.origin}${template.image}" alt="Plantilla ${template.name}" class="template-image" crossorigin="anonymous" />`
           }
           
-          <div class="content overflow-protection">
+          <div class="content">
             <!-- Header -->
             <div class="header">
               <div class="company-info">
@@ -402,10 +451,12 @@ class PDFService {
                 <div class="quote-title">COTIZACIÓN</div>
                 <div class="quote-number">Folio: <strong>${quoteData.folio}</strong></div>
                 <div class="quote-date">${currentDate}</div>
+                ${totalPages > 1 ? `<div class="page-info">Página ${pageNumber} de ${totalPages}</div>` : ''}
               </div>
             </div>
             
-            <!-- Cliente -->
+            <!-- Cliente (solo en primera página) -->
+            ${pageNumber === 1 ? `
             <div class="section">
               <h2 class="section-title">Información del Cliente</h2>
               <div class="client-info">
@@ -443,10 +494,11 @@ class PDFService {
                 </div>
               </div>
             </div>
+            ` : ''}
             
             <!-- Productos -->
-            <div class="section">
-              <h2 class="section-title">Productos y Servicios</h2>
+            <div class="section products-section">
+              <h2 class="section-title">${pageNumber === 1 ? 'Productos y Servicios' : `Productos y Servicios (Continuación)`}</h2>
               <table class="products-table">
                 <thead>
                   <tr>
@@ -459,9 +511,15 @@ class PDFService {
                   </tr>
                 </thead>
                 <tbody>
-                  ${cartItems.map((item, index) => `
+                  ${cartItems.map((item, index) => {
+                    // Calcular el índice global del producto
+                    const globalIndex = productsForThisPage ? 
+                      allItems.findIndex(globalItem => globalItem === item) + 1 :
+                      index + 1;
+                    
+                    return `
                     <tr>
-                      <td class="text-center">${index + 1}</td>
+                      <td class="text-center">${globalIndex}</td>
                       <td class="text-center font-bold">${item.code || 'N/A'}</td>
                       <td>
                         <div class="font-bold product-description">${item.name || 'Producto sin nombre'}</div>
@@ -472,11 +530,20 @@ class PDFService {
                       <td class="text-right price">$${(item.basePrice || 0).toLocaleString('es-MX')}</td>
                       <td class="text-right price font-bold">$${((item.quantity || 1) * (item.basePrice || 0)).toLocaleString('es-MX')}</td>
                     </tr>
-                  `).join('')}
+                  `}).join('')}
                 </tbody>
               </table>
               
-              <!-- Resumen -->
+              <!-- Nota de continuación si no es la última página -->
+              ${!showSummary && totalPages > 1 ? `
+                <div class="continuation-note">
+                  Continúa en la siguiente página...
+                </div>
+              ` : ''}
+            </div>
+            
+            <!-- Resumen (solo en la última página) -->
+            ${showSummary ? `
               <div class="summary-section">
                 <table class="summary-table">
                   <tr>
@@ -493,7 +560,7 @@ class PDFService {
                   </tr>
                 </table>
               </div>
-            </div>
+            ` : ''}
           </div>
         </div>
       </body>
@@ -501,14 +568,124 @@ class PDFService {
     `;
   }
 
-  // Función principal para generar y descargar PDF
-  async generateAndDownloadQuotePDF(quoteData, sellerCompany) {
+  // NUEVA FUNCIÓN: Generar PDF con múltiples páginas
+  async generateMultiPagePDF(quoteData, sellerCompany) {
     try {
+      console.log('📄 Iniciando generación de PDF multipágina');
+      
+      const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+      
+      if (allItems.length === 0) {
+        throw new Error('No hay productos para generar el PDF');
+      }
+
       // Precargar la imagen de la plantilla
       const templateImg = await this.preloadTemplateImage(sellerCompany.id);
-      // Crear el HTML idéntico a la vista previa
-      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
-      // Crear un contenedor oculto en el DOM
+      
+      // Dividir productos en páginas
+      const productPages = this.paginateProducts(allItems);
+      const totalPages = productPages.length;
+      
+      console.log(`📊 Generando ${totalPages} páginas con ${allItems.length} productos`);
+
+      // Crear el PDF
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      const pageWidth = 216;
+      const pageHeight = 279;
+
+      // Generar cada página
+      for (let i = 0; i < productPages.length; i++) {
+        const pageNumber = i + 1;
+        const productsForThisPage = productPages[i];
+        const isLastPage = pageNumber === totalPages;
+
+        console.log(`📄 Generando página ${pageNumber}/${totalPages} con ${productsForThisPage.length} productos`);
+
+        // Crear HTML para esta página
+        const htmlContent = this.createQuoteHTML(
+          quoteData, 
+          sellerCompany, 
+          templateImg, 
+          pageNumber, 
+          totalPages, 
+          productsForThisPage, 
+          isLastPage // Mostrar resumen solo en la última página
+        );
+
+        // Crear contenedor temporal
+        let container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '216mm';
+        container.style.height = '279mm';
+        container.innerHTML = htmlContent;
+        document.body.appendChild(container);
+
+        // Esperar a que carguen las imágenes
+        await this.waitForImages(container);
+
+        // Renderizar a imagen
+        const quoteNode = container.querySelector('.quote-container');
+        const canvas = await html2canvas(quoteNode, { 
+          scale: 2, 
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+        // Agregar nueva página si no es la primera
+        if (pageNumber > 1) {
+          pdf.addPage();
+        }
+
+        // Agregar imagen al PDF
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pageWidth;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+        // Limpiar el DOM
+        document.body.removeChild(container);
+      }
+
+      // Descargar PDF
+      const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      console.log('✅ PDF multipágina generado exitosamente');
+      return { success: true, fileName, pages: totalPages };
+
+    } catch (error) {
+      console.error('❌ Error generando PDF multipágina:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Función principal actualizada para manejar automáticamente la paginación
+  async generateAndDownloadQuotePDF(quoteData, sellerCompany) {
+    const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+    const itemsPerPage = this.calculateItemsPerPage(allItems.length);
+    
+    // Si hay muchos productos, usar PDF multipágina
+    if (allItems.length > itemsPerPage) {
+      console.log(`📊 Demasiados productos (${allItems.length}), usando paginación automática`);
+      return await this.generateMultiPagePDF(quoteData, sellerCompany);
+    } else {
+      // Usar método original para pocos productos
+      return await this.generateSinglePagePDF(quoteData, sellerCompany);
+    }
+  }
+
+  // Método original renombrado para una sola página
+  async generateSinglePagePDF(quoteData, sellerCompany) {
+    try {
+      const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg, 1, 1, null, true);
+      
       let container = document.createElement('div');
       container.style.position = 'fixed';
       container.style.left = '-9999px';
@@ -517,35 +694,212 @@ class PDFService {
       container.style.minHeight = '279mm';
       container.innerHTML = htmlContent;
       document.body.appendChild(container);
-      // Esperar a que carguen las imágenes
+
       await this.waitForImages(container);
-      // Seleccionar el nodo principal
+
       const quoteNode = container.querySelector('.quote-container');
-      // Renderizar a imagen
       const canvas = await html2canvas(quoteNode, { 
         scale: 2, 
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff'
       });
+      
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      // Crear PDF y agregar la imagen
       const pdf = new jsPDF('p', 'mm', 'letter');
       const pageWidth = 216;
       const pageHeight = 279;
-      // Calcular tamaño de la imagen en mm
+      
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pageWidth;
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      // Descargar PDF
+      
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
-      // Limpiar el DOM
+      
       document.body.removeChild(container);
       return { success: true, fileName };
+
     } catch (error) {
       console.error('❌ Error generando PDF:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Función para previsualizar PDF (actualizada para manejar múltiples páginas)
+  async previewQuotePDF(quoteData, sellerCompany) {
+    try {
+      console.log('👁️ Iniciando vista previa del PDF');
+      
+      const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+      const itemsPerPage = this.calculateItemsPerPage(allItems.length);
+      
+      // Si hay muchos productos, mostrar aviso y previsualizar solo la primera página
+      if (allItems.length > itemsPerPage) {
+        const productPages = this.paginateProducts(allItems);
+        const totalPages = productPages.length;
+        
+        if (!confirm(`Esta cotización tendrá ${totalPages} páginas debido a la cantidad de productos (${allItems.length}). ¿Desea previsualizar solo la primera página?`)) {
+          return { success: false, error: 'Vista previa cancelada por el usuario' };
+        }
+        
+        // Previsualizar solo la primera página
+        const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+        const htmlContent = this.createQuoteHTML(
+          quoteData, 
+          sellerCompany, 
+          templateImg, 
+          1, 
+          totalPages, 
+          productPages[0], 
+          false
+        );
+        
+        const previewWindow = this.openPreviewWindow(htmlContent, `Cotización ${quoteData.folio} - Página 1 de ${totalPages}`);
+        return { success: true, pages: totalPages };
+      } else {
+        // Vista previa normal para pocos productos
+        const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+        const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg, 1, 1, null, true);
+        
+        const previewWindow = this.openPreviewWindow(htmlContent, `Cotización ${quoteData.folio}`);
+        return { success: true, pages: 1 };
+      }
+    } catch (error) {
+      console.error('❌ Error en vista previa:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Función auxiliar para abrir ventana de vista previa
+  openPreviewWindow(htmlContent, title) {
+    const previewWindow = window.open('', '_blank', 
+      'width=900,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+    );
+    
+    if (previewWindow) {
+      previewWindow.document.write(htmlContent);
+      previewWindow.document.close();
+      previewWindow.document.title = title;
+      
+      previewWindow.addEventListener('load', () => {
+        console.log('📄 Vista previa cargada completamente');
+        const images = previewWindow.document.querySelectorAll('img');
+        console.log(`🖼️ Imágenes en vista previa: ${images.length}`);
+        
+        images.forEach((img, index) => {
+          if (img.complete && img.naturalWidth > 0) {
+            console.log(`✅ Imagen ${index + 1} ya cargada en vista previa`);
+          } else {
+            console.log(`⏳ Esperando carga de imagen ${index + 1} en vista previa`);
+            img.onload = () => console.log(`✅ Imagen ${index + 1} cargada en vista previa`);
+            img.onerror = () => console.warn(`❌ Error cargando imagen ${index + 1} en vista previa`);
+          }
+        });
+      });
+      
+      previewWindow.focus();
+      return previewWindow;
+    } else {
+      throw new Error('No se pudo abrir la ventana de vista previa. Verifique que no esté bloqueada por el navegador.');
+    }
+  }
+
+  // NUEVA FUNCIÓN: Vista previa de todas las páginas
+  async previewAllPages(quoteData, sellerCompany) {
+    try {
+      console.log('👁️ Iniciando vista previa de todas las páginas');
+      
+      const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+      const productPages = this.paginateProducts(allItems);
+      const totalPages = productPages.length;
+      
+      if (totalPages === 1) {
+        return await this.previewQuotePDF(quoteData, sellerCompany);
+      }
+
+      const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+      
+      // Crear HTML combinado de todas las páginas
+      let combinedHTML = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Cotización ${quoteData.folio} - Vista Completa</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #f5f5f5;
+              font-family: Arial, sans-serif;
+            }
+            .page-separator {
+              margin: 20px 0;
+              padding: 10px;
+              background: #333;
+              color: white;
+              text-align: center;
+              border-radius: 5px;
+            }
+            .page-container {
+              margin-bottom: 40px;
+              box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+              border-radius: 8px;
+              overflow: hidden;
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center; color: #333; margin-bottom: 30px;">
+            Vista Previa Completa - Cotización ${quoteData.folio} (${totalPages} páginas)
+          </h1>
+      `;
+
+      // Generar cada página
+      for (let i = 0; i < productPages.length; i++) {
+        const pageNumber = i + 1;
+        const productsForThisPage = productPages[i];
+        const isLastPage = pageNumber === totalPages;
+
+        combinedHTML += `
+          <div class="page-separator">
+            Página ${pageNumber} de ${totalPages} (${productsForThisPage.length} productos)
+          </div>
+          <div class="page-container">
+        `;
+
+        const pageHTML = this.createQuoteHTML(
+          quoteData,
+          sellerCompany,
+          templateImg,
+          pageNumber,
+          totalPages,
+          productsForThisPage,
+          isLastPage
+        );
+
+        // Extraer solo el contenido del body
+        const bodyContent = pageHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyContent) {
+          combinedHTML += bodyContent[1];
+        }
+
+        combinedHTML += '</div>';
+      }
+
+      combinedHTML += '</body></html>';
+
+      // Abrir ventana de vista previa
+      const previewWindow = this.openPreviewWindow(combinedHTML, `Cotización ${quoteData.folio} - Vista Completa`);
+      
+      return { success: true, pages: totalPages };
+
+    } catch (error) {
+      console.error('❌ Error en vista previa completa:', error);
       return { success: false, error: error.message };
     }
   }
@@ -647,58 +1001,6 @@ class PDFService {
 
     console.warn(`⚠️ No se pudo cargar ninguna plantilla para ${templateId}`);
     return null;
-  }
-
-  // Función para previsualizar PDF
-  async previewQuotePDF(quoteData, sellerCompany) {
-    try {
-      console.log('👁️ Iniciando vista previa del PDF con plantilla:', sellerCompany.id);
-      // Precargar la imagen de la plantilla ANTES de crear el HTML
-      console.log('🖼️ Precargando plantilla antes de crear vista previa...');
-      const templateImg = await this.preloadTemplateImage(sellerCompany.id);
-      if (templateImg) {
-        console.log('✅ Plantilla precargada exitosamente');
-      } else {
-        console.warn('⚠️ No se pudo precargar la plantilla, continuando sin imagen de fondo');
-      }
-      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
-      // Crear nueva ventana con mejor configuración
-      const previewWindow = window.open('', '_blank', 
-        'width=900,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
-      );
-      if (previewWindow) {
-        // Escribir el contenido
-        previewWindow.document.write(htmlContent);
-        previewWindow.document.close();
-        // Esperar a que se cargue completamente la ventana
-        previewWindow.addEventListener('load', () => {
-          console.log('📄 Vista previa cargada completamente');
-          // Verificar si las imágenes se cargaron en la nueva ventana
-          const images = previewWindow.document.querySelectorAll('img');
-          console.log(`🖼️ Imágenes en vista previa: ${images.length}`);
-          images.forEach((img, index) => {
-            if (img.complete && img.naturalWidth > 0) {
-              console.log(`✅ Imagen ${index + 1} ya cargada en vista previa`);
-            } else {
-              console.log(`⏳ Esperando carga de imagen ${index + 1} en vista previa`);
-              img.onload = () => {
-                console.log(`✅ Imagen ${index + 1} cargada en vista previa`);
-              };
-              img.onerror = () => {
-                console.warn(`❌ Error cargando imagen ${index + 1} en vista previa`);
-              };
-            }
-          });
-        });
-        previewWindow.focus();
-      } else {
-        throw new Error('No se pudo abrir la ventana de vista previa. Verifique que no esté bloqueada por el navegador.');
-      }
-      return { success: true };
-    } catch (error) {
-      console.error('❌ Error en vista previa:', error);
-      return { success: false, error: error.message };
-    }
   }
 
   // Función auxiliar para esperar a que se carguen las imágenes
