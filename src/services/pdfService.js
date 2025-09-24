@@ -50,43 +50,65 @@ class PDFService {
     };
   }
 
-  // NUEVA FUNCIÓN: Calcular productos por página (MÁS ESTRICTO)
+  // FUNCIÓN MEJORADA: Calcular productos por página con mejor adaptación
   calculateItemsPerPage(itemsCount) {
-    // Límites más conservadores para asegurar que todo quepa bien
+    // Algoritmo más inteligente basado en la cantidad total de productos
     let maxItemsPerPage;
+    let fontSize;
+    let rowPadding;
     
-    if (itemsCount > 20) {
-      maxItemsPerPage = 12; // Para muchos productos, muy compacto
-    } else if (itemsCount > 15) {
-      maxItemsPerPage = 10; // Para bastantes productos
-    } else if (itemsCount > 10) {
-      maxItemsPerPage = 8;  // Para productos medianos
-    } else if (itemsCount > 5) {
-      maxItemsPerPage = 6;  // Para pocos productos, más espacioso
+    if (itemsCount <= 3) {
+      // Pocos productos: espacioso y elegante
+      maxItemsPerPage = 3;
+      fontSize = 12;
+      rowPadding = 10;
+    } else if (itemsCount <= 6) {
+      // Productos medianos: balance entre espacio y contenido
+      maxItemsPerPage = 4;
+      fontSize = 11;
+      rowPadding = 8;
+    } else if (itemsCount <= 12) {
+      // Bastantes productos: más compacto pero legible
+      maxItemsPerPage = 6;
+      fontSize = 10;
+      rowPadding = 6;
+    } else if (itemsCount <= 20) {
+      // Muchos productos: compacto pero no apretado
+      maxItemsPerPage = 8;
+      fontSize = 9;
+      rowPadding = 5;
     } else {
-      maxItemsPerPage = 5;  // Para muy pocos productos
+      // Muchísimos productos: máxima eficiencia
+      maxItemsPerPage = 10;
+      fontSize = 8;
+      rowPadding = 4;
     }
     
-    console.log(`📊 Cálculo de paginación: ${itemsCount} productos, máximo ${maxItemsPerPage} por página`);
+    console.log(`📊 Adaptación inteligente: ${itemsCount} productos -> ${maxItemsPerPage}/página (font: ${fontSize}px)`);
     
-    return maxItemsPerPage;
+    return { maxItemsPerPage, fontSize, rowPadding };
   }
 
-  // NUEVA FUNCIÓN: Dividir productos en páginas
+  // NUEVA FUNCIÓN: Dividir productos en páginas con mejor distribución
   paginateProducts(cartItems) {
-    const itemsPerPage = this.calculateItemsPerPage(cartItems.length);
+    const config = this.calculateItemsPerPage(cartItems.length);
+    const itemsPerPage = config.maxItemsPerPage;
     const pages = [];
     
     for (let i = 0; i < cartItems.length; i += itemsPerPage) {
       pages.push(cartItems.slice(i, i + itemsPerPage));
     }
     
-    console.log(`📄 Productos divididos en ${pages.length} páginas`);
-    return pages;
+    console.log(`📄 Productos divididos en ${pages.length} páginas con configuración:`, config);
+    pages.forEach((page, index) => {
+      console.log(`  Página ${index + 1}: ${page.length} productos`);
+    });
+    
+    return { pages, config };
   }
 
-  // Función para crear el HTML de la cotización con PAGINACIÓN
-  createQuoteHTML(quoteData, sellerCompany, templateImageData = null, pageNumber = 1, totalPages = 1, productsForThisPage = null, showSummary = false) {
+  // Función para crear el HTML de la cotización con ADAPTACIÓN DINÁMICA
+  createQuoteHTML(quoteData, sellerCompany, templateImageData = null, pageNumber = 1, totalPages = 1, productsForThisPage = null, showSummary = false, styleConfig = null) {
     const template = this.companyTemplates[sellerCompany.id];
     if (!template) {
       throw new Error('Plantilla no encontrada para la empresa seleccionada');
@@ -109,29 +131,15 @@ class PDFService {
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
-    // Ajustar tamaños de fuente según la cantidad total de items
-    const totalItemsCount = allItems.length;
-    let fontSize = 12;
-    let rowPadding = 8;
-    let headerHeight = 120;
-    let sectionSpacing = 20;
+    // Usar configuración de estilo pasada o calcular una nueva
+    const config = styleConfig || this.calculateItemsPerPage(allItems.length);
+    const fontSize = config.fontSize;
+    const rowPadding = config.rowPadding;
 
-    if (totalItemsCount > 15) {
-      fontSize = 8;
-      rowPadding = 4;
-      headerHeight = 100;
-      sectionSpacing = 15;
-    } else if (totalItemsCount > 10) {
-      fontSize = 9;
-      rowPadding = 5;
-      headerHeight = 110;
-      sectionSpacing = 18;
-    } else if (totalItemsCount > 5) {
-      fontSize = 10;
-      rowPadding = 6;
-      headerHeight = 115;
-      sectionSpacing = 19;
-    }
+    // Ajustar espaciados según la configuración
+    let headerHeight = fontSize > 11 ? 120 : fontSize > 9 ? 110 : 100;
+    let sectionSpacing = fontSize > 11 ? 25 : fontSize > 9 ? 20 : 15;
+    let clientSectionHeight = pageNumber === 1 ? (fontSize > 11 ? 140 : fontSize > 9 ? 120 : 100) : 0;
 
     return `
       <!DOCTYPE html>
@@ -197,7 +205,7 @@ class PDFService {
             align-items: flex-start;
             min-height: ${headerHeight}px;
             margin-top: ${pageNumber === 1 ? '140px' : '20px'};
-            padding: 15px;
+            padding: ${fontSize > 11 ? '20px' : fontSize > 9 ? '15px' : '12px'};
             background: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             backdrop-filter: blur(5px);
@@ -213,7 +221,7 @@ class PDFService {
             font-size: ${fontSize + 6}px;
             font-weight: bold;
             color: #000000;
-            margin-bottom: 8px;
+            margin-bottom: ${fontSize > 11 ? '10px' : '6px'};
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
@@ -225,7 +233,7 @@ class PDFService {
           }
           
           .company-details div {
-            margin-bottom: 3px;
+            margin-bottom: ${fontSize > 11 ? '4px' : '2px'};
           }
           
           .quote-info {
@@ -263,7 +271,7 @@ class PDFService {
           
           .section {
             background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
+            padding: ${fontSize > 11 ? '25px' : fontSize > 9 ? '20px' : '15px'};
             border-radius: 8px;
             backdrop-filter: blur(5px);
             margin-bottom: ${sectionSpacing}px;
@@ -274,21 +282,21 @@ class PDFService {
             font-size: ${fontSize + 2}px;
             font-weight: bold;
             color: ${template.colors.primary};
-            margin-bottom: 15px;
-            padding-bottom: 8px;
+            margin-bottom: ${fontSize > 11 ? '20px' : fontSize > 9 ? '15px' : '12px'};
+            padding-bottom: ${fontSize > 11 ? '10px' : '8px'};
             border-bottom: 2px solid ${template.colors.primary}20;
           }
           
           .client-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
+            gap: ${fontSize > 11 ? '20px' : '15px'};
           }
           
           .client-row {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: ${fontSize > 11 ? '10px' : '8px'};
           }
           
           .client-label {
@@ -330,11 +338,12 @@ class PDFService {
           }
           
           .products-table td {
-            padding: ${rowPadding}px 8px;
+            padding: ${rowPadding + 2}px 8px;
             border-bottom: 1px solid #f3f4f6;
             font-size: ${fontSize}px;
             color: #1f2937;
             vertical-align: top;
+            line-height: 1.3;
           }
           
           .products-table tbody tr:nth-child(even) {
@@ -574,10 +583,10 @@ class PDFService {
     `;
   }
 
-  // NUEVA FUNCIÓN: Generar PDF con múltiples páginas
+  // NUEVA FUNCIÓN: Generar PDF con múltiples páginas MEJORADO
   async generateMultiPagePDF(quoteData, sellerCompany) {
     try {
-      console.log('📄 Iniciando generación de PDF multipágina');
+      console.log('📄 Iniciando generación de PDF multipágina ADAPTATIVO');
       
       const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
       
@@ -588,11 +597,13 @@ class PDFService {
       // Precargar la imagen de la plantilla
       const templateImg = await this.preloadTemplateImage(sellerCompany.id);
       
-      // Dividir productos en páginas
-      const productPages = this.paginateProducts(allItems);
+      // Dividir productos en páginas CON configuración
+      const paginationResult = this.paginateProducts(allItems);
+      const productPages = paginationResult.pages;
+      const config = paginationResult.config;
       const totalPages = productPages.length;
       
-      console.log(`📊 Generando ${totalPages} páginas con ${allItems.length} productos`);
+      console.log(`📊 Generando ${totalPages} páginas con configuración inteligente:`, config);
 
       // Crear el PDF
       const pdf = new jsPDF('p', 'mm', 'letter');
@@ -607,7 +618,7 @@ class PDFService {
 
         console.log(`📄 Generando página ${pageNumber}/${totalPages} con ${productsForThisPage.length} productos`);
 
-        // Crear HTML para esta página
+        // Crear HTML para esta página CON configuración de estilo
         const htmlContent = this.createQuoteHTML(
           quoteData, 
           sellerCompany, 
@@ -615,7 +626,8 @@ class PDFService {
           pageNumber, 
           totalPages, 
           productsForThisPage, 
-          isLastPage // Mostrar resumen solo en la última página
+          isLastPage, // Mostrar resumen solo en la última página
+          config // PASAR la configuración de estilo
         );
 
         // Crear contenedor temporal
@@ -662,8 +674,8 @@ class PDFService {
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
 
-      console.log('✅ PDF multipágina generado exitosamente');
-      return { success: true, fileName, pages: totalPages };
+      console.log(`✅ PDF multipágina generado exitosamente: ${fileName}`);
+      return { success: true, fileName, pages: totalPages, config };
 
     } catch (error) {
       console.error('❌ Error generando PDF multipágina:', error);
@@ -674,20 +686,21 @@ class PDFService {
   // NUEVA FUNCIÓN: Debug para ver qué método se está usando
   debugPaginationDecision(quoteData) {
     const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
-    const itemsPerPage = this.calculateItemsPerPage(allItems.length);
+    const config = this.calculateItemsPerPage(allItems.length);
     
-    console.log('🔍 === DEBUG PAGINACIÓN ===');
+    console.log('🔍 === DEBUG PAGINACIÓN ADAPTATIVA ===');
     console.log(`📊 Total productos: ${allItems.length}`);
-    console.log(`📄 Items por página: ${itemsPerPage}`);
-    console.log(`🔄 ¿Usar multipágina?: ${allItems.length > 3 || allItems.length > itemsPerPage}`);
+    console.log(`📄 Items por página: ${config.maxItemsPerPage}`);
+    console.log(`🎨 Configuración: font ${config.fontSize}px, padding ${config.rowPadding}px`);
+    console.log(`🔄 ¿Usar multipágina?: ${allItems.length > 3 || allItems.length > config.maxItemsPerPage}`);
     console.log(`📋 Productos:`, allItems.map(item => item.name));
-    console.log('========================');
+    console.log('======================================');
     
     return {
       totalItems: allItems.length,
-      itemsPerPage,
-      willUseMultiPage: allItems.length > 3 || allItems.length > itemsPerPage,
-      pages: Math.ceil(allItems.length / itemsPerPage)
+      config,
+      willUseMultiPage: allItems.length > 3 || allItems.length > config.maxItemsPerPage,
+      pages: Math.ceil(allItems.length / config.maxItemsPerPage)
     };
   }
 
@@ -697,13 +710,13 @@ class PDFService {
     const debugInfo = this.debugPaginationDecision(quoteData);
     
     const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
-    const itemsPerPage = this.calculateItemsPerPage(allItems.length);
+    const config = this.calculateItemsPerPage(allItems.length);
     
-    console.log(`🔍 Análisis: ${allItems.length} productos, ${itemsPerPage} por página`);
+    console.log(`🔍 Análisis: ${allItems.length} productos, ${config.maxItemsPerPage} por página`);
     
     // FORZAR paginación si hay más de 3 productos O si excede el límite calculado
-    if (allItems.length > 3 || allItems.length > itemsPerPage) {
-      console.log(`📊 Usando paginación: ${allItems.length} productos (límite: ${itemsPerPage})`);
+    if (allItems.length > 3 || allItems.length > config.maxItemsPerPage) {
+      console.log(`📊 Usando paginación ADAPTATIVA: ${allItems.length} productos`);
       return await this.generateMultiPagePDF(quoteData, sellerCompany);
     } else {
       console.log(`📄 Usando página única: ${allItems.length} productos`);
