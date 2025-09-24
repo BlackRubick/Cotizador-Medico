@@ -1394,12 +1394,19 @@ ${companyName}`;
                 <EmailButton
                   quoteData={{
                     number: generatedQuote?.folio || `COT-${Date.now()}`,
-                    date: new Date().toLocaleDateString('es-ES'),
+                    date: new Date().toLocaleDateString('es-MX', {
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric'
+                    }),
                     total: cartItems.reduce((total, item) => total + item.precio * item.cantidad, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
                     items: cartItems
                   }}
                   clientData={{
-                    name: selectedClient?.nombre || selectedClient?.name,
+                    name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
+                    hospitalName: selectedClient?.name || selectedClient?.nombre,
+                    contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     email: selectedClient?.email || selectedClient?.correo
                   }}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"

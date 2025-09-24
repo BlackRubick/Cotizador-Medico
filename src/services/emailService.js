@@ -16,28 +16,41 @@ class EmailService {
    * @param {Object} emailData.quote - Datos de la cotización
    * @param {string} emailData.company_name - Nombre de la empresa
    * @param {string} emailData.from_name - Nombre del remitente
+   * @param {string} emailData.client_hospital - Nombre del hospital/cliente
    */
   async sendQuote(emailData) {
     try {
       const templateParams = {
         to_email: emailData.to_email,
         to_name: emailData.to_name || 'Cliente',
-        from_name: emailData.from_name || 'Cotizador Médico',
-        company_name: emailData.company_name || 'Mi Empresa Médica',
-        subject: emailData.subject || 'Nueva Cotización',
-        message: emailData.message || 'Adjunto encontrará su cotización.',
+        from_name: emailData.from_name || EMAIL_CONFIG.COMPANY.name,
+        company_name: emailData.company_name || EMAIL_CONFIG.COMPANY.name,
+        company_phone: EMAIL_CONFIG.COMPANY.phone,
+        company_email: EMAIL_CONFIG.COMPANY.email,
+        company_website: EMAIL_CONFIG.COMPANY.website,
         
-        // Datos de la cotización
-        quote_number: emailData.quote?.number || '',
-        quote_date: emailData.quote?.date || new Date().toLocaleDateString('es-ES'),
+        subject: emailData.subject || `Cotización ${emailData.quote?.number || ''} - ${EMAIL_CONFIG.COMPANY.name}`,
+        message: emailData.message || '',
+        
+        // Datos de la cotización con formato profesional
+        quote_number: emailData.quote?.number || `COT-${Date.now()}`,
+        quote_date: emailData.quote?.date || new Date().toLocaleDateString('es-MX', {
+          weekday: 'long',
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric'
+        }),
         quote_total: emailData.quote?.total || '0',
-        quote_items: this.formatQuoteItems(emailData.quote?.items || []),
+        quote_items: this.formatQuoteItemsProfessional(emailData.quote?.items || []),
+        
+        // Información del cliente/hospital
+        client_hospital: emailData.client_hospital || emailData.to_name || 'Hospital',
         
         // Email de respuesta
         reply_to: emailData.reply_to || emailData.to_email,
       };
 
-      console.log('Enviando email con parámetros:', templateParams);
+      console.log('📧 Enviando email profesional con parámetros:', templateParams);
 
       const response = await emailjs.send(
         EMAIL_CONFIG.SERVICE_ID,
@@ -46,7 +59,7 @@ class EmailService {
         EMAIL_CONFIG.PUBLIC_KEY
       );
 
-      console.log('Email enviado exitosamente:', response);
+      console.log('✅ Email enviado exitosamente:', response);
       return {
         success: true,
         message: 'Cotización enviada por email exitosamente',
@@ -54,10 +67,10 @@ class EmailService {
       };
 
     } catch (error) {
-      console.error('Error al enviar email:', error);
+      console.error('❌ Error al enviar email:', error);
       return {
         success: false,
-        message: 'Error al enviar el email: ' + error.text || error.message,
+        message: 'Error al enviar el email: ' + (error.text || error.message),
         error
       };
     }
@@ -141,7 +154,39 @@ class EmailService {
   }
 
   /**
-   * Formatear items de la cotización para el email
+   * Formatear items de la cotización para el email (versión profesional)
+   * @param {Array} items - Items de la cotización
+   */
+  formatQuoteItemsProfessional(items) {
+    if (!items || items.length === 0) return 'No hay productos en esta cotización.';
+    
+    let formatted = '';
+    let total = 0;
+    
+    items.forEach((item, index) => {
+      const cantidad = item.quantity || item.cantidad || 1;
+      const precio = parseFloat(item.price || item.precio || 0);
+      const nombre = item.name || item.descripcion || item.nombre || 'Producto';
+      const codigo = item.code || item.codigo || '';
+      const subtotal = cantidad * precio;
+      total += subtotal;
+      
+      formatted += `${index + 1}. ${nombre}\n`;
+      if (codigo) formatted += `   Código: ${codigo}\n`;
+      formatted += `   Cantidad: ${cantidad}\n`;
+      formatted += `   Precio unitario: $${precio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}\n`;
+      formatted += `   Subtotal: $${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}\n`;
+      if (index < items.length - 1) formatted += '\n';
+    });
+    
+    formatted += `\n${'='.repeat(40)}\n`;
+    formatted += `TOTAL: $${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+    
+    return formatted;
+  }
+
+  /**
+   * Formatear items de la cotización para el email (versión simple)
    * @param {Array} items - Items de la cotización
    */
   formatQuoteItems(items) {

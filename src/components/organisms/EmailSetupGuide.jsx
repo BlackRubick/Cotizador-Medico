@@ -1,7 +1,7 @@
 // src/components/organisms/EmailSetupGuide.jsx
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle, ExternalLink, Copy, Settings } from 'lucide-react';
-import { EMAIL_CONFIG, SETUP_INSTRUCTIONS, validateEmailConfig } from '../../config/emailConfig';
+import { EMAIL_CONFIG, SETUP_INSTRUCTIONS, validateEmailConfig, EMAIL_TEMPLATES } from '../../config/emailConfig';
 import emailService from '../../services/emailService';
 
 const EmailSetupGuide = ({ onClose }) => {
@@ -22,49 +22,9 @@ const EmailSetupGuide = ({ onClose }) => {
   };
 
   const templateExamples = {
-    quote: `
-Hola {{to_name}},
-
-Te enviamos la cotización solicitada:
-
-📋 Número de Cotización: {{quote_number}}
-📅 Fecha: {{quote_date}}
-💰 Total: {{quote_total}}
-
-🏥 {{company_name}}
-{{message}}
-
-Productos cotizados:
-{{quote_items}}
-
-¡Quedamos a tu disposición!
-
-Saludos,
-{{from_name}}
-    `.trim(),
-    
-    contact: `
-Nuevo mensaje de contacto:
-
-👤 Nombre: {{from_name}}
-📧 Email: {{from_email}}
-📋 Asunto: {{subject}}
-
-💬 Mensaje:
-{{message}}
-    `.trim(),
-
-    admin: `
-🚨 Nueva cotización generada
-
-📋 Cotización: {{quote_number}}
-👤 Cliente: {{client_name}}
-📧 Email cliente: {{client_email}}
-💰 Total: {{quote_total}}
-📅 Fecha: {{quote_date}}
-
-💬 {{message}}
-    `.trim()
+    quote: EMAIL_TEMPLATES.cotizacion.text,
+    contact: EMAIL_TEMPLATES.contacto.text,
+    admin: EMAIL_TEMPLATES.admin_notification.text
   };
 
   return (

@@ -9,7 +9,8 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     subject: '',
     message: '',
     company_name: 'Cotizador Médico',
-    from_name: 'Equipo de Ventas'
+    from_name: 'Equipo de Ventas',
+    client_hospital: ''
   });
 
   const { sendQuoteEmail, isLoading, error, success, clearStates } = useEmail();
@@ -17,12 +18,22 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
     if (isOpen && clientData) {
+      const hospitalName = clientData.hospitalName || clientData.hospital || clientData.name || clientData.nombre || '';
+      const contactName = clientData.contactName || clientData.contact || clientData.name || clientData.nombre || '';
+      
       setFormData(prev => ({
         ...prev,
-        to_email: clientData.email || '',
-        to_name: clientData.name || clientData.nombre || '',
-        subject: `Cotización #${quoteData?.number || new Date().getTime()}`,
-        message: `Estimado/a ${clientData.name || clientData.nombre || 'Cliente'},\n\nAdjunto encontrará la cotización solicitada.\n\nQuedamos a su disposición para cualquier consulta.\n\nSaludos cordiales,\nEquipo de Ventas`
+        to_email: clientData.email || clientData.correo || '',
+        to_name: contactName,
+        subject: `Cotización ${quoteData?.number || new Date().getTime()} - ${prev.company_name}`,
+        message: `Estimado/a ${contactName},
+
+Esperamos se encuentre bien. Por medio del presente, nos es grato hacerle llegar la cotización solicitada para ${hospitalName}.
+
+Adjunto encontrará el PDF con todos los detalles, especificaciones técnicas y condiciones comerciales.
+
+Quedamos a su disposición para cualquier duda o aclaración.`,
+        client_hospital: hospitalName
       }));
     }
   }, [isOpen, clientData, quoteData]);
@@ -58,7 +69,8 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     const emailData = {
       ...formData,
       quote: quoteData,
-      reply_to: formData.to_email
+      reply_to: formData.to_email,
+      client_hospital: formData.client_hospital || formData.to_name
     };
 
     const result = await sendQuoteEmail(emailData);
@@ -114,13 +126,28 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
           {/* Nombre del destinatario */}
           <div>
             <label htmlFor="to_name" className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre del Destinatario
+              Nombre del Contacto
             </label>
             <input
               type="text"
               id="to_name"
               name="to_name"
               value={formData.to_name}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Nombre del hospital */}
+          <div>
+            <label htmlFor="client_hospital" className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre del Hospital/Institución
+            </label>
+            <input
+              type="text"
+              id="client_hospital"
+              name="client_hospital"
+              value={formData.client_hospital}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
