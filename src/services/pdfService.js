@@ -1,6 +1,7 @@
 // src/services/pdfService.js
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import autoTable from 'jspdf-autotable';
 
 class PDFService {
   constructor() {
@@ -473,96 +474,95 @@ class PDFService {
   // Función principal para generar y descargar PDF
   async generateAndDownloadQuotePDF(quoteData, sellerCompany) {
     try {
-      console.log('📄 Iniciando generación de PDF - usando mismo método que vista previa');
-      
-      // Usar exactamente el mismo proceso que la vista previa
-      console.log('🖼️ Precargando plantilla...');
+      // Precargar la imagen de la plantilla
       const templateImg = await this.preloadTemplateImage(sellerCompany.id);
-      
-      if (templateImg) {
-        console.log('✅ Plantilla precargada exitosamente');
-      } else {
-        console.warn('⚠️ No se pudo precargar la plantilla, continuando sin imagen de fondo');
-      }
-      
-      // Crear exactamente el mismo HTML que la vista previa
-      const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
-      
-      // Crear nueva ventana temporal para capturar
-      const tempWindow = window.open('', '_blank', 'width=900,height=700');
-      
-      if (!tempWindow) {
-        throw new Error('No se pudo abrir ventana temporal para generar PDF');
-      }
-      
-      // Escribir el mismo contenido que la vista previa
-      tempWindow.document.write(htmlContent);
-      tempWindow.document.close();
-      
-      // Esperar a que se cargue completamente
-      await new Promise((resolve) => {
-        tempWindow.addEventListener('load', () => {
-          console.log('📄 Ventana temporal cargada, esperando imágenes...');
-          setTimeout(resolve, 1500); // Dar tiempo extra para las imágenes
-        });
+      const cartItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+      const subtotal = cartItems.reduce((sum, item) => sum + ((item.quantity || 1) * (item.basePrice || 0)), 0);
+      const iva = subtotal * 0.16;
+      const total = subtotal + iva;
+      const currentDate = new Date().toLocaleDateString('es-MX', {
+        year: 'numeric', month: 'long', day: 'numeric'
       });
-
-      console.log('📸 Generando PDF desde ventana temporal...');
-      
-      // Capturar la ventana temporal con configuración optimizada para carta
-      const canvas = await html2canvas(tempWindow.document.body, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: 816, // 216mm * 3.78 (conversión mm a pixels aprox)
-        height: 1056, // 279mm * 3.78
-        windowWidth: 816,
-        windowHeight: 1056
-      });
-
-      console.log('📄 Creando archivo PDF...');
-      
-      // Crear PDF en tamaño carta (Letter)
+      // Crear PDF tamaño carta
       const pdf = new jsPDF('p', 'mm', 'letter');
-      const pageWidth = 216; // Letter width in mm (8.5 inches)
-      const pageHeight = 279; // Letter height in mm (11 inches)
-      
-      // Calcular dimensiones manteniendo aspecto pero ajustando a página carta
-      const canvasAspectRatio = canvas.width / canvas.height;
-      const pageAspectRatio = pageWidth / pageHeight;
-      
-      let imgWidth, imgHeight;
-      
-      if (canvasAspectRatio > pageAspectRatio) {
-        // Canvas es más ancho, ajustar por ancho
-        imgWidth = pageWidth;
-        imgHeight = pageWidth / canvasAspectRatio;
-      } else {
-        // Canvas es más alto, ajustar por alto
-        imgHeight = pageHeight;
-        imgWidth = pageHeight * canvasAspectRatio;
-      }
-      
-      // Centrar la imagen en la página
-      const x = (pageWidth - imgWidth) / 2;
-      const y = (pageHeight - imgHeight) / 2;
-
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, imgWidth, imgHeight);
-
-      // Generar nombre de archivo
+      const pageWidth = 216;
+      const pageHeight = 279;
+      // Dibujar la plantilla de fondo en cada página
+      const drawBackground = () => {
+        if (templateImg && templateImg.base64) {
+          pdf.addImage(templateImg.base64, 'JPEG', 0, 0, pageWidth, pageHeight);
+        }
+      };
+      drawBackground();
+      // Header empresa y cotización
+      pdf.setFontSize(18);
+      pdf.setTextColor(40);
+      pdf.text(sellerCompany.fullName, 15, 25);
+      pdf.setFontSize(10);
+      pdf.text(`Dirección: ${sellerCompany.address}`, 15, 32);
+      pdf.text(`Teléfono: ${sellerCompany.phone}`, 15, 37);
+      pdf.text(`Email: ${sellerCompany.email}`, 15, 42);
+      pdf.text(`RFC: ${sellerCompany.rfc}`, 15, 47);
+      pdf.setFontSize(16);
+      pdf.text('COTIZACIÓN', pageWidth - 60, 25);
+      pdf.setFontSize(12);
+      pdf.text(`Folio: ${quoteData.folio}`, pageWidth - 60, 32);
+      pdf.text(currentDate, pageWidth - 60, 37);
+      // Cliente
+      pdf.setFontSize(12);
+      pdf.text('Información del Cliente', 15, 60);
+      pdf.setFontSize(10);
+      let y = 66;
+      pdf.text(`Cliente: ${quoteData.clientName}`, 15, y); y += 6;
+      pdf.text(`Contacto: ${quoteData.clientContact || 'N/A'}`, 15, y); y += 6;
+      pdf.text(`Email: ${quoteData.email}`, 15, y); y += 6;
+      pdf.text(`Teléfono: ${quoteData.phone || 'N/A'}`, 15, y); y += 6;
+      if (quoteData.clientAddress) { pdf.text(`Dirección: ${quoteData.clientAddress}`, 15, y); y += 6; }
+      if (quoteData.clientPosition) { pdf.text(`Puesto: ${quoteData.clientPosition}`, 15, y); y += 6; }
+      // Tabla de productos con paginación
+      const tableStartY = y + 8;
+      autoTable(pdf, {
+        startY: tableStartY,
+        head: [[
+          '#', 'Código', 'Descripción', 'Cant.', 'Precio Unit.', 'Total'
+        ]],
+        body: cartItems.map((item, idx) => [
+          idx + 1,
+          item.code || 'N/A',
+          `${item.name || ''}\n${item.description || ''}${item.brand ? `\nMarca: ${item.brand}` : ''}`,
+          item.quantity || 1,
+          `$${(item.basePrice || 0).toLocaleString('es-MX')}`,
+          `$${((item.quantity || 1) * (item.basePrice || 0)).toLocaleString('es-MX')}`
+        ]),
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [30, 64, 175], textColor: 255 },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 22, halign: 'center' },
+          2: { cellWidth: 70 },
+          3: { cellWidth: 15, halign: 'center' },
+          4: { cellWidth: 25, halign: 'right' },
+          5: { cellWidth: 25, halign: 'right' }
+        },
+        margin: { left: 15, right: 15 },
+        didDrawPage: drawBackground
+      });
+      // Resumen
+      let summaryY = pdf.lastAutoTable.finalY + 10;
+      pdf.setFontSize(12);
+      pdf.text('Resumen', pageWidth - 80, summaryY);
+      pdf.setFontSize(10);
+      summaryY += 6;
+      pdf.text(`Subtotal: $${subtotal.toLocaleString('es-MX')}`, pageWidth - 80, summaryY);
+      summaryY += 6;
+      pdf.text(`IVA (16%): $${iva.toLocaleString('es-MX')}`, pageWidth - 80, summaryY);
+      summaryY += 6;
+      pdf.setFontSize(12);
+      pdf.text(`TOTAL: $${total.toLocaleString('es-MX')} MXN`, pageWidth - 80, summaryY);
+      // Guardar PDF
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-
-      // Descargar
       pdf.save(fileName);
-      
-      // Cerrar ventana temporal
-      tempWindow.close();
-
-      console.log('✅ PDF generado exitosamente:', fileName);
       return { success: true, fileName };
-
     } catch (error) {
       console.error('❌ Error generando PDF:', error);
       return { success: false, error: error.message };
