@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ShoppingBag, Edit } from 'lucide-react';
 import CartItem from '../../molecules/CartItem';
 import CartSummary from '../../molecules/CartSummary';
 import Button from '../../atoms/Button';
@@ -9,6 +9,29 @@ import { useCart } from '../../../context/CartContext';
 
 const ShoppingCart = ({ onBack, onProceedToQuote }) => {
   const { cartItems, clearCart } = useCart();
+  const [isEditingMode, setIsEditingMode] = useState(false);
+  const [editingQuoteData, setEditingQuoteData] = useState(null);
+
+  // Verificar si estamos en modo edición
+  useEffect(() => {
+    const editingData = localStorage.getItem('editingQuote');
+    const navigatingFromEdit = localStorage.getItem('navigatingFromEdit');
+    
+    if (editingData) {
+      try {
+        const parsedData = JSON.parse(editingData);
+        setIsEditingMode(true);
+        setEditingQuoteData(parsedData);
+      } catch (error) {
+        console.warn('Error parsing editing data in cart:', error);
+      }
+    }
+    
+    // Limpiar el flag de navegación desde edición
+    if (navigatingFromEdit) {
+      localStorage.removeItem('navigatingFromEdit');
+    }
+  }, []);
 
   if (cartItems.length === 0) {
     return (
@@ -106,6 +129,27 @@ const ShoppingCart = ({ onBack, onProceedToQuote }) => {
         </div>
       </div>
 
+      {/* Banner informativo de modo edición */}
+      {isEditingMode && editingQuoteData && (
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-0">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-lg p-4 sm:p-6 shadow-sm">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Edit className="w-5 h-5 text-blue-500" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-blue-800 font-semibold text-lg">Editando Cotización {editingQuoteData.folio}</h4>
+                <p className="text-blue-700 mt-1">
+                  Has agregado productos adicionales. Usa "Continuar Edición" para volver al formulario de cotización.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Contenido principal - RESPONSIVE */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
@@ -119,7 +163,7 @@ const ShoppingCart = ({ onBack, onProceedToQuote }) => {
                   onClick={onProceedToQuote}
                   className="w-full bg-gradient-to-r from-slate-600 to-blue-700 hover:from-slate-700 hover:to-blue-800 text-white py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                   Generar Cotización
+                   {isEditingMode ? 'Continuar Edición' : 'Generar Cotización'}
                 </Button>
               </div>
             </div>
@@ -149,7 +193,7 @@ const ShoppingCart = ({ onBack, onProceedToQuote }) => {
                   onClick={onProceedToQuote}
                   className="w-full bg-gradient-to-r from-slate-600 to-blue-700 hover:from-slate-700 hover:to-blue-800 text-white py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                   Generar Cotización
+                   {isEditingMode ? 'Continuar Edición' : 'Generar Cotización'}
                 </Button>
               </div>
             </div>

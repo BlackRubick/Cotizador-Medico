@@ -704,6 +704,26 @@ ${companyName}`;
                 <ArrowLeft size={20} />
                 <span>Volver al Carrito</span>
               </Button>
+              
+              {/* Botón para agregar productos cuando estamos en modo edición */}
+              {isEditingMode && (
+                <Button 
+                  variant="ghost"
+                  onClick={() => {
+                    // Marcar que estamos navegando desde edición para mantener el contexto
+                    localStorage.setItem('navigatingFromEdit', 'true');
+                    navigate('/cotizar');
+                  }}
+                  className="flex items-center space-x-2 text-white hover:bg-white/10 border-white/20"
+                  disabled={isSubmitting}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Agregar Productos</span>
+                </Button>
+              )}
+              
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
                   <Send className="w-6 h-6 text-white" />
@@ -744,6 +764,28 @@ ${companyName}`;
               <div className="flex-1">
                 <h4 className="text-green-800 font-semibold text-lg">Operación Exitosa</h4>
                 <p className="text-green-700 mt-1">{successMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mensaje informativo de modo edición */}
+        {isEditingMode && editingQuoteData && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-lg p-6 shadow-sm">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-blue-800 font-semibold text-lg">Editando Cotización {editingQuoteData.folio}</h4>
+                <p className="text-blue-700 mt-1">
+                  Puedes modificar los datos del cliente, agregar o quitar productos, y actualizar la cotización. 
+                  Usa el botón "Agregar Productos" para explorar el catálogo y añadir más equipos.
+                </p>
               </div>
             </div>
           </div>
