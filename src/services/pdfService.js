@@ -240,7 +240,7 @@ class PDFService {
             font-size: 12px; /* antes 14px */
             font-weight: bold;
             color: #000000;
-            margin-bottom: 6px;
+            margin-bottom: 16px; /* antes 6px, ahora más separación */
             padding-bottom: 2px;
             border-bottom: 1px solid #00000030;
           }
@@ -375,8 +375,7 @@ class PDFService {
             <br />
             <!-- Cliente -->
             <div class="section client-section">
-              <h2 class="section-title">Información del Cliente</h2>
-              <br />
+              <h2 class="section-title">Información del Cliente<br /></h2>
               <div class="client-row">
                 <span class="client-label">Cliente:</span>
                 <span class="client-value">${quoteData.clientName}</span>
@@ -409,8 +408,7 @@ class PDFService {
             <br />
             <!-- Productos -->
             <div class="section products-section">
-              <h2 class="section-title">Productos y Servicios</h2>
-              <br />
+              <h2 class="section-title">Productos y Servicios<br /></h2>
               <table class="products-table">
                 <thead>
                   <tr>
