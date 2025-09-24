@@ -71,34 +71,29 @@ class PDFService {
     const total = subtotal + iva;
 
     // --- Ajuste dinámico para que siempre quepa en una hoja ---
-    // Altura total de la hoja: 279mm
-    // Header + cliente + márgenes aprox: 480px (header) + 120px (cliente) + 2*30px (margen) ≈ 660px
-    // Espacio disponible para tabla: 279mm - 480px (aprox 180mm) - 30px margen inferior
-    // Pero mejor: calculamos en px para html2canvas (1mm ≈ 3.78px)
+    // Compactar header y cliente para más espacio a la tabla
     const PAGE_HEIGHT_MM = 279;
     const PAGE_HEIGHT_PX = Math.floor(PAGE_HEIGHT_MM * 3.78); // ≈ 1055px
-    const HEADER_PX = 180 + 15 + 120 + 15; // header + padding + cliente + padding
-    const FOOTER_PX = 60; // margen inferior y resumen
-    const AVAILABLE_PX = PAGE_HEIGHT_PX - HEADER_PX - FOOTER_PX;
-    // Altura estimada por fila (incluyendo padding):
+    const HEADER_PX = 100; // antes 180, ahora más compacto
+    const CLIENT_PX = 70;  // antes 120, ahora más compacto
+    const PADDING_PX = 10 + 10; // padding top y bottom
+    const FOOTER_PX = 50; // margen inferior y resumen
+    const AVAILABLE_PX = PAGE_HEIGHT_PX - HEADER_PX - CLIENT_PX - PADDING_PX - FOOTER_PX;
     let minFont = 7;
     let maxFont = 12;
     let fontSize = maxFont;
     let rowPadding = 8;
     let rowHeight = fontSize + rowPadding * 2;
-    // Ajustar dinámicamente para que quepan todas las filas
     if (cartItems.length > 0) {
-      // Probar desde maxFont hacia abajo
       for (let f = maxFont; f >= minFont; f--) {
         let pad = Math.max(2, Math.floor(f / 2));
         let h = f + pad * 2;
-        if ((cartItems.length + 1) * h < AVAILABLE_PX) { // +1 por header
+        if ((cartItems.length + 1) * h < AVAILABLE_PX) {
           fontSize = f;
           rowPadding = pad;
           rowHeight = h;
           break;
         }
-        // Si no cabe ni con minFont, usar minFont
         if (f === minFont) {
           fontSize = minFont;
           rowPadding = pad;
@@ -106,7 +101,6 @@ class PDFService {
         }
       }
     }
-    // Ajustar también el resumen
     let summaryFontSize = fontSize + 2;
 
     return `
@@ -122,14 +116,12 @@ class PDFService {
             padding: 0;
             box-sizing: border-box;
           }
-          
           body {
             font-family: 'Arial', sans-serif;
             line-height: 1.4;
             color: #1f2937;
             background: white;
           }
-
           .quote-container {
             position: relative;
             width: 216mm;
@@ -143,7 +135,6 @@ class PDFService {
             border-radius: 6px;
             box-shadow: 0 0 8px #0002;
           }
-          
           .template-image {
             position: absolute;
             top: 0;
@@ -155,17 +146,14 @@ class PDFService {
             pointer-events: none;
             object-position: center center;
           }
-          
           .template-image.landscape {
             object-fit: cover;
             object-position: center top;
           }
-          
           .template-image.portrait {
             object-fit: contain;
             object-position: center center;
           }
-
           .content {
             position: absolute;
             z-index: 2;
@@ -179,97 +167,83 @@ class PDFService {
             overflow: hidden;
             max-height: 259mm;
           }
-
           .header {
             position: absolute;
-            top: 180px;
-            left: 30px;
-            right: 30px;
+            top: 40px; /* antes 180px */
+            left: 20px; /* antes 30px */
+            right: 20px; /* antes 30px */
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 10px;
+            padding: 4px; /* antes 10px */
             background: transparent;
             border-radius: 0;
             box-shadow: none;
           }
-
           .company-info {
             flex: 1;
           }
-
           .company-name {
-            font-size: 20px;
+            font-size: 16px; /* antes 20px */
             font-weight: bold;
             color: #000000;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
-
           .company-details {
-            font-size: 10px;
+            font-size: 9px; /* antes 10px */
             color: #000000;
-            line-height: 1.3;
+            line-height: 1.2;
           }
-
           .quote-info {
             text-align: right;
             background: transparent;
-            padding: 20px;
+            padding: 8px; /* antes 20px */
             border-radius: 0;
             border-left: none;
           }
-
           .quote-title {
-            font-size: 18px;
+            font-size: 14px; /* antes 18px */
             font-weight: bold;
-            color: #000000;
-            margin-bottom: 8px;
-          }
-
-          .quote-number {
-            font-size: 14px;
             color: #000000;
             margin-bottom: 4px;
           }
-
+          .quote-number {
+            font-size: 11px; /* antes 14px */
+            color: #000000;
+            margin-bottom: 2px;
+          }
           .quote-date {
-            font-size: 12px;
+            font-size: 10px; /* antes 12px */
             color: #000000;
           }
-
           .section {
             position: absolute;
-            left: 30px;
-            right: 30px;
+            left: 20px; /* antes 30px */
+            right: 20px; /* antes 30px */
             background: transparent;
-            padding: 15px;
+            padding: 7px; /* antes 15px */
             border-radius: 0;
             box-shadow: none;
           }
-          
           .section.client-section {
-            top: 320px;
+            top: 90px; /* antes 320px */
           }
-          
           .section.products-section {
-            top: 480px;
+            top: 170px; /* antes 480px */
             height: auto;
             overflow: visible;
-            max-height: calc(279mm - 480px - 30px);
+            max-height: calc(279mm - 170px - 20px);
           }
-          
-
           .section-title {
-            font-size: 14px;
+            font-size: 12px; /* antes 14px */
             font-weight: bold;
             color: #000000;
-            margin-bottom: 10px;
-            padding-bottom: 3px;
+            margin-bottom: 6px;
+            padding-bottom: 2px;
             border-bottom: 1px solid #00000030;
           }
-
           .client-info {
             background: transparent;
             padding: 0;
@@ -277,101 +251,85 @@ class PDFService {
             border-left: none;
             box-shadow: none;
           }
-
           .client-row {
             display: flex;
-            margin-bottom: 6px;
-            font-size: 12px;
+            margin-bottom: 3px;
+            font-size: 10px; /* antes 12px */
           }
-
           .client-label {
             font-weight: bold;
-            width: 100px;
+            width: 80px; /* antes 100px */
             color: #000000;
           }
-
           .client-value {
             color: #000000;
             flex: 1;
           }
-
           .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
             box-shadow: none;
             border-radius: 0;
             overflow: visible;
             background: transparent;
             font-size: ${fontSize}px;
           }
-
           .products-table th {
             background: linear-gradient(135deg, ${template.colors.primary}, ${template.colors.primary}90);
             color: white;
-            padding: ${rowPadding + 2}px 6px;
+            padding: ${rowPadding + 2}px 4px;
             text-align: left;
             font-weight: bold;
             font-size: ${fontSize}px;
           }
-
           .products-table td {
-            padding: ${rowPadding}px 6px;
+            padding: ${rowPadding}px 4px;
             border-bottom: 1px solid #e5e7eb;
             font-size: ${fontSize}px;
             color: #000000;
           }
-
           .products-table tbody tr:nth-child(even) {
             background-color: transparent;
           }
-
           .products-table tbody tr:hover {
             background-color: transparent;
           }
-
           .text-right {
             text-align: right;
           }
-
           .text-center {
             text-align: center;
           }
-
           .font-bold {
             font-weight: bold;
           }
-
           .summary-table {
-            width: 300px;
+            width: 220px; /* antes 300px */
             margin-left: auto;
-            margin-top: 20px;
+            margin-top: 10px;
             border-collapse: collapse;
             background: transparent;
             border-radius: 0;
             overflow: visible;
             box-shadow: none;
           }
-
           .summary-table td {
-            padding: 8px 15px;
+            padding: 6px 10px;
             border-bottom: 1px solid #e5e7eb;
             color: #000000;
             font-size: ${fontSize}px;
           }
-
           .summary-table .total-row {
             background: transparent;
             font-weight: bold;
             font-size: ${summaryFontSize}px;
             color: #000000;
           }
-
           .price {
             font-weight: bold;
             color: #000000;
           }
-
           @media print {
             .quote-container {
               box-shadow: none;
@@ -379,13 +337,11 @@ class PDFService {
               width: 216mm !important;
               height: 279mm !important;
             }
-            
             body {
               margin: 0 !important;
               padding: 0 !important;
             }
           }
-          
           .content {
             max-width: 186mm;
             max-height: 249mm;
@@ -398,7 +354,6 @@ class PDFService {
             `<img src="${templateImageData.base64}" alt="Plantilla ${template.name}" class="template-image ${templateImageData.orientation || 'portrait'}" />` :
             `<img src="${window.location.origin}${template.image}" alt="Plantilla ${template.name}" class="template-image portrait" crossorigin="anonymous" />`
           }
-          
           <div class="content">
             <!-- Header -->
             <div class="header">
@@ -411,14 +366,12 @@ class PDFService {
                   <div><strong>RFC:</strong> ${sellerCompany.rfc}</div>
                 </div>
               </div>
-              
               <div class="quote-info">
                 <div class="quote-title">COTIZACIÓN</div>
                 <div class="quote-number">Folio: <strong>${quoteData.folio}</strong></div>
                 <div class="quote-date">${currentDate}</div>
               </div>
             </div>
-
             <!-- Cliente -->
             <div class="section client-section">
               <h2 class="section-title">Información del Cliente</h2>
@@ -451,19 +404,18 @@ class PDFService {
                 </div>
                 ` : ''}
             </div>
-
             <!-- Productos -->
             <div class="section products-section">
               <h2 class="section-title">Productos y Servicios</h2>
               <table class="products-table">
                 <thead>
                   <tr>
-                    <th style="width: 60px;">#</th>
-                    <th style="width: 80px;">Código</th>
+                    <th style="width: 50px;">#</th>
+                    <th style="width: 70px;">Código</th>
                     <th>Descripción</th>
-                    <th style="width: 60px;">Cant.</th>
-                    <th style="width: 100px;">Precio Unit.</th>
-                    <th style="width: 100px;">Total</th>
+                    <th style="width: 50px;">Cant.</th>
+                    <th style="width: 80px;">Precio Unit.</th>
+                    <th style="width: 80px;">Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -473,8 +425,8 @@ class PDFService {
                       <td class="text-center font-bold">${item.code || 'N/A'}</td>
                       <td>
                         <div class="font-bold">${item.name || 'Producto sin nombre'}</div>
-                        <div style="font-size: ${fontSize - 1}px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
-                        ${item.brand ? `<div style="font-size: ${fontSize - 2}px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
+                        <div style="font-size: ${fontSize - 1}px; color: #000000; margin-top: 2px;">${item.description || ''}</div>
+                        ${item.brand ? `<div style="font-size: ${fontSize - 2}px; color: #000000; margin-top: 1px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
                       </td>
                       <td class="text-center">${item.quantity || 1}</td>
                       <td class="text-right price">$${(item.basePrice || 0).toLocaleString('es-MX')}</td>
@@ -483,7 +435,6 @@ class PDFService {
                   `).join('')}
                 </tbody>
               </table>
-
               <!-- Resumen -->
               <table class="summary-table">
                 <tr>
