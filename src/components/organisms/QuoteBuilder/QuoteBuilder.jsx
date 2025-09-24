@@ -149,13 +149,12 @@ const QuoteBuilder = ({ onBack }) => {
         console.log('🔍 Estado del carrito:', {
           navegandoDesdeEdicion: !!navigatingFromEdit,
           productosEnCarritoActual: currentCartItemsCount,
-          productosEnDatosEdicion: parsedData.cartItems?.length || 0
+          productosEnDatosEdicion: parsedData.cartItems?.length || 0,
+          flagEnLocalStorage: navigatingFromEdit
         });
         
-        // Solo sobrescribir el carrito si:
-        // 1. No venimos de agregar productos (navigatingFromEdit es null)
-        // 2. O el carrito está vacío
-        if (!navigatingFromEdit || currentCartItemsCount === 0) {
+        // Solo sobrescribir el carrito si NO venimos de agregar productos
+        if (!navigatingFromEdit) {
           if (parsedData.cartItems && Array.isArray(parsedData.cartItems)) {
             console.log('🛒 Cargando productos originales al carrito:', parsedData.cartItems);
             
@@ -191,6 +190,7 @@ const QuoteBuilder = ({ onBack }) => {
           // Venimos de agregar productos, mantener el carrito actual
           console.log('🔄 Manteniendo productos actuales del carrito (se agregaron productos adicionales)');
           console.log('📦 Productos actuales en carrito:', currentCartItemsCount);
+          console.log('🏷️ Flag navigatingFromEdit encontrado:', navigatingFromEdit);
           
           // Mostrar mensaje indicando que se mantuvieron los productos agregados
           const productosOriginales = parsedData.cartItems?.length || 0;
@@ -199,8 +199,10 @@ const QuoteBuilder = ({ onBack }) => {
           setSuccessMessage(`✅ Editando cotización ${parsedData.folio}. ${currentCartItemsCount} productos total (${productosOriginales} originales + ${productosAgregados} agregados).`);
           setTimeout(() => setSuccessMessage(''), 8000);
           
-          // Limpiar el flag para futuras navegaciones
-          localStorage.removeItem('navigatingFromEdit');
+          // Limpiar el flag para futuras navegaciones (con delay para asegurar que se procese)
+          setTimeout(() => {
+            localStorage.removeItem('navigatingFromEdit');
+          }, 500);
         }
         
         // NO eliminar los datos de localStorage aún, los eliminaremos cuando se guarde/actualice

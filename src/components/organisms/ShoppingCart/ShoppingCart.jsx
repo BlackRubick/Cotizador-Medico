@@ -27,10 +27,7 @@ const ShoppingCart = ({ onBack, onProceedToQuote }) => {
       }
     }
     
-    // Limpiar el flag de navegación desde edición
-    if (navigatingFromEdit) {
-      localStorage.removeItem('navigatingFromEdit');
-    }
+    // NO limpiar el flag aquí - lo hará QuoteBuilder cuando procese los productos
   }, []);
 
   if (cartItems.length === 0) {
