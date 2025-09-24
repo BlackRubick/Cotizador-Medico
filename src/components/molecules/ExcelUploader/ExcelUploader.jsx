@@ -369,41 +369,7 @@ const ExcelUploader = ({ onDataLoaded, onError }) => {
         </div>
       )}
 
-      {/* Información sobre el formato esperado */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-        <div className="flex items-start space-x-2">
-          <FileSpreadsheet size={16} className="text-blue-600 mt-0.5" />
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-2">Formato de archivo Excel esperado:</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div>
-                <p className="font-medium text-xs mb-1">📋 Columnas Requeridas:</p>
-                <ul className="text-xs space-y-0.5">
-                  <li>• <strong>DESCRIPCIÓN</strong> o <strong>MODELO</strong></li>
-                  <li>• <strong>PRECIO VENTA</strong> o <strong>PRICE EXW</strong></li>
-                </ul>
-              </div>
-              <div>
-                <p className="font-medium text-xs mb-1">📝 Columnas Opcionales:</p>
-                <ul className="text-xs space-y-0.5">
-                  <li>• CATEGORIA, ESPECIALIDAD</li>
-                  <li>• MARCA, MODELO, CLASIFICACION</li>
-                  <li>• USO, UNIDAD, PROVEEDOR</li>
-                  <li>• COMPATIBILIDAD, MONEDA</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-2 p-2 bg-white rounded border border-blue-100">
-              <p className="font-medium text-xs mb-1">🔄 Columnas Reconocidas:</p>
-              <p className="text-xs leading-relaxed">
-                CATEGORIA | ESPECIALIDAD | CLASIFICACION | PARA | MARCA | MODELO | 
-                DESCRIPCIÓN | USO | UNIDAD | PROVEEDOR | UOM | PRICE EXW | MONEDA | 
-                VALOR MONEDA | LANDEN FACTOR | MARGIN FACTOR | COMPATIBILIDAD | PRECIO VENTA
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };

@@ -94,16 +94,7 @@ const ProductCatalog = ({ onCategorySelect, onBack }) => {
         onDismiss={() => setUploadStatus(null)}
       />
 
-      {/* Componente de carga de Excel */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">
-          Cargar Catálogo desde Excel
-        </h3>
-        <ExcelUploader 
-          onDataLoaded={handleExcelDataLoaded}
-          onError={handleUploadError}
-        />
-      </div>
+
       
       <ProductGrid 
         key={refreshKey}
