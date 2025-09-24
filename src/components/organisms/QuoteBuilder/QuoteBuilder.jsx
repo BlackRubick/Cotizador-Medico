@@ -450,7 +450,6 @@ const QuoteBuilder = ({ onBack }) => {
       const quoteData = {
         sellerCompany: selectedSellerCompany?.name || '',
         sellerCompanyId: quoteInfo.sellerCompany,
-        clientId: selectedClient?.id || null,
         clientName: quoteInfo.clientName || selectedClient?.name,
         clientContact: quoteInfo.clientContact || selectedClient?.contact,
         email: quoteInfo.email,
@@ -465,6 +464,18 @@ const QuoteBuilder = ({ onBack }) => {
           observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
         }
       };
+      
+      // Solo agregar clientId si hay un cliente seleccionado de la BD
+      if (selectedClient?.id) {
+        quoteData.clientId = selectedClient.id;
+      }
+      
+      console.log('📝 Datos de cotización para guardar:', {
+        ...quoteData,
+        products: `${quoteData.products.length} productos`,
+        hasClientId: !!quoteData.clientId,
+        selectedClient: !!selectedClient
+      });
 
       if (isEditingMode && editingQuoteData) {
         // Modo edición: actualizar cotización existente
@@ -537,7 +548,6 @@ const QuoteBuilder = ({ onBack }) => {
       const quoteData = {
         sellerCompany: selectedSellerCompany?.name || '',
         sellerCompanyId: quoteInfo.sellerCompany,
-        clientId: selectedClient?.id || null,
         clientName: quoteInfo.clientName || selectedClient?.name,
         clientContact: quoteInfo.clientContact || selectedClient?.contact,
         email: quoteInfo.email,
@@ -552,8 +562,20 @@ const QuoteBuilder = ({ onBack }) => {
           observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
         }
       };
+      
+      // Solo agregar clientId si hay un cliente seleccionado de la BD
+      if (selectedClient?.id) {
+        quoteData.clientId = selectedClient.id;
+      }
 
-      console.log('📤 Creando cotización y preparando envío por WhatsApp');
+      console.log('� Datos de cotización para enviar:', {
+        ...quoteData,
+        products: `${quoteData.products.length} productos`,
+        hasClientId: !!quoteData.clientId,
+        selectedClient: !!selectedClient
+      });
+
+      console.log('�📤 Creando cotización y preparando envío por WhatsApp');
       console.log('📦 Productos que se van a enviar (actuales del carrito):', cartItems);
       console.log('📊 Total de productos a enviar:', cartItems.length);
       
