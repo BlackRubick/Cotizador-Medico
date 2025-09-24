@@ -100,7 +100,7 @@ const HistoryPage = () => {
       console.log('✏️ handleEdit llamado desde HistoryPage:', quote);
       
       const confirmEdit = window.confirm(
-        `¿Deseas editar la cotización ${quote.folio}?\n\nSe abrirá el editor de cotizaciones con los datos actuales.`
+        `¿Deseas editar la cotización ${quote.folio}?\n\nTe llevará directamente al generador de cotizaciones con los datos cargados para edición.`
       );
       
       if (confirmEdit) {
@@ -152,17 +152,15 @@ const HistoryPage = () => {
           console.log('✅ Datos guardados verificados:', !!savedData, savedData ? 'Tamaño:' + savedData.length : '');
           console.log('📋 Vista previa de datos guardados:', savedData ? JSON.parse(savedData) : null);
           
-          // Mostrar alerta temporal para debugging
-          alert(`🔧 DEBUG: Datos preparados para edición:
+          // Mostrar mensaje de confirmación
+          console.log(`✅ Datos preparados para edición:
 • Folio: ${editData.folio}
 • Cliente: ${editData.clientInfo.clientName}
 • Productos: ${editData.cartItems.length}
-• Navegando a: /cotizar
+• Navegando a: /cotizar/generar`);
           
-Presiona OK para continuar...`);
-          
-          // Usar React Router para navegar
-          navigate('/cotizar');
+          // Navegar directamente al QuoteBuilder donde se pueden editar las cotizaciones
+          navigate('/cotizar/generar');
           
         } catch (editError) {
           console.error('❌ Error preparando edición:', editError);
