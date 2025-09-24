@@ -583,31 +583,61 @@ const QuoteBuilder = ({ onBack }) => {
       let quoteId = null;
       let savedInBD = false;
       
-      // 1. Intentar guardar cotización (BD primero, local como respaldo)
-      try {
-        const response = await quoteService.createQuote(quoteData);
+      // Verificar si estamos en modo edición
+      if (isEditingMode && editingQuoteData) {
+        // Modo edición: actualizar cotización existente primero
+        console.log('✏️ Actualizando cotización existente antes de enviar:', editingQuoteData.quoteId);
         
-        if (response.success) {
-          await quoteService.updateQuoteStatus(response.data.id, 'sent');
-          quoteFolio = response.data.folio;
-          quoteId = response.data.id;
-          savedInBD = true;
-          console.log('✅ Cotización guardada en BD:', quoteFolio);
-        } else {
-          throw new Error(response.message || 'Error al guardar en BD');
+        try {
+          const updateResponse = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
+          
+          if (updateResponse.success) {
+            quoteFolio = editingQuoteData.folio;
+            quoteId = editingQuoteData.quoteId;
+            savedInBD = true;
+            console.log('✅ Cotización actualizada exitosamente:', quoteFolio);
+            
+            // Actualizar estado a 'sent'
+            await quoteService.updateQuoteStatus(quoteId, 'sent');
+            
+            // Limpiar datos de edición
+            localStorage.removeItem('editingQuote');
+            setIsEditingMode(false);
+            setEditingQuoteData(null);
+          } else {
+            throw new Error(updateResponse.message || 'Error al actualizar cotización');
+          }
+        } catch (updateError) {
+          console.error('❌ Error actualizando cotización:', updateError);
+          throw new Error('Error al actualizar cotización: ' + updateError.message);
         }
-      } catch (bdError) {
-        console.warn('⚠️ No se pudo guardar en BD, guardando localmente:', bdError.message);
-        
-        // Si falla la BD, guardar localmente
-        const localResult = localStorageService.saveLocalQuote(quoteData);
-        
-        if (localResult.success) {
-          quoteFolio = localResult.data.folio;
-          quoteId = localResult.data.id;
-          console.log('✅ Cotización guardada localmente:', quoteFolio);
-        } else {
-          throw new Error('Error al guardar cotización: ' + localResult.error);
+      } else {
+        // Modo normal: crear nueva cotización (BD primero, local como respaldo)
+        try {
+          const response = await quoteService.createQuote(quoteData);
+          
+          if (response.success) {
+            await quoteService.updateQuoteStatus(response.data.id, 'sent');
+            quoteFolio = response.data.folio;
+            quoteId = response.data.id;
+            savedInBD = true;
+            console.log('✅ Cotización guardada en BD:', quoteFolio);
+          } else {
+            throw new Error(response.message || 'Error al guardar en BD');
+          }
+        } catch (bdError) {
+          console.warn('⚠️ No se pudo guardar en BD, guardando localmente:', bdError.message);
+          
+          // Si falla la BD, guardar localmente
+          const localResult = localStorageService.saveLocalQuote(quoteData);
+          
+          if (localResult.success) {
+            quoteFolio = localResult.data.folio;
+            quoteId = localResult.data.id;
+            console.log('✅ Cotización guardada localmente:', quoteFolio);
+          } else {
+            throw new Error('Error al guardar cotización: ' + localResult.error);
+          }
         }
       }
       
@@ -669,7 +699,8 @@ ${companyName}`;
         
         setGeneratedQuote({ ...quoteData, id: quoteId, folio: quoteFolio });
         const storageType = savedInBD ? 'en base de datos' : 'localmente';
-        setSuccessMessage(`✅ Cotización ${quoteFolio} guardada ${storageType} exitosamente. Se abrió WhatsApp para envío.`);
+        const actionType = (isEditingMode && editingQuoteData) ? 'actualizada' : 'guardada';
+        setSuccessMessage(`✅ Cotización ${quoteFolio} ${actionType} ${storageType} exitosamente. Se abrió WhatsApp para envío.`);
         console.log('✅ Quote saved and WhatsApp opened:', quoteFolio);
         
         // 7. Redirigir al historial después de un momento
