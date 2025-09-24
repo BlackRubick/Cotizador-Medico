@@ -242,8 +242,8 @@ class PDFService {
             font-size: 12px;
             font-weight: bold;
             color: #000000;
-            margin-bottom: 24px; /* más separación visual */
-            padding-bottom: 2px;
+            margin-bottom: 40px; /* más separación visual debajo del título */
+            padding-bottom: 8px; /* más separación visual debajo del título */
             border-bottom: 1px solid #00000030;
           }
           .client-info {
