@@ -375,6 +375,7 @@ class PDFService {
             <!-- Cliente -->
             <div class="section client-section">
               <h2 class="section-title">Información del Cliente</h2>
+              <br />
               <div class="client-row">
                 <span class="client-label">Cliente:</span>
                 <span class="client-value">${quoteData.clientName}</span>
@@ -407,6 +408,7 @@ class PDFService {
             <!-- Productos -->
             <div class="section products-section">
               <h2 class="section-title">Productos y Servicios</h2>
+              <br />
               <table class="products-table">
                 <thead>
                   <tr>
