@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserRole } from '../../hooks/useUserRole';
+import { useUserRole } from '../hooks/useUserRole';
 import { useLocation } from 'react-router-dom';
 
 const PageDebug = ({ pageName }) => {
