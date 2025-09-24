@@ -50,20 +50,26 @@ class PDFService {
     };
   }
 
-  // NUEVA FUNCIÓN: Calcular productos por página
+  // NUEVA FUNCIÓN: Calcular productos por página (MÁS ESTRICTO)
   calculateItemsPerPage(itemsCount) {
-    // Estimación de altura por fila en mm (considerando fuente y padding)
-    const rowHeight = itemsCount > 15 ? 8 : itemsCount > 10 ? 9 : itemsCount > 5 ? 10 : 12;
+    // Límites más conservadores para asegurar que todo quepa bien
+    let maxItemsPerPage;
     
-    // Altura disponible para productos (página 279mm - header 60mm - client 40mm - totals 30mm - margins 40mm)
-    const availableHeight = 279 - 60 - 40 - 30 - 40; // ~109mm
+    if (itemsCount > 20) {
+      maxItemsPerPage = 12; // Para muchos productos, muy compacto
+    } else if (itemsCount > 15) {
+      maxItemsPerPage = 10; // Para bastantes productos
+    } else if (itemsCount > 10) {
+      maxItemsPerPage = 8;  // Para productos medianos
+    } else if (itemsCount > 5) {
+      maxItemsPerPage = 6;  // Para pocos productos, más espacioso
+    } else {
+      maxItemsPerPage = 5;  // Para muy pocos productos
+    }
     
-    // Calcular cuántas filas caben
-    const maxItemsPerPage = Math.floor(availableHeight / rowHeight);
+    console.log(`📊 Cálculo de paginación: ${itemsCount} productos, máximo ${maxItemsPerPage} por página`);
     
-    console.log(`📊 Cálculo de paginación: ${itemsCount} productos, ${maxItemsPerPage} por página`);
-    
-    return Math.max(8, maxItemsPerPage); // Mínimo 8 productos por página
+    return maxItemsPerPage;
   }
 
   // NUEVA FUNCIÓN: Dividir productos en páginas
@@ -665,17 +671,42 @@ class PDFService {
     }
   }
 
-  // Función principal actualizada para manejar automáticamente la paginación
-  async generateAndDownloadQuotePDF(quoteData, sellerCompany) {
+  // NUEVA FUNCIÓN: Debug para ver qué método se está usando
+  debugPaginationDecision(quoteData) {
     const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
     const itemsPerPage = this.calculateItemsPerPage(allItems.length);
     
-    // Si hay muchos productos, usar PDF multipágina
-    if (allItems.length > itemsPerPage) {
-      console.log(`📊 Demasiados productos (${allItems.length}), usando paginación automática`);
+    console.log('🔍 === DEBUG PAGINACIÓN ===');
+    console.log(`📊 Total productos: ${allItems.length}`);
+    console.log(`📄 Items por página: ${itemsPerPage}`);
+    console.log(`🔄 ¿Usar multipágina?: ${allItems.length > 3 || allItems.length > itemsPerPage}`);
+    console.log(`📋 Productos:`, allItems.map(item => item.name));
+    console.log('========================');
+    
+    return {
+      totalItems: allItems.length,
+      itemsPerPage,
+      willUseMultiPage: allItems.length > 3 || allItems.length > itemsPerPage,
+      pages: Math.ceil(allItems.length / itemsPerPage)
+    };
+  }
+
+  // Función principal actualizada para FORZAR paginación cuando hay más de 3 productos
+  async generateAndDownloadQuotePDF(quoteData, sellerCompany) {
+    // DEBUG: Mostrar información de paginación
+    const debugInfo = this.debugPaginationDecision(quoteData);
+    
+    const allItems = Array.isArray(quoteData.cartItems) ? quoteData.cartItems : [];
+    const itemsPerPage = this.calculateItemsPerPage(allItems.length);
+    
+    console.log(`🔍 Análisis: ${allItems.length} productos, ${itemsPerPage} por página`);
+    
+    // FORZAR paginación si hay más de 3 productos O si excede el límite calculado
+    if (allItems.length > 3 || allItems.length > itemsPerPage) {
+      console.log(`📊 Usando paginación: ${allItems.length} productos (límite: ${itemsPerPage})`);
       return await this.generateMultiPagePDF(quoteData, sellerCompany);
     } else {
-      // Usar método original para pocos productos
+      console.log(`📄 Usando página única: ${allItems.length} productos`);
       return await this.generateSinglePagePDF(quoteData, sellerCompany);
     }
   }
