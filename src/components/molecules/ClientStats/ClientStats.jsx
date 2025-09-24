@@ -29,13 +29,7 @@ const ClientStats = ({ clients }) => {
       color: 'text-purple-600',
       bg: 'bg-purple-100'
     },
-    {
-      title: 'Con Email',
-      value: clients.filter(c => c.email).length,
-      icon: Mail,
-      color: 'text-orange-600',
-      bg: 'bg-orange-100'
-    }
+
   ];
 
   return (
