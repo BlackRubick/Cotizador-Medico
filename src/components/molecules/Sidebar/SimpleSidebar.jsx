@@ -17,6 +17,8 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
   // Crear menú simple basado en el rol
   let menuItems = [];
   
+  console.log('SimpleSidebar render - userRole:', userRole);
+  
   if (userRole === 'admin' || userRole === 'administrador') {
     menuItems = [
       { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -33,6 +35,8 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
     ];
   }
+  
+  console.log('SimpleSidebar menuItems:', menuItems);
 
   return (
     <>
@@ -70,14 +74,16 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
                 <NavLink
                   key={item.id}
                   to={item.path}
-                  className={({ isActive }) => 
-                    `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={({ isActive }) => {
+                    console.log(`NavLink ${item.label}:`, { path: item.path, isActive });
+                    return `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive 
                         ? 'bg-blue-600 text-white' 
                         : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`
-                  }
-                  onClick={() => {
+                    }`;
+                  }}
+                  onClick={(e) => {
+                    console.log(`Clicked on ${item.label}:`, item.path);
                     if (window.innerWidth < 1024 && isOpen) {
                       onToggle();
                     }

@@ -39,60 +39,15 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Redirección inteligente basada en roles */}
+              {/* Rutas simplificadas - SIN protección por roles por ahora */}
               <Route index element={<RoleBasedRedirect />} />
-              
-              {/* Rutas solo para administradores */}
-              <Route 
-                path="dashboard" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <TestContentPage title="Dashboard Administrativo" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="perfil" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <TestContentPage title="Perfil de Usuario" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="revisar-cotizaciones" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <TestContentPage title="Revisar Cotizaciones" />
-                  </RoleBasedRoute>
-                } 
-              />
-              
-              {/* Rutas para administradores y vendedores */}
-              <Route 
-                path="cotizar/*" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestContentPage title="Nueva Cotización" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="historial" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestContentPage title="Historial de Cotizaciones" />
-                  </RoleBasedRoute>
-                } 
-              />
-              <Route 
-                path="clientes" 
-                element={
-                  <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <TestContentPage title="Gestión de Clientes" />
-                  </RoleBasedRoute>
-                } 
-              />
+              <Route path="dashboard" element={<TestContentPage title="Dashboard Administrativo" />} />
+              <Route path="cotizar/*" element={<TestContentPage title="Nueva Cotización" />} />
+              <Route path="cotizar" element={<TestContentPage title="Nueva Cotización" />} />
+              <Route path="historial" element={<TestContentPage title="Historial de Cotizaciones" />} />
+              <Route path="clientes" element={<TestContentPage title="Gestión de Clientes" />} />
+              <Route path="perfil" element={<TestContentPage title="Perfil de Usuario" />} />
+              <Route path="revisar-cotizaciones" element={<TestContentPage title="Revisar Cotizaciones" />} />
             </Route>
 
             {/* Catch all route - redirección inteligente basada en roles */}
