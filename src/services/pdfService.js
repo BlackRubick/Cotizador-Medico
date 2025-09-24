@@ -94,11 +94,15 @@ class PDFService {
           .quote-container {
             position: relative;
             width: 216mm;
-            min-height: 279mm;
-            padding: 15mm;
+            height: 279mm;
+            max-width: 216mm;
+            max-height: 279mm;
+            padding: 10mm 10mm 10mm 10mm;
             background: white;
             overflow: hidden;
             box-sizing: border-box;
+            border-radius: 6px;
+            box-shadow: 0 0 8px #0002;
           }
           
           .template-image {
@@ -137,6 +141,8 @@ class PDFService {
             padding: 0;
             margin: 0;
             background: transparent;
+            overflow-y: auto;
+            max-height: 259mm; /* 279mm - 2*10mm padding */
           }
 
           .header {
