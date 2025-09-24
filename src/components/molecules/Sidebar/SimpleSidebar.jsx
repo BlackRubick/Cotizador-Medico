@@ -62,12 +62,6 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
             <h1 className="text-xl font-bold">Cotizador</h1>
           </div>
 
-          {/* Debug info */}
-          <div className="bg-red-500/20 p-2 rounded mb-4 text-xs">
-            <p>Usuario: {user?.nombre || 'N/A'}</p>
-            <p>Rol: {userRole}</p>
-            <p>Items: {menuItems.length}</p>
-          </div>
 
           {/* Menu Items */}
           <nav className="space-y-2 flex-1">
