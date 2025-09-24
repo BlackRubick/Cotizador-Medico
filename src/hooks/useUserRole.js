@@ -9,13 +9,25 @@ export const useUserRole = () => {
   const isAdmin = userRole === 'admin' || userRole === 'administrador';
   const isVendedor = userRole === 'vendedor';
   
+  // Debug temporal
+  console.log('👤 useUserRole:', {
+    user: user ? { nombre: user.nombre, role: user.role, tipo_usuario: user.tipo_usuario } : null,
+    userRole,
+    isAdmin,
+    isVendedor
+  });
+  
   const hasAccess = (allowedRoles = []) => {
     if (allowedRoles.length === 0) return true;
-    return allowedRoles.some(role => role.toLowerCase() === userRole);
+    const hasPermission = allowedRoles.some(role => role.toLowerCase() === userRole);
+    console.log('🔑 hasAccess:', { userRole, allowedRoles, hasPermission });
+    return hasPermission;
   };
   
   const getDefaultRoute = () => {
-    return isAdmin ? '/dashboard' : '/cotizar';
+    const route = isAdmin ? '/dashboard' : '/cotizar';
+    console.log('🏠 getDefaultRoute:', { userRole, route });
+    return route;
   };
   
   const getDisplayRole = () => {

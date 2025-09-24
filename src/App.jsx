@@ -18,6 +18,7 @@ import HistoryPage from './components/pages/HistoryPage';
 import QuotePage from './components/pages/QuotePage';
 import ClientesPage from './components/pages/ClientesPage';
 import QuoteReviewPage from './components/pages/QuoteReviewPage';
+import TestContentPage from './components/TestContentPage';
 
 function App() {
   return (
@@ -46,7 +47,7 @@ function App() {
                 path="dashboard" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <DashboardPage />
+                    <TestContentPage title="Dashboard Administrativo" />
                   </RoleBasedRoute>
                 } 
               />
@@ -54,7 +55,7 @@ function App() {
                 path="perfil" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <ProfilePage />
+                    <TestContentPage title="Perfil de Usuario" />
                   </RoleBasedRoute>
                 } 
               />
@@ -62,7 +63,7 @@ function App() {
                 path="revisar-cotizaciones" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador']}>
-                    <QuoteReviewPage />
+                    <TestContentPage title="Revisar Cotizaciones" />
                   </RoleBasedRoute>
                 } 
               />
@@ -72,7 +73,7 @@ function App() {
                 path="cotizar/*" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <QuotePage />
+                    <TestContentPage title="Nueva Cotización" />
                   </RoleBasedRoute>
                 } 
               />
@@ -80,7 +81,7 @@ function App() {
                 path="historial" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <HistoryPage />
+                    <TestContentPage title="Historial de Cotizaciones" />
                   </RoleBasedRoute>
                 } 
               />
@@ -88,7 +89,7 @@ function App() {
                 path="clientes" 
                 element={
                   <RoleBasedRoute allowedRoles={['admin', 'administrador', 'vendedor']}>
-                    <ClientesPage />
+                    <TestContentPage title="Gestión de Clientes" />
                   </RoleBasedRoute>
                 } 
               />
