@@ -9,9 +9,9 @@ const LoginPage = () => {
   const { isAuthenticated, login } = useAuthContext();
   const [loading, setLoading] = useState(false);
 
-  // Si ya está autenticado, redirigir al dashboard
+  // Si ya está autenticado, redirigir a la ruta por rol
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleLogin = async (formData) => {
@@ -19,7 +19,7 @@ const LoginPage = () => {
     try {
       const result = await login(formData);
       if (result.success) {
-        navigate('/dashboard');
+        navigate('/'); // Redirige a la raíz para que RoleBasedRedirect decida
       } else {
         alert('Error: ' + result.error);
       }
