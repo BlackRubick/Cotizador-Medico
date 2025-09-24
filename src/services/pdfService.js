@@ -567,10 +567,42 @@ class PDFService {
       summaryY += 6;
       pdf.setFontSize(12);
       pdf.text(`TOTAL: $${total.toLocaleString('es-MX')} MXN`, pageWidth - 80, summaryY);
+
+      // Agregar Observaciones, Condiciones, Términos si existen
+      let extraY = summaryY + 14;
+      pdf.setFontSize(11);
+      pdf.setTextColor(40);
+      if (quoteData.observaciones) {
+        pdf.text('Observaciones:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitObs = pdf.splitTextToSize(quoteData.observaciones, pageWidth - 30);
+        pdf.text(splitObs, 15, extraY);
+        extraY += splitObs.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      if (quoteData.condiciones) {
+        pdf.text('Condiciones:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitCond = pdf.splitTextToSize(quoteData.condiciones, pageWidth - 30);
+        pdf.text(splitCond, 15, extraY);
+        extraY += splitCond.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      if (quoteData.terminos) {
+        pdf.text('Términos:', 15, extraY);
+        pdf.setFontSize(10);
+        extraY += 6;
+        const splitTerm = pdf.splitTextToSize(quoteData.terminos, pageWidth - 30);
+        pdf.text(splitTerm, 15, extraY);
+        extraY += splitTerm.length * 5 + 4;
+        pdf.setFontSize(11);
+      }
+      pdf.setTextColor(120);
       // Footer solo en la última página (puedes personalizarlo aquí)
       const footerY = pageHeight - 15;
       pdf.setFontSize(9);
-      pdf.setTextColor(120);
       pdf.text(sellerCompany.email || 'contacto@empresa.com', 15, footerY);
       pdf.text(sellerCompany.name, pageWidth / 2, footerY, { align: 'center' });
       pdf.text('ICD 2025', pageWidth - 15, footerY, { align: 'right' });
