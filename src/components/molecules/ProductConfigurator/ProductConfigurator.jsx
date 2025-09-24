@@ -94,9 +94,15 @@ const ProductConfigurator = ({ categoryId, categoryName, onBack }) => {
       
       if (categoryName) {
         // ⭐ USAR LA API con el parámetro 'category' y el nombre de la categoría
+        let apiUrl;
+        if (categoryName.toLowerCase() === 'todos') {
+          apiUrl = `/products?limit=500`;
+        } else {
+          apiUrl = `/products?category=${encodeURIComponent(categoryName)}&limit=500`;
+        }
         console.log('🌐 Cargando productos desde API para categoría:', categoryName);
         
-        const response = await apiRequest(`/products?category=${encodeURIComponent(categoryName)}&limit=500`, {
+        const response = await apiRequest(apiUrl, {
           method: 'GET'
         });
         
