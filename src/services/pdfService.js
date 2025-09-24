@@ -70,22 +70,44 @@ class PDFService {
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
-    // Ajuste dinámico de estilos según cantidad de productos
-    let tableFontSize = 12;
-    let tableCellPadding = 8;
-    let tableHeaderPadding = 10;
-    let summaryFontSize = 16;
-    if (cartItems.length > 8 && cartItems.length <= 15) {
-      tableFontSize = 10;
-      tableCellPadding = 5;
-      tableHeaderPadding = 7;
-      summaryFontSize = 14;
-    } else if (cartItems.length > 15) {
-      tableFontSize = 8;
-      tableCellPadding = 3;
-      tableHeaderPadding = 5;
-      summaryFontSize = 12;
+    // --- Ajuste dinámico para que siempre quepa en una hoja ---
+    // Altura total de la hoja: 279mm
+    // Header + cliente + márgenes aprox: 480px (header) + 120px (cliente) + 2*30px (margen) ≈ 660px
+    // Espacio disponible para tabla: 279mm - 480px (aprox 180mm) - 30px margen inferior
+    // Pero mejor: calculamos en px para html2canvas (1mm ≈ 3.78px)
+    const PAGE_HEIGHT_MM = 279;
+    const PAGE_HEIGHT_PX = Math.floor(PAGE_HEIGHT_MM * 3.78); // ≈ 1055px
+    const HEADER_PX = 180 + 15 + 120 + 15; // header + padding + cliente + padding
+    const FOOTER_PX = 60; // margen inferior y resumen
+    const AVAILABLE_PX = PAGE_HEIGHT_PX - HEADER_PX - FOOTER_PX;
+    // Altura estimada por fila (incluyendo padding):
+    let minFont = 7;
+    let maxFont = 12;
+    let fontSize = maxFont;
+    let rowPadding = 8;
+    let rowHeight = fontSize + rowPadding * 2;
+    // Ajustar dinámicamente para que quepan todas las filas
+    if (cartItems.length > 0) {
+      // Probar desde maxFont hacia abajo
+      for (let f = maxFont; f >= minFont; f--) {
+        let pad = Math.max(2, Math.floor(f / 2));
+        let h = f + pad * 2;
+        if ((cartItems.length + 1) * h < AVAILABLE_PX) { // +1 por header
+          fontSize = f;
+          rowPadding = pad;
+          rowHeight = h;
+          break;
+        }
+        // Si no cabe ni con minFont, usar minFont
+        if (f === minFont) {
+          fontSize = minFont;
+          rowPadding = pad;
+          rowHeight = h;
+        }
+      }
     }
+    // Ajustar también el resumen
+    let summaryFontSize = fontSize + 2;
 
     return `
       <!DOCTYPE html>
@@ -134,13 +156,11 @@ class PDFService {
             object-position: center center;
           }
           
-          /* Para imágenes horizontales (más anchas que altas) */
           .template-image.landscape {
             object-fit: cover;
             object-position: center top;
           }
           
-          /* Para imágenes verticales (más altas que anchas) */
           .template-image.portrait {
             object-fit: contain;
             object-position: center center;
@@ -283,22 +303,22 @@ class PDFService {
             border-radius: 0;
             overflow: visible;
             background: transparent;
-            font-size: ${tableFontSize}px;
+            font-size: ${fontSize}px;
           }
 
           .products-table th {
             background: linear-gradient(135deg, ${template.colors.primary}, ${template.colors.primary}90);
             color: white;
-            padding: ${tableHeaderPadding}px 6px;
+            padding: ${rowPadding + 2}px 6px;
             text-align: left;
             font-weight: bold;
-            font-size: ${tableFontSize}px;
+            font-size: ${fontSize}px;
           }
 
           .products-table td {
-            padding: ${tableCellPadding}px 6px;
+            padding: ${rowPadding}px 6px;
             border-bottom: 1px solid #e5e7eb;
-            font-size: ${tableFontSize}px;
+            font-size: ${fontSize}px;
             color: #000000;
           }
 
@@ -337,7 +357,7 @@ class PDFService {
             padding: 8px 15px;
             border-bottom: 1px solid #e5e7eb;
             color: #000000;
-            font-size: ${tableFontSize}px;
+            font-size: ${fontSize}px;
           }
 
           .summary-table .total-row {
@@ -453,8 +473,8 @@ class PDFService {
                       <td class="text-center font-bold">${item.code || 'N/A'}</td>
                       <td>
                         <div class="font-bold">${item.name || 'Producto sin nombre'}</div>
-                        <div style="font-size: ${tableFontSize - 1}px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
-                        ${item.brand ? `<div style="font-size: ${tableFontSize - 2}px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
+                        <div style="font-size: ${fontSize - 1}px; color: #000000; margin-top: 4px;">${item.description || ''}</div>
+                        ${item.brand ? `<div style="font-size: ${fontSize - 2}px; color: #000000; margin-top: 2px;"><strong>Marca:</strong> ${item.brand}</div>` : ''}
                       </td>
                       <td class="text-center">${item.quantity || 1}</td>
                       <td class="text-right price">$${(item.basePrice || 0).toLocaleString('es-MX')}</td>
