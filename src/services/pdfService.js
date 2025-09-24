@@ -169,7 +169,7 @@ class PDFService {
           }
           .header {
             position: absolute;
-            top: 130px; /* +30px más abajo */
+            top: 160px; /* +30px más abajo */
             left: 20px;
             right: 20px;
             display: flex;
