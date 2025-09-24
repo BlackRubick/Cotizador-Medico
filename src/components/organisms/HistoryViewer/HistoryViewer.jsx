@@ -81,22 +81,6 @@ const HistoryViewer = ({ quotes, onEdit, onSendEmail, onDelete, onFilter, onRefr
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <h1 className="text-2xl font-bold text-gray-800">Historial de Cotizaciones</h1>
         <div className="flex space-x-2">
-          <Button
-            variant="secondary"
-            onClick={() => setShowFilter(!showFilter)}
-            className="flex items-center space-x-2"
-          >
-            <Filter size={20} />
-            <span>Filtrar</span>
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleExport}
-            className="flex items-center space-x-2"
-          >
-            <Download size={20} />
-            <span>Exportar</span>
-          </Button>
         </div>
       </div>
 
