@@ -169,7 +169,7 @@ class PDFService {
           }
           .header {
             position: absolute;
-            top: 30px; /* margen superior visual */
+            top: 60px; /* antes 30px, ahora más abajo */
             left: 20px;
             right: 20px;
             display: flex;
@@ -228,13 +228,13 @@ class PDFService {
             box-shadow: none;
           }
           .section.client-section {
-            top: 70px; /* deja espacio visual entre header y cliente */
+            top: 130px; /* antes 70px, ahora más abajo */
           }
           .section.products-section {
-            top: 150px; /* ajusta para que la tabla siga arriba pero no pegue cliente */
+            top: 210px; /* antes 150px, ahora más abajo */
             height: auto;
             overflow: visible;
-            max-height: calc(279mm - 150px - 20px);
+            max-height: calc(279mm - 210px - 20px);
           }
           .section-title {
             font-size: 12px; /* antes 14px */
