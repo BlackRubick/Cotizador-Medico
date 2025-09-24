@@ -545,10 +545,18 @@ class PDFService {
           5: { cellWidth: 25, halign: 'right' }
         },
         margin: { left: 15, right: 15 },
-        didDrawPage: drawBackground
+        didDrawPage: drawBackground,
+        // Footer solo en la última página
+        didDrawCell: function (data) {
+          if (data.row.index === cartItems.length - 1 && data.column.index === 5) {
+            // Guardar la posición Y final de la tabla
+            pdf.lastTableFinalY = data.cell.y + data.cell.height;
+          }
+        }
       });
-      // Resumen
-      let summaryY = pdf.lastAutoTable.finalY + 10;
+      // Resumen SIEMPRE en la última página, bien alineado
+      pdf.setPage(pdf.getNumberOfPages());
+      let summaryY = pdf.lastTableFinalY ? pdf.lastTableFinalY + 12 : pdf.lastAutoTable.finalY + 12;
       pdf.setFontSize(12);
       pdf.text('Resumen', pageWidth - 80, summaryY);
       pdf.setFontSize(10);
@@ -559,6 +567,13 @@ class PDFService {
       summaryY += 6;
       pdf.setFontSize(12);
       pdf.text(`TOTAL: $${total.toLocaleString('es-MX')} MXN`, pageWidth - 80, summaryY);
+      // Footer solo en la última página (puedes personalizarlo aquí)
+      const footerY = pageHeight - 15;
+      pdf.setFontSize(9);
+      pdf.setTextColor(120);
+      pdf.text(sellerCompany.email || 'contacto@empresa.com', 15, footerY);
+      pdf.text(sellerCompany.name, pageWidth / 2, footerY, { align: 'center' });
+      pdf.text('ICD 2025', pageWidth - 15, footerY, { align: 'right' });
       // Guardar PDF
       const fileName = `Cotizacion_${quoteData.folio}_${sellerCompany.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
