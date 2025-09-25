@@ -1,6 +1,7 @@
 // src/components/organisms/EmailQuoteModal.jsx
 import React, { useState, useEffect } from 'react';
 import pdfService from '../../services/pdfService';
+import quoteService from '../../services/quoteService';
 
 const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
   const [formData, setFormData] = useState({
@@ -128,10 +129,28 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
     // Normaliza el branch para el backend
     const normalizedBranch = formData.branch.trim().toLowerCase().replace(/\s+/g, '');
     setIsLoading(true);
+    let quoteToSend = quoteData;
+    // Si no hay folio ni id, guarda la cotización primero
+    if (!quoteData?.folio && !quoteData?.id) {
+      try {
+        const createResult = await quoteService.createQuote(quoteData);
+        if (createResult.success && createResult.data) {
+          quoteToSend = { ...quoteData, id: createResult.data.id, folio: createResult.data.folio };
+        } else {
+          setIsLoading(false);
+          setError(createResult.message || 'No se pudo guardar la cotización.');
+          return;
+        }
+      } catch (err) {
+        setIsLoading(false);
+        setError(err.message || 'Error al guardar la cotización.');
+        return;
+      }
+    }
     const emailData = {
       ...formData,
       branch: normalizedBranch,
-      quote: quoteData,
+      quote: quoteToSend,
       reply_to: formData.to_email,
       client_hospital: formData.client_hospital || formData.to_name
     };
@@ -143,7 +162,6 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
         onClose();
       }, 2000);
     } else {
-      // Mostrar el mensaje de error exacto del backend si existe
       setError(result.error || result.message || 'Error al enviar el email. Por favor, intente nuevamente.');
     }
   };
