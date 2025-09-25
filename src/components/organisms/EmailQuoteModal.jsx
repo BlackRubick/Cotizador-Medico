@@ -66,18 +66,17 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
   const sendQuoteEmail = async (emailData) => {
     try {
-      // 1. Generar PDF como Blob usando generateAndDownloadQuotePDF
       let pdfBlob;
       if (pdfService.generateAndDownloadQuotePDF) {
-        // Esta función descarga el PDF, pero podemos modificarla para obtener el Blob
-        // Usamos jsPDF directamente para obtener el Blob
         const jsPDF = (await import('jspdf')).default;
         const doc = new jsPDF('p', 'mm', 'letter');
-        // Aquí deberías renderizar el contenido de la cotización en el PDF
-        // Por simplicidad, agregamos solo texto básico
-        doc.text(emailData.subject, 10, 10);
-        doc.text(emailData.text, 10, 20);
-        // Puedes agregar más detalles aquí según tu plantilla
+        // Asegura que los argumentos sean válidos
+        const subject = String(emailData.subject || 'Cotización');
+        const message = String(emailData.message || '');
+        doc.text(subject, 10, 10);
+        // Divide el mensaje en líneas para evitar overflow y errores
+        const lines = doc.splitTextToSize(message, 180);
+        doc.text(lines, 10, 20);
         pdfBlob = doc.output('blob');
       } else {
         throw new Error('No se encontró la función para generar el PDF.');
