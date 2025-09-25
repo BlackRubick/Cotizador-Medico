@@ -155,10 +155,8 @@ class PDFService {
             object-position: center center;
           }
           .content {
-            position: absolute;
+            position: relative;
             z-index: 2;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             padding: 0;
@@ -168,10 +166,9 @@ class PDFService {
             max-height: 259mm;
           }
           .header {
-            position: absolute;
-            top: 160px; /* +30px más abajo */
-            left: 20px;
-            right: 20px;
+            position: relative;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -179,6 +176,7 @@ class PDFService {
             background: transparent;
             border-radius: 0;
             box-shadow: none;
+            margin-bottom: 16px;
           }
           .company-info {
             flex: 1;
@@ -219,24 +217,23 @@ class PDFService {
             color: #000000;
           }
           .section {
-            position: absolute;
-            left: 20px; /* antes 30px */
-            right: 20px; /* antes 30px */
+            position: relative;
+            left: 0;
+            right: 0;
             background: transparent;
             padding: 7px; /* antes 15px */
             border-radius: 0;
             box-shadow: none;
+            margin-bottom: 24px;
           }
           .section.client-section {
-            top: 210px; /* +30px más abajo */
-            margin-bottom: 32px; /* Espacio extra debajo de cliente */
+            margin-bottom: 32px;
           }
           .section.products-section {
-            top: 290px; /* +30px más abajo */
             height: auto;
             overflow: visible;
-            max-height: calc(279mm - 290px - 20px);
-            margin-top: 32px; /* Espacio extra arriba de productos */
+            max-height: none;
+            margin-top: 0;
           }
           .section-title {
             font-size: 12px;
