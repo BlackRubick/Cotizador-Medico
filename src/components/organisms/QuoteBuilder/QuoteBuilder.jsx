@@ -1455,7 +1455,7 @@ ${companyName}`;
                       month: 'long', 
                       day: 'numeric'
                     }),
-                    total: cartItems.reduce((total, item) => total + item.precio * item.cantidad, 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
+                    total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
                     items: cartItems
                   }}
                   clientData={{
