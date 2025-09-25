@@ -32,39 +32,34 @@ const QuoteBuilder = ({ onBack }) => {
     { 
       id: 'conduit-life', 
       name: 'CONDUIT LIFE',
-      fullName: 'CONDUIT LIFE S.A. DE C.V.',
-      address: 'Av. Principal 123, Tuxtla Gutiérrez, Chiapas',
+      fullName: 'Conduit Life S.A. de C.V.',
+      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030',
       phone: '+52 961 123 4567',
       email: 'contacto@conduitlife.com',
       website: 'www.conduitlife.com',
-      rfc: 'CON850101ABC'
-    },
-    { 
-      id: 'escala-biomedica', 
-      name: 'ESCALA BIOMEDICA',
-      fullName: 'ESCALA BIOMÉDICA S.A. DE C.V.',
-      address: 'Blvd. Belisario Domínguez 456, Tuxtla Gutiérrez, Chiapas',
-      phone: '+52 961 234 5678',
-      email: 'ventas@escalabiomedica.com',
-      website: 'www.escalabiomedica.com',
-      rfc: 'ESC900215XYZ'
-    },
-    { 
-      id: 'ingenieria-clinica', 
-      name: 'INGENIERIA CLINICA Y DISEÑO',
-      fullName: 'INGENIERÍA CLÍNICA Y DISEÑO S.A. DE C.V.',
-      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP:16030',
-      phone: '+52 55 5526 789034',
-      email: 'contacto@clinicaydiseno.com',
-      website: 'www.clinicaydiseno.com',
-      rfc: 'ICD130614LQ4'
+      rfc: 'CLI150120328'
     },
     { 
       id: 'biosystems-hls', 
-      name: 'Biosystems HLS',
-      fullName: 'BIOSYSTEMS HEALTH & LIFE SCIENCES S.A. DE C.V.',
-      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP:16030',
-      rfc: 'BHL130614LQ4',
+      name: 'BIOSYSTEMS HLS',
+      fullName: 'Biosystems HLS S.A. de C.V.',
+      address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030',
+      rfc: 'BHL130614LQ4'
+    },
+    { 
+      id: 'ingenieria-clinica', 
+      name: 'INGENIERÍA CLÍNICA Y DISEÑO',
+      fullName: 'Ingeniería Clínica y Diseño S.A. de C.V.',
+      address: 'Viena 68, Colonia Del Carmen, Alcaldía Coyoacán, CP. 04100 CDMX',
+
+      rfc: 'ICD090619J79'
+    },
+    { 
+      id: 'escala-biomedica', 
+      name: 'ESCALA BIOMÉDICA',
+      fullName: 'Escala Biomédica S.A. de C.V.',
+      address: 'Av. Insurgentes 682 int. 706, Colonia Del Valle Norte, Benito Juárez CP. 03103 CDMX',
+      rfc: 'EBI1081216T38'
     }
   ];
 
