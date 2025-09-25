@@ -28,7 +28,6 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
     }
     setIsSending(true);
     try {
-      // 1. Generar PDF
       const pdfResult = await pdfService.generateQuotePDF(quoteData);
       if (!pdfResult.success || !pdfResult.fileBuffer) {
         throw new Error('No se pudo generar el PDF.');
