@@ -1,6 +1,5 @@
 // src/components/organisms/EmailQuoteModal.jsx
 import React, { useState, useEffect } from 'react';
-import { useEmail } from '../../hooks/useEmail';
 
 const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
   const [formData, setFormData] = useState({
@@ -12,8 +11,6 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     from_name: 'Equipo de Ventas',
     client_hospital: ''
   });
-
-  const { sendQuoteEmail, isLoading, error, success, clearStates } = useEmail();
 
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
