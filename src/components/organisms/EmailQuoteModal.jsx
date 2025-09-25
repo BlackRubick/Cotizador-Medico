@@ -72,8 +72,9 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       if (pdfService.generateAndDownloadQuotePDF) {
         const jsPDF = (await import('jspdf')).default;
         const doc = new jsPDF('p', 'mm', 'letter');
-        // Asegura que los argumentos sean válidos
-        const subject = String(emailData.subject || 'Cotización');
+        // Usa el folio del backend para el asunto
+        const folio = emailData.quote?.folio || emailData.quote?.id || '';
+        const subject = `Cotización ${folio} - ${emailData.company_name}`;
         const message = String(emailData.message || '');
         doc.text(subject, 10, 10);
         // Divide el mensaje en líneas para evitar overflow y errores
@@ -91,8 +92,9 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       formData.append('subject', emailData.subject);
       formData.append('text', emailData.message);
       formData.append('pdfBuffer', pdfBlob, 'cotizacion.pdf');
-
-      const response = await fetch(`/api/quotes/${quoteData?.id || quoteData?.number || ''}/send`, {
+      // Usa el folio o id del backend en la URL
+      const quoteIdentifier = emailData.quote?.folio || emailData.quote?.id || '';
+      const response = await fetch(`/api/quotes/${quoteIdentifier}/send`, {
         method: 'POST',
         body: formData
       });
