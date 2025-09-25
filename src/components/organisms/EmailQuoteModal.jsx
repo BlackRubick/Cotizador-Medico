@@ -38,9 +38,19 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
   // Limpiar estados cuando se cierre el modal
   useEffect(() => {
     if (!isOpen) {
-      clearStates();
+      setFormData({
+        to_email: '',
+        to_name: '',
+        subject: '',
+        message: '',
+        company_name: 'Cotizador Médico',
+        from_name: 'Equipo de Ventas',
+        client_hospital: ''
+      });
+      setError && setError('');
+      setSuccess && setSuccess('');
     }
-  }, [isOpen, clearStates]);
+  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
