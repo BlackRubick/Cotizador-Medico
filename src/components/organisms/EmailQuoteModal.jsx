@@ -86,7 +86,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
       // 2. Crear FormData y enviar al backend
       const formData = new FormData();
-      formData.append('branch', emailData.branch || 'conduit-life');
+      formData.append('branch', emailData.branch); // Solo el valor seleccionado
       formData.append('to', emailData.to_email);
       formData.append('subject', emailData.subject);
       formData.append('text', emailData.message);
