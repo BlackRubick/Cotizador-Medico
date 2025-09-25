@@ -252,7 +252,7 @@ class PDFService {
             border-bottom: 2px solid #e5e7eb;
           }
           .section-title.products-space {
-            margin-top: 40px;
+            margin-top: 16px;
             margin-bottom: 48px;
             padding-bottom: 8px;
             border-bottom: 2px solid #e5e7eb;
