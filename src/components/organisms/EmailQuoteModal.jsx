@@ -116,15 +116,20 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       return;
     }
 
+    if (!formData.branch.trim()) {
+      alert('Por favor, ingrese la sucursal (branch)');
+      return;
+    }
+    // Normaliza el branch para el backend
+    const normalizedBranch = formData.branch.trim().toLowerCase().replace(/\s+/g, '');
     setIsLoading(true);
-
     const emailData = {
       ...formData,
+      branch: normalizedBranch,
       quote: quoteData,
       reply_to: formData.to_email,
       client_hospital: formData.client_hospital || formData.to_name
     };
-
     const result = await sendQuoteEmail(emailData);
     setIsLoading(false);
     if (result.success) {
