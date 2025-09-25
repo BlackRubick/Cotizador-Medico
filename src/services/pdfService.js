@@ -247,12 +247,15 @@ class PDFService {
             border-bottom: 1px solid #00000030;
           }
           .section-title.client-space {
-            margin-bottom: 40px;
+            margin-bottom: 48px;
             padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
           }
           .section-title.products-space {
-            margin-bottom: 40px;
+            margin-top: 24px;
+            margin-bottom: 48px;
             padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
           }
           .client-info {
             background: transparent;
