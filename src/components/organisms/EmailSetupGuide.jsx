@@ -2,13 +2,23 @@
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle, ExternalLink, Copy, Settings } from 'lucide-react';
 import { EMAIL_CONFIG, SETUP_INSTRUCTIONS, validateEmailConfig, EMAIL_TEMPLATES } from '../../config/emailConfig';
-import emailService from '../../services/emailService';
 
 const EmailSetupGuide = ({ onClose }) => {
   const [activeStep, setActiveStep] = useState(1);
   const [copied, setCopied] = useState('');
   
-  const config = emailService.getConfig();
+  const config = {
+    service: 'tu_service_id_aqui',
+    templates: {
+      quote: 'template_cotizacion',
+      contact: 'template_contacto'
+    },
+    company: {
+      email: 'tu_email@empresa.com',
+      phone: '123456789'
+    }
+  };
+
   const validation = validateEmailConfig();
 
   const copyToClipboard = async (text, type) => {
