@@ -135,17 +135,15 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
     };
 
     const result = await sendQuoteEmail(emailData);
-    
     setIsLoading(false);
-    
     if (result.success) {
       setSuccess('Email enviado con éxito!');
-      // Cerrar modal después de 2 segundos
       setTimeout(() => {
         onClose();
       }, 2000);
     } else {
-      setError('Error al enviar el email. Por favor, intente nuevamente.');
+      // Mostrar el mensaje de error exacto del backend si existe
+      setError(result.error || result.message || 'Error al enviar el email. Por favor, intente nuevamente.');
     }
   };
 
