@@ -1156,7 +1156,7 @@ ${companyName}`;
                               <div
                                 key={client.id}
                                 onClick={() => handleClientSelect(client)}
-                                className="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                                className="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colores"
                               >
                                 {/* Hospital como título principal */}
                                 <div className="flex items-start space-x-3">
@@ -1389,7 +1389,46 @@ ${companyName}`;
               {/* Botón de Email */}
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
-                  onClick={() => setShowEmailModal(true)}
+                  onClick={async () => {
+                    // Si no hay cotización generada, guárdala primero
+                    if (!generatedQuote?.id || !generatedQuote?.folio) {
+                      setIsSubmitting(true);
+                      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                      const quoteData = {
+                        sellerCompany: selectedSellerCompany?.name || '',
+                        sellerCompanyId: quoteInfo.sellerCompany,
+                        clientName: quoteInfo.clientName || selectedClient?.name,
+                        clientContact: quoteInfo.clientContact || selectedClient?.contact,
+                        email: quoteInfo.email,
+                        phone: quoteInfo.phone,
+                        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
+                        clientPosition: quoteInfo.clientPosition || '',
+                        products: cartItems,
+                        terms: {
+                          paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
+                          deliveryTime: '15 días hábiles',
+                          warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
+                          observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
+                        }
+                      };
+                      if (selectedClient?.id) {
+                        quoteData.clientId = selectedClient.id;
+                      }
+                      try {
+                        const response = await quoteService.createQuote(quoteData);
+                        if (response.success) {
+                          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+                        }
+                      } catch (err) {
+                        // Puedes mostrar un error aquí si lo deseas
+                      } finally {
+                        setIsSubmitting(false);
+                        setShowEmailModal(true);
+                      }
+                    } else {
+                      setShowEmailModal(true);
+                    }
+                  }}
                   quoteData={{
                     number: generatedQuote?.folio || `COT-${Date.now()}`,
                     date: new Date().toLocaleDateString('es-MX', {
