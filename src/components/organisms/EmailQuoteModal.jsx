@@ -64,13 +64,20 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
   };
 
   const sendQuoteEmail = async (emailData) => {
-    // Simulación de envío de email
-    console.log('Enviando email con los siguientes datos:', emailData);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ success: true });
-      }, 2000);
-    });
+    try {
+      // Llama al endpoint real del backend
+      const response = await fetch(`/api/quotes/${quoteData?.id || quoteData?.number || ''}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emailData)
+      });
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      return { success: false, error: err.message || 'Error de conexión' };
+    }
   };
 
   const handleSubmit = async (e) => {
