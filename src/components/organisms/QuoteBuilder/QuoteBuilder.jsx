@@ -7,6 +7,7 @@ import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 import Card from '../../atoms/Card';
 import EmailButton from '../../atoms/EmailButton';
+import EmailQuoteModal from '../../modals/EmailQuoteModal';
 import { useCart } from '../../../context/CartContext';
 import quoteService from '../../../services/quoteService';
 import clientService from '../../../services/clientService';
@@ -27,6 +28,7 @@ const QuoteBuilder = ({ onBack }) => {
   const [generatedQuote, setGeneratedQuote] = useState(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [editingQuoteData, setEditingQuoteData] = useState(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const sellerCompanies = [
     { 
@@ -1387,6 +1389,7 @@ ${companyName}`;
               {/* Botón de Email */}
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
+                  onClick={() => setShowEmailModal(true)}
                   quoteData={{
                     number: generatedQuote?.folio || `COT-${Date.now()}`,
                     date: new Date().toLocaleDateString('es-MX', {
@@ -1410,7 +1413,22 @@ ${companyName}`;
                   Enviar por Email
                 </EmailButton>
               )}
-              
+              <EmailQuoteModal
+                open={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                quoteData={generatedQuote || {
+                  // fallback: build from current state if not generated
+                  ...prepareQuoteDataForPDF(),
+                  folio: generatedQuote?.folio || `COT-${Date.now()}`
+                }}
+                clientData={{
+                  name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
+                  hospitalName: selectedClient?.name || selectedClient?.nombre,
+                  contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
+                  email: selectedClient?.email || selectedClient?.correo
+                }}
+                quoteId={generatedQuote?.id || editingQuoteData?.quoteId}
+              />
               <Button 
                 onClick={handleSaveQuote}
                 variant="secondary"
