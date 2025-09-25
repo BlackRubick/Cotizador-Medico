@@ -445,6 +445,14 @@ const QuoteBuilder = ({ onBack }) => {
     try {
       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
       
+      // Normalizar productos antes de guardar/enviar
+      const normalizedProducts = cartItems.map(item => ({
+        ...item,
+        quantity: Number(item.quantity) || 1,
+        basePrice: Number(item.basePrice) || 0,
+      }));
+      const total = normalizedProducts.reduce((sum, item) => sum + (item.quantity * item.basePrice), 0);
+      
       const quoteData = {
         sellerCompany: selectedSellerCompany?.name || '',
         sellerCompanyId: quoteInfo.sellerCompany,
@@ -454,7 +462,8 @@ const QuoteBuilder = ({ onBack }) => {
         phone: quoteInfo.phone,
         clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
         clientPosition: quoteInfo.clientPosition || '',
-        products: cartItems,
+        products: normalizedProducts,
+        total,
         terms: {
           paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
           deliveryTime: '15 días hábiles',
@@ -543,6 +552,14 @@ const QuoteBuilder = ({ onBack }) => {
     try {
       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
       
+      // Normalizar productos antes de guardar/enviar
+      const normalizedProducts = cartItems.map(item => ({
+        ...item,
+        quantity: Number(item.quantity) || 1,
+        basePrice: Number(item.basePrice) || 0,
+      }));
+      const total = normalizedProducts.reduce((sum, item) => sum + (item.quantity * item.basePrice), 0);
+      
       const quoteData = {
         sellerCompany: selectedSellerCompany?.name || '',
         sellerCompanyId: quoteInfo.sellerCompany,
@@ -552,7 +569,8 @@ const QuoteBuilder = ({ onBack }) => {
         phone: quoteInfo.phone,
         clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
         clientPosition: quoteInfo.clientPosition || '',
-        products: cartItems,
+        products: normalizedProducts,
+        total,
         terms: {
           paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
           deliveryTime: '15 días hábiles',
