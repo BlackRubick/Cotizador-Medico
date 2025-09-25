@@ -133,7 +133,13 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
     // Si no hay folio ni id, guarda la cotización primero
     if (!quoteData?.folio && !quoteData?.id) {
       try {
-        const createResult = await quoteService.createQuote(quoteData);
+        // Construir datos mínimos requeridos para el backend
+        const safeQuoteData = {
+          ...quoteData,
+          email: formData.to_email || quoteData.email || '',
+          products: quoteData.items || quoteData.products || [],
+        };
+        const createResult = await quoteService.createQuote(safeQuoteData);
         if (createResult.success && createResult.data) {
           quoteToSend = { ...quoteData, id: createResult.data.id, folio: createResult.data.folio };
         } else {
