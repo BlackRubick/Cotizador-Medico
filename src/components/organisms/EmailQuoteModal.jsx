@@ -92,8 +92,11 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       formData.append('subject', emailData.subject);
       formData.append('text', emailData.message);
       formData.append('pdfBuffer', pdfBlob, 'cotizacion.pdf');
-      // Usa el folio o id del backend en la URL
+      // Valida el identificador antes de enviar
       const quoteIdentifier = emailData.quote?.folio || emailData.quote?.id || '';
+      if (!quoteIdentifier) {
+        return { success: false, error: 'No se encontró el identificador de la cotización. Guarda la cotización antes de enviar el email.' };
+      }
       const response = await fetch(`/api/quotes/${quoteIdentifier}/send`, {
         method: 'POST',
         body: formData
