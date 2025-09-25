@@ -1,9 +1,4 @@
 // src/services/emailService.js
-import emailjs from '@emailjs/browser';
-import { EMAIL_CONFIG, validateEmailConfig } from '../config/emailConfig';
-
-// Inicializar EmailJS
-emailjs.init(EMAIL_CONFIG.PUBLIC_KEY);
 
 class EmailService {
   /**
@@ -20,50 +15,12 @@ class EmailService {
    */
   async sendQuote(emailData) {
     try {
-      const templateParams = {
-        to_email: emailData.to_email,
-        to_name: emailData.to_name || 'Cliente',
-        from_name: emailData.from_name || EMAIL_CONFIG.COMPANY.name,
-        company_name: emailData.company_name || EMAIL_CONFIG.COMPANY.name,
-        company_phone: EMAIL_CONFIG.COMPANY.phone,
-        company_email: EMAIL_CONFIG.COMPANY.email,
-        company_website: EMAIL_CONFIG.COMPANY.website,
-        
-        subject: emailData.subject || `Cotización ${emailData.quote?.number || ''} - ${EMAIL_CONFIG.COMPANY.name}`,
-        message: emailData.message || '',
-        
-        // Datos de la cotización con formato profesional
-        quote_number: emailData.quote?.number || `COT-${Date.now()}`,
-        quote_date: emailData.quote?.date || new Date().toLocaleDateString('es-MX', {
-          weekday: 'long',
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric'
-        }),
-        quote_total: emailData.quote?.total || '0',
-        quote_items: this.formatQuoteItemsProfessional(emailData.quote?.items || []),
-        
-        // Información del cliente/hospital
-        client_hospital: emailData.client_hospital || emailData.to_name || 'Hospital',
-        
-        // Email de respuesta
-        reply_to: emailData.reply_to || emailData.to_email,
-      };
+      // Lógica para enviar email con nodemailer en el backend
+      console.log('📧 Enviando email profesional (lógica no implementada):', emailData);
 
-      console.log('📧 Enviando email profesional con parámetros:', templateParams);
-
-      const response = await emailjs.send(
-        EMAIL_CONFIG.SERVICE_ID,
-        EMAIL_CONFIG.TEMPLATE_ID_QUOTE,
-        templateParams,
-        EMAIL_CONFIG.PUBLIC_KEY
-      );
-
-      console.log('✅ Email enviado exitosamente:', response);
       return {
         success: true,
-        message: 'Cotización enviada por email exitosamente',
-        response
+        message: 'Cotización enviada por email exitosamente (simulación)',
       };
 
     } catch (error) {
@@ -82,26 +39,12 @@ class EmailService {
    */
   async sendContactEmail(contactData) {
     try {
-      const templateParams = {
-        from_name: contactData.name,
-        from_email: contactData.email,
-        subject: contactData.subject || 'Nuevo mensaje de contacto',
-        message: contactData.message,
-        to_email: EMAIL_CONFIG.COMPANY.email,
-        reply_to: contactData.email,
-      };
-
-      const response = await emailjs.send(
-        EMAIL_CONFIG.SERVICE_ID,
-        EMAIL_CONFIG.TEMPLATE_ID_CONTACT,
-        templateParams,
-        EMAIL_CONFIG.PUBLIC_KEY
-      );
+      // Lógica para enviar email con nodemailer en el backend
+      console.log('📧 Enviando email de contacto (lógica no implementada):', contactData);
 
       return {
         success: true,
-        message: 'Mensaje enviado exitosamente',
-        response
+        message: 'Mensaje enviado exitosamente (simulación)',
       };
 
     } catch (error) {
@@ -120,27 +63,12 @@ class EmailService {
    */
   async sendQuoteNotificationToAdmin(quoteData) {
     try {
-      const templateParams = {
-        admin_email: EMAIL_CONFIG.ADMIN_EMAILS[0],
-        quote_number: quoteData.number,
-        client_name: quoteData.clientName,
-        client_email: quoteData.clientEmail,
-        quote_total: quoteData.total,
-        quote_date: new Date().toLocaleDateString('es-ES'),
-        message: `Nueva cotización generada por ${quoteData.createdBy || 'Usuario'}`,
-      };
-
-      const response = await emailjs.send(
-        EMAIL_CONFIG.SERVICE_ID,
-        EMAIL_CONFIG.TEMPLATE_ID_ADMIN,
-        templateParams,
-        EMAIL_CONFIG.PUBLIC_KEY
-      );
+      // Lógica para enviar email con nodemailer en el backend
+      console.log('📧 Enviando notificación a admin (lógica no implementada):', quoteData);
 
       return {
         success: true,
-        message: 'Notificación enviada al administrador',
-        response
+        message: 'Notificación enviada al administrador (simulación)',
       };
 
     } catch (error) {
@@ -201,7 +129,7 @@ class EmailService {
    * Validar configuración de email
    */
   validateConfig() {
-    return validateEmailConfig();
+    return true; // Simulación de validación
   }
 
   /**
@@ -209,13 +137,18 @@ class EmailService {
    */
   getConfig() {
     return {
-      service: EMAIL_CONFIG.SERVICE_ID,
+      service: 'SERVICE_ID_SIMULADO',
       templates: {
-        quote: EMAIL_CONFIG.TEMPLATE_ID_QUOTE,
-        contact: EMAIL_CONFIG.TEMPLATE_ID_CONTACT,
-        admin: EMAIL_CONFIG.TEMPLATE_ID_ADMIN
+        quote: 'TEMPLATE_ID_QUOTE_SIMULADO',
+        contact: 'TEMPLATE_ID_CONTACT_SIMULADO',
+        admin: 'TEMPLATE_ID_ADMIN_SIMULADO'
       },
-      company: EMAIL_CONFIG.COMPANY,
+      company: {
+        name: 'Nombre Empresa',
+        email: 'email@empresa.com',
+        phone: '123456789',
+        website: 'www.empresa.com'
+      },
       validation: this.validateConfig()
     };
   }

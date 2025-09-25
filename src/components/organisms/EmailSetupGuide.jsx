@@ -36,7 +36,7 @@ const EmailSetupGuide = ({ onClose }) => {
             <div className="flex items-center space-x-3">
               <Settings className="w-6 h-6 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">
-                Configuración de EmailJS
+                Guía de Configuración de Correo
               </h3>
             </div>
             <button
@@ -52,7 +52,7 @@ const EmailSetupGuide = ({ onClose }) => {
             {validation.isValid ? (
               <div className="flex items-center text-green-600 text-sm">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                EmailJS configurado correctamente
+                Configurado correctamente
               </div>
             ) : (
               <div className="flex items-center text-red-600 text-sm">
@@ -109,17 +109,15 @@ const EmailSetupGuide = ({ onClose }) => {
           <div className="flex-1 p-6">
             {activeStep === 1 && (
               <div>
-                <h4 className="text-lg font-medium mb-4">1. Crear cuenta en EmailJS</h4>
+                <h4 className="text-lg font-medium mb-4">1. Crear cuenta en el proveedor de correo</h4>
                 <div className="space-y-4">
                   <p className="text-gray-700">
-                    EmailJS te permite enviar emails directamente desde el navegador sin necesidad de un servidor.
+                    El proveedor de correo te permite enviar emails directamente desde el navegador sin necesidad de un servidor.
                   </p>
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h5 className="font-medium text-blue-800 mb-2">Pasos:</h5>
                     <ol className="list-decimal list-inside text-blue-700 space-y-2">
-                      <li>Ve a <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center">
-                        emailjs.com <ExternalLink className="w-3 h-3 ml-1" />
-                      </a></li>
+                      <li>Ve al sitio web de tu proveedor de correo</li>
                       <li>Regístrate con tu email</li>
                       <li>Verifica tu cuenta por email</li>
                       <li>Accede a tu dashboard</li>
@@ -140,7 +138,7 @@ const EmailSetupGuide = ({ onClose }) => {
                     Conecta tu proveedor de email (Gmail, Outlook, etc.) para enviar correos desde tu cuenta.
                   </p>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <h5 className="font-medium text-green-800 mb-2">En tu dashboard de EmailJS:</h5>
+                    <h5 className="font-medium text-green-800 mb-2">En tu dashboard del proveedor:</h5>
                     <ol className="list-decimal list-inside text-green-700 space-y-2">
                       <li>Ve a "Email Services"</li>
                       <li>Haz clic en "Add New Service"</li>
@@ -260,7 +258,7 @@ const EmailSetupGuide = ({ onClose }) => {
                     <div className="border p-3 rounded">
                       <h6 className="font-medium mb-2">Datos que debes cambiar:</h6>
                       <ul className="text-sm space-y-2 text-gray-700">
-                        <li>• <strong>SERVICE_ID:</strong> Tu ID de servicio de EmailJS</li>
+                        <li>• <strong>SERVICE_ID:</strong> Tu ID de servicio</li>
                         <li>• <strong>TEMPLATE_ID_*:</strong> Los IDs de tus templates</li>
                         <li>• <strong>COMPANY.email:</strong> Email de tu empresa</li>
                         <li>• <strong>COMPANY.phone:</strong> Teléfono de tu empresa</li>

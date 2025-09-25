@@ -1,33 +1,7 @@
 // src/config/emailConfig.js
-// Configuración de EmailJS - CAMBIAR SEGÚN TU CONFIGURACIÓN
+// Configuración de EmailJS eliminada. Este archivo ya no contiene datos de EmailJS
 
 export const EMAIL_CONFIG = {
-  // IDs de EmailJS (obtener de tu dashboard)
-  SERVICE_ID: 'default_service', // ⚠️ CAMBIAR: ID del servicio en EmailJS (ej: 'service_abc123')
-  TEMPLATE_ID_QUOTE: 'template_cotizacion', // ⚠️ CAMBIAR: ID del template para cotizaciones
-  TEMPLATE_ID_CONTACT: 'template_contacto', // ⚠️ CAMBIAR: ID del template para contacto
-  TEMPLATE_ID_ADMIN: 'template_admin_notification', // ⚠️ CAMBIAR: ID del template para admin
-  
-  // Claves de EmailJS
-  PUBLIC_KEY: 'Kijg9SZDUugSSWYYn',
-  PRIVATE_KEY: 'icTuV5ZY7LmKztSVmNw0E',
-  
-  // Configuración de la empresa
-  COMPANY: {
-    name: 'Cotizador Médico',
-    fullName: 'Cotizador Médico S.A. de C.V.',
-    email: 'contacto@cotizadormedico.com', // ⚠️ CAMBIAR: Email de tu empresa
-    phone: '+52 961 123 4567', // ⚠️ CAMBIAR: Teléfono de tu empresa
-    website: 'www.cotizadormedico.com', // ⚠️ CAMBIAR: Website de tu empresa
-    address: 'Dirección de tu empresa', // ⚠️ CAMBIAR: Dirección de tu empresa
-  },
-  
-  // Emails para notificaciones
-  ADMIN_EMAILS: [
-    'admin@cotizadormedico.com', // ⚠️ CAMBIAR: Email del administrador principal
-    'ventas@cotizadormedico.com' // ⚠️ CAMBIAR: Email adicional para notificaciones
-  ],
-  
   // Configuración por defecto de templates
   DEFAULT_SETTINGS: {
     language: 'es',
