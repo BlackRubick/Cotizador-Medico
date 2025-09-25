@@ -221,13 +221,13 @@ class PDFService {
             left: 0;
             right: 0;
             background: transparent;
-            padding: 7px; /* antes 15px */
+            padding: 2px; /* antes 7px */
             border-radius: 0;
             box-shadow: none;
-            margin-bottom: 24px;
+            margin-bottom: 8px; /* antes 24px */
           }
           .section.client-section {
-            margin-bottom: 32px;
+            margin-bottom: 10px; /* antes 32px */
           }
           .section.products-section {
             height: auto;
@@ -239,19 +239,19 @@ class PDFService {
             font-size: 12px;
             font-weight: bold;
             color: #000000;
-            margin-bottom: 40px; /* más separación visual debajo del título */
-            padding-bottom: 8px; /* más separación visual debajo del título */
+            margin-bottom: 10px; /* antes 40px */
+            padding-bottom: 4px; /* antes 8px */
             border-bottom: 1px solid #00000030;
           }
           .section-title.client-space {
-            margin-bottom: 48px;
-            padding-bottom: 8px;
+            margin-bottom: 12px; /* antes 48px */
+            padding-bottom: 4px; /* antes 8px */
             border-bottom: 2px solid #e5e7eb;
           }
           .section-title.products-space {
-            margin-top: 16px;
-            margin-bottom: 48px;
-            padding-bottom: 8px;
+            margin-top: 4px; /* antes 16px */
+            margin-bottom: 12px; /* antes 48px */
+            padding-bottom: 4px; /* antes 8px */
             border-bottom: 2px solid #e5e7eb;
           }
           .client-info {
@@ -281,8 +281,7 @@ class PDFService {
           .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            margin-top: 16px; /* separación extra después del título de productos */
+            margin-top: 4px; /* antes 16px */
             box-shadow: none;
             border-radius: 0;
             overflow: visible;
@@ -292,13 +291,13 @@ class PDFService {
           .products-table th {
             background: linear-gradient(135deg, ${template.colors.primary}, ${template.colors.primary}90);
             color: white;
-            padding: ${rowPadding + 2}px 4px;
+            padding: ${Math.max(2, rowPadding)}px 2px; /* más compacto */
             text-align: left;
             font-weight: bold;
             font-size: ${fontSize}px;
           }
           .products-table td {
-            padding: ${rowPadding}px 4px;
+            padding: ${Math.max(2, rowPadding - 2)}px 2px; /* más compacto */
             border-bottom: 1px solid #e5e7eb;
             font-size: ${fontSize}px;
             color: #000000;
@@ -319,9 +318,9 @@ class PDFService {
             font-weight: bold;
           }
           .summary-table {
-            width: 220px; /* antes 300px */
+            width: 160px; /* antes 220px */
             margin-left: auto;
-            margin-top: 10px;
+            margin-top: 4px; /* antes 10px */
             border-collapse: collapse;
             background: transparent;
             border-radius: 0;
@@ -329,7 +328,7 @@ class PDFService {
             box-shadow: none;
           }
           .summary-table td {
-            padding: 6px 10px;
+            padding: 4px 6px; /* más compacto */
             border-bottom: 1px solid #e5e7eb;
             color: #000000;
             font-size: ${fontSize}px;
