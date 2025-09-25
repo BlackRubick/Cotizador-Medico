@@ -218,15 +218,20 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
             <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-1">
               Sucursal (Branch) *
             </label>
-            <input
-              type="text"
+            <select
               id="branch"
               name="branch"
               value={formData.branch}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
-            />
+            >
+              <option value="">Selecciona una sucursal</option>
+              <option value="conduitlife">Conduit Life</option>
+              <option value="biosystems">Biosystems</option>
+              <option value="escalabiomedica">Escala Biomedica</option>
+              <option value="clinicaydiseno">Clinica y Diseño</option>
+            </select>
           </div>
 
           {/* Asunto */}
