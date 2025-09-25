@@ -11,6 +11,9 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     from_name: 'Equipo de Ventas',
     client_hospital: ''
   });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
@@ -47,8 +50,8 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
         from_name: 'Equipo de Ventas',
         client_hospital: ''
       });
-      setError && setError('');
-      setSuccess && setSuccess('');
+      setError('');
+      setSuccess('');
     }
   }, [isOpen]);
 
@@ -58,6 +61,16 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       ...prev,
       [name]: value
     }));
+  };
+
+  const sendQuoteEmail = async (emailData) => {
+    // Simulación de envío de email
+    console.log('Enviando email con los siguientes datos:', emailData);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: true });
+      }, 2000);
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -73,6 +86,8 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       return;
     }
 
+    setIsLoading(true);
+
     const emailData = {
       ...formData,
       quote: quoteData,
@@ -82,11 +97,16 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
     const result = await sendQuoteEmail(emailData);
     
+    setIsLoading(false);
+    
     if (result.success) {
+      setSuccess('Email enviado con éxito!');
       // Cerrar modal después de 2 segundos
       setTimeout(() => {
         onClose();
       }, 2000);
+    } else {
+      setError('Error al enviar el email. Por favor, intente nuevamente.');
     }
   };
 
