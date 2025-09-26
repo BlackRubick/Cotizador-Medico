@@ -25,8 +25,6 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
-      { id: 'perfil', path: '/perfil', icon: User, label: 'Perfil' },
-      { id: 'revisar-cotizaciones', path: '/revisar-cotizaciones', icon: FileText, label: 'Revisar Cotizaciones' },
     ];
   } else {
     menuItems = [
