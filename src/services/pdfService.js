@@ -755,7 +755,7 @@ class PDFService {
       setTimeout(() => {
         console.warn('⏰ Timeout de carga de imágenes alcanzado');
         resolve();
-      }, 5000);
+      }, 30000); // 30 segundos
     });
   }
 }
