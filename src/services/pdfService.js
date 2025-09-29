@@ -517,6 +517,41 @@ class PDFService {
     }
   }
 
+  // Generar PDF profesional y retornar como blob
+  async generateQuotePDFBlob(quoteData, sellerCompany) {
+    // Precargar la imagen de la plantilla
+    const templateImg = await this.preloadTemplateImage(sellerCompany.id);
+    // Crear el HTML idéntico a la vista previa
+    const htmlContent = this.createQuoteHTML(quoteData, sellerCompany, templateImg);
+    // Crear un contenedor oculto en el DOM
+    let container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '216mm';
+    container.style.minHeight = '279mm';
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+    // Esperar a que carguen las imágenes
+    await this.waitForImages(container);
+    // Seleccionar el nodo principal
+    const quoteNode = container.querySelector('.quote-container');
+    // Renderizar a imagen
+    const canvas = await window.html2canvas(quoteNode, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    // Crear PDF y agregar la imagen
+    const pdf = new window.jsPDF('p', 'mm', 'letter');
+    const pageWidth = 216;
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    // Limpiar el DOM
+    document.body.removeChild(container);
+    // Retornar el blob
+    return pdf.output('blob');
+  }
+
   // Función para precargar imagen de plantilla con fallbacks y convertir a base64
   async preloadTemplateImage(templateId) {
     const template = this.companyTemplates[templateId];
