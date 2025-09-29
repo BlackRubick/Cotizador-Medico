@@ -1417,7 +1417,6 @@ ${companyName}`;
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
                   onClick={async () => {
-                    // Validar antes de guardar
                     if (!validateForm()) {
                       setApiError('Completa todos los campos requeridos antes de enviar por email.');
                       return;
@@ -1425,8 +1424,8 @@ ${companyName}`;
                     setApiError('');
                     setSuccessMessage('');
                     setIsSubmitting(true);
+                    let modalShouldOpen = false;
                     try {
-                      // Siempre guarda/actualiza la cotización antes de abrir el modal
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
                       const quoteData = {
                         sellerCompany: selectedSellerCompany?.name || '',
@@ -1458,14 +1457,16 @@ ${companyName}`;
                       if (response.success) {
                         setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
                         setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente. Ahora puedes enviarla por email.`);
-                        setShowEmailModal(true);
+                        modalShouldOpen = true;
                       } else {
                         throw new Error(response.message || 'Error al guardar cotización');
                       }
                     } catch (err) {
                       setApiError(err.message || 'Error al guardar/enviar cotización por email');
+                      modalShouldOpen = false;
                     } finally {
                       setIsSubmitting(false);
+                      if (modalShouldOpen) setShowEmailModal(true);
                     }
                   }}
                   quoteData={{
