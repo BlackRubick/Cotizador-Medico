@@ -1417,7 +1417,7 @@ ${companyName}`;
                 </Button>
               {/* Botón de Email */}
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
-                <EmailButton
+                <Button
                   onClick={async () => {
                     if (!validateForm()) return;
                     setApiError("");
@@ -1442,39 +1442,17 @@ ${companyName}`;
                       setApiError(error.message || "Error al adjuntar PDF visual");
                     }
                   }}
-                  quoteData={{
-                    folio: generatedQuote?.folio,
-                    id: generatedQuote?.id,
-                    date: new Date().toLocaleDateString('es-MX', {
-                      weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric'
-                    }),
-                    total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
-                    products: cartItems
-                  }}
-                  clientData={{
-                    name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
-                    hospitalName: selectedClient?.name || selectedClient?.nombre,
-                    contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
-                    email: selectedClient?.email || selectedClient?.correo
-                  }}
-                  pdfAttachment={pdfAttachment}
+                  disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany || !generatedQuote?.id}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   variant="primary"
                 >
                   Enviar por Email
-                </EmailButton>
+                </Button>
               )}
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={generatedQuote || {
-                  ...prepareQuoteDataForPDF(),
-                  folio: generatedQuote?.folio || generateFolio(),
-                  products: cartItems // <--- usa products, no items
-                }}
+                quoteData={generatedQuote}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
