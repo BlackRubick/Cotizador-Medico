@@ -473,6 +473,7 @@ const QuoteBuilder = ({ onBack }) => {
         clientPosition: quoteInfo.clientPosition || '',
         products: normalizedProducts,
         total,
+        folio: generateFolio(), // <--- Asegura folio único
         terms: {
           paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
           deliveryTime: '15 días hábiles',
@@ -580,6 +581,7 @@ const QuoteBuilder = ({ onBack }) => {
         clientPosition: quoteInfo.clientPosition || '',
         products: normalizedProducts,
         total,
+        folio: generateFolio(), // <--- Asegura folio único
         terms: {
           paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
           deliveryTime: '15 días hábiles',
@@ -1439,6 +1441,7 @@ ${companyName}`;
                           clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
                           clientPosition: quoteInfo.clientPosition || '',
                           products: cartItems,
+                          folio: generateFolio(), // <--- Asegura folio único
                           terms: {
                             paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
                             deliveryTime: '15 días hábiles',
