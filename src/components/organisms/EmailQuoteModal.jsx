@@ -246,10 +246,10 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
               required
             >
               <option value="">Selecciona una sucursal</option>
-              <option value="conduitlife">Conduit Life</option>
-              <option value="biosystems">Biosystems</option>
-              <option value="escalabiomedica">Escala Biomedica</option>
-              <option value="clinicaydiseno">Clinica y Diseño</option>
+              <option value="conduit-life">Conduit Life</option>
+              <option value="biosystems-hls">Biosystems HLS</option>
+              <option value="escala-biomedica">Escala Biomédica</option>
+              <option value="ingenieria-clinica">Ingeniería Clínica y Diseño</option>
             </select>
           </div>
 
