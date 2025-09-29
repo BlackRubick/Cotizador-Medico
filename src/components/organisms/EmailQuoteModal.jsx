@@ -67,12 +67,23 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
     }));
   };
 
+  // Array de empresas vendedoras (debe coincidir con los IDs usados en branch)
+  const sellerCompanies = [
+    { id: 'conduit-life', name: 'Conduit Life', fullName: 'Conduit Life S.A. de C.V.', address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030', phone: '+52 961 123 4567', email: 'contacto@conduitlife.com', website: 'www.conduitlife.com', rfc: 'CLI150120328' },
+    { id: 'biosystems-hls', name: 'Biosystems HLS', fullName: 'Biosystems HLS S.A. de C.V.', address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030', rfc: 'BHL130614LQ4' },
+    { id: 'ingenieria-clinica', name: 'Ingeniería Clínica y Diseño', fullName: 'Ingeniería Clínica y Diseño S.A. de C.V.', address: 'Viena 68, Colonia Del Carmen, Alcaldía Coyoacán, CP. 04100 CDMX', rfc: 'ICD090619J79' },
+    { id: 'escala-biomedica', name: 'Escala Biomédica', fullName: 'Escala Biomédica S.A. de C.V.', address: 'Av. Insurgentes 682 int. 706, Colonia Del Valle Norte, Benito Juárez CP. 03103 CDMX', rfc: 'EBI1081216T38' }
+  ];
+
   const sendQuoteEmail = async (emailData) => {
     try {
       let pdfBlob = pdfAttachment;
       if (!pdfBlob) {
-        // Generar el PDF visual si no existe
-        const sellerCompany = emailData.quote?.sellerCompany || {};
+        // Buscar la empresa vendedora usando el branch seleccionado
+        const sellerCompany = sellerCompanies.find(c => c.id === emailData.branch);
+        if (!sellerCompany) {
+          throw new Error('No se encontró la empresa vendedora para la sucursal seleccionada.');
+        }
         pdfBlob = await pdfService.generateQuotePDFBlob(emailData.quote, sellerCompany);
       }
 
