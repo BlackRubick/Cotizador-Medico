@@ -74,15 +74,16 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       if (pdfService.generateAndDownloadQuotePDF) {
         // Obtener los datos completos de la cotización y la empresa
         const quote = emailData.quote || quoteData;
-        const sellerCompany = emailData.sellerCompany || (quote && quote.sellerCompany) || {};
+        let sellerCompany = emailData.sellerCompany || (quote && quote.sellerCompany) || {};
+        // Si no tiene id válido, usar uno por defecto
+        if (!sellerCompany.id || !pdfService.companyTemplates[sellerCompany.id]) {
+          sellerCompany = { id: 'ingenieria-clinica', ...sellerCompany };
+        }
         // Generar el PDF profesional como blob
-        // Usar el mismo método que se usa para descargar el PDF completo
-        // Si pdfService tiene un método para obtener el blob directamente, úsalo; si no, adaptar
         if (pdfService.generateQuotePDFBlob) {
           pdfBlob = await pdfService.generateQuotePDFBlob(quote, sellerCompany);
         } else {
           // Adaptar: generar y descargar PDF, luego obtener el blob
-          // Usar el método profesional y extraer el blob
           const result = await pdfService.generateAndDownloadQuotePDF(quote, sellerCompany);
           if (result && result.pdfBlob) {
             pdfBlob = result.pdfBlob;
