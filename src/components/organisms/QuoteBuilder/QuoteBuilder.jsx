@@ -1412,52 +1412,30 @@ ${companyName}`;
                     if (!generatedQuote?.id || !generatedQuote?.folio) {
                       setIsSubmitting(true);
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                      // Usar prepareQuoteDataForPDF para asegurar todos los datos
                       const quoteData = {
-                        sellerCompany: selectedSellerCompany?.name || '',
-                        sellerCompanyId: quoteInfo.sellerCompany,
-                        clientName: quoteInfo.clientName || selectedClient?.name,
-                        clientContact: quoteInfo.clientContact || selectedClient?.contact,
-                        email: quoteInfo.email,
-                        phone: quoteInfo.phone,
-                        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
-                        clientPosition: quoteInfo.clientPosition || '',
-                        products: cartItems,
-                        terms: {
-                          paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
-                          deliveryTime: '15 días hábiles',
-                          warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
-                          observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
-                        }
+                        ...prepareQuoteDataForPDF(),
+                        sellerCompany: selectedSellerCompany,
                       };
-                      if (selectedClient?.id) {
-                        quoteData.clientId = selectedClient.id;
-                      }
                       try {
                         const response = await quoteService.createQuote(quoteData);
                         if (response.success) {
                           setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+                          setIsSubmitting(false);
+                          setShowEmailModal(true);
+                        } else {
+                          setIsSubmitting(false);
+                          setApiError('No se pudo crear la cotización.');
                         }
                       } catch (err) {
-                        // Puedes mostrar un error aquí si lo deseas
-                      } finally {
                         setIsSubmitting(false);
-                        setShowEmailModal(true);
+                        setApiError('Error al crear la cotización.');
                       }
                     } else {
                       setShowEmailModal(true);
                     }
                   }}
-                  quoteData={{
-                    number: generatedQuote?.folio || `COT-${Date.now()}`,
-                    date: new Date().toLocaleDateString('es-MX', {
-                      weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric'
-                    }),
-                    total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
-                    items: cartItems
-                  }}
+                  quoteData={generatedQuote || prepareQuoteDataForPDF()}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     hospitalName: selectedClient?.name || selectedClient?.nombre,
