@@ -1425,6 +1425,7 @@ ${companyName}`;
                     setSuccessMessage('');
                     setIsSubmitting(true);
                     let modalShouldOpen = false;
+                    let pdfAttachment = null;
                     try {
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
                       const quoteData = {
@@ -1446,6 +1447,13 @@ ${companyName}`;
                       };
                       if (selectedClient?.id) {
                         quoteData.clientId = selectedClient.id;
+                      }
+                      // Generar PDF para adjuntar al email
+                      const pdfResult = await pdfService.generateQuotePDFForEmail(quoteData, selectedSellerCompany);
+                      if (pdfResult.success && pdfResult.file) {
+                        pdfAttachment = pdfResult.file; // base64 o blob
+                      } else {
+                        throw new Error('No se pudo generar el PDF para adjuntar al email.');
                       }
                       let response;
                       if (isEditingMode && editingQuoteData?.quoteId) {
@@ -1488,6 +1496,7 @@ ${companyName}`;
                     contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     email: selectedClient?.email || selectedClient?.correo
                   }}
+                  pdfAttachment={pdfAttachment}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   variant="primary"
                 >
