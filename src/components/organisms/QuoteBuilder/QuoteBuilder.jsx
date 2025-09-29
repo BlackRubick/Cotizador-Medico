@@ -1418,29 +1418,10 @@ ${companyName}`;
               {/* Botón de Email */}
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <Button
-                  onClick={async () => {
-                    if (!validateForm()) return;
+                  onClick={() => {
                     setApiError("");
                     setSuccessMessage("");
-                    try {
-                      let pdfFile = pdfAttachment;
-                      if (!pdfFile) {
-                        // Si no hay PDF visual generado, lo generamos igual que la vista previa
-                        const quoteDataForPDF = prepareQuoteDataForPDF();
-                        const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                        const pdfResult = await pdfService.generateAndDownloadQuotePDF(quoteDataForPDF, selectedSellerCompany);
-                        if (pdfResult.success && pdfResult.file) {
-                          pdfFile = pdfResult.file;
-                          setPdfAttachment(pdfFile);
-                        } else {
-                          throw new Error(pdfResult.error || "Error al generar PDF visual");
-                        }
-                      }
-                      // Usar el PDF visual generado como adjunto
-                      setShowEmailModal(true);
-                    } catch (error) {
-                      setApiError(error.message || "Error al adjuntar PDF visual");
-                    }
+                    setShowEmailModal(true);
                   }}
                   disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany || !generatedQuote?.id}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
