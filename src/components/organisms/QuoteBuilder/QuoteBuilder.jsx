@@ -1473,11 +1473,7 @@ ${companyName}`;
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={generatedQuote || {
-                  // fallback: build from current state if not generated
-                  ...prepareQuoteDataForPDF(),
-                  folio: generatedQuote?.folio || `COT-${Date.now()}`
-                }}
+                quoteData={generatedQuote || prepareQuoteDataForPDF()}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
