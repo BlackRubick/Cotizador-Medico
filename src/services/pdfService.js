@@ -536,6 +536,12 @@ class PDFService {
     await this.waitForImages(container);
     // Seleccionar el nodo principal
     const quoteNode = container.querySelector('.quote-container');
+    if (!quoteNode) {
+      console.error('❌ No se encontró el nodo .quote-container en el HTML generado');
+      console.error('HTML generado:', htmlContent);
+      document.body.removeChild(container);
+      return { error: 'No se encontró el nodo principal de la cotización', blob: null };
+    }
     // Renderizar a imagen usando el import correcto
     const canvas = await html2canvas(quoteNode, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -549,7 +555,7 @@ class PDFService {
     // Limpiar el DOM
     document.body.removeChild(container);
     // Retornar el blob
-    return pdf.output('blob');
+    return { blob: pdf.output('blob') };
   }
 
   // Función para precargar imagen de plantilla con fallbacks y convertir a base64
