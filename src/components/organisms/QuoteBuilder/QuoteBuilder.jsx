@@ -1422,19 +1422,19 @@ ${companyName}`;
                     setApiError("");
                     setSuccessMessage("");
                     try {
-                      // Generar datos para el PDF igual que en la vista previa
+                      // Generar el PDF visual igual que la vista previa
                       const quoteDataForPDF = prepareQuoteDataForPDF();
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Generar el PDF usando la misma función que la vista previa
+                      // Usar la función visual, NO la de solo texto
                       const pdfResult = await pdfService.generateAndDownloadQuotePDF(quoteDataForPDF, selectedSellerCompany);
                       if (pdfResult.success && pdfResult.file) {
-                        setPdfAttachment(pdfResult.file); // Guardar el PDF generado en el estado
-                        setShowEmailModal(true); // Abrir el modal para enviar el email
+                        setPdfAttachment(pdfResult.file); // PDF visual
+                        setShowEmailModal(true); // Abrir modal para enviar email
                       } else {
-                        throw new Error(pdfResult.error || "Error al generar PDF");
+                        throw new Error(pdfResult.error || "Error al generar PDF visual");
                       }
                     } catch (error) {
-                      setApiError(error.message || "Error al generar PDF para email");
+                      setApiError(error.message || "Error al generar PDF visual para email");
                     }
                   }}
                   quoteData={{
