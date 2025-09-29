@@ -1412,92 +1412,72 @@ ${companyName}`;
                     ? (isEditingMode ? 'Actualizando y Enviando...' : 'Enviando por WhatsApp...') 
                     : (isEditingMode ? 'Actualizar y Enviar' : 'Enviar por WhatsApp')
                   }
-                </Button>
-                
-                {/* Botón de Email */}
-                {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
-                  <EmailButton
-                    onClick={async () => {
-                      // Validar antes de guardar
-                      if (!validateForm()) {
-                        setApiError('Completa todos los campos requeridos antes de enviar por email.');
-                        return;
-                      }
-                      setApiError('');
-                      setSuccessMessage('');
-                      setIsSubmitting(true);
-                      try {
-                        // Si no hay cotización generada, guárdala primero
-                        if (!generatedQuote?.id || !generatedQuote?.folio) {
-                          const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                          const quoteData = {
-                            sellerCompany: selectedSellerCompany?.name || '',
-                            sellerCompanyId: quoteInfo.sellerCompany,
-                            clientName: quoteInfo.clientName || selectedClient?.name,
-                            clientContact: quoteInfo.clientContact || selectedClient?.contact,
-                            email: quoteInfo.email,
-                            phone: quoteInfo.phone,
-                            clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
-                            clientPosition: quoteInfo.clientPosition || '',
-                            products: cartItems,
-                            folio: generateFolio(), // <--- Asegura folio único
-                            terms: {
-                              paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
-                              deliveryTime: '15 días hábiles',
-                              warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
-                              observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
-                            }
-                          };
-                          if (selectedClient?.id) {
-                            quoteData.clientId = selectedClient.id;
+                </span>
+              </Button>
+              {/* Botón de Email */}
+              {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
+                <EmailButton
+                  onClick={async () => {
+                    // Validar antes de guardar
+                    if (!validateForm()) {
+                      setApiError('Completa todos los campos requeridos antes de enviar por email.');
+                      return;
+                    }
+                    setApiError('');
+                    setSuccessMessage('');
+                    setIsSubmitting(true);
+                    try {
+                      // Si no hay cotización generada, guárdala primero
+                      if (!generatedQuote?.id || !generatedQuote?.folio) {
+                        const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                        const quoteData = {
+                          sellerCompany: selectedSellerCompany?.name || '',
+                          sellerCompanyId: quoteInfo.sellerCompany,
+                          clientName: quoteInfo.clientName || selectedClient?.name,
+                          clientContact: quoteInfo.clientContact || selectedClient?.contact,
+                          email: quoteInfo.email,
+                          phone: quoteInfo.phone,
+                          clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
+                          clientPosition: quoteInfo.clientPosition || '',
+                          products: cartItems,
+                          folio: generateFolio(), // <--- Asegura folio único
+                          terms: {
+                            paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
+                            deliveryTime: '15 días hábiles',
+                            warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
+                            observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
                           }
-                          const response = await quoteService.createQuote(quoteData);
-                          if (response.success) {
-                            setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
-                            setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente. Ahora puedes enviarla por email.`);
-                            setShowEmailModal(true);
-                          } else {
-                            throw new Error(response.message || 'Error al guardar cotización');
-                          }
-                        } else {
-                          setShowEmailModal(true);
+                        };
+                        if (selectedClient?.id) {
+                          quoteData.clientId = selectedClient.id;
                         }
-                      } catch (err) {
-                        setApiError(err.message || 'Error al guardar/enviar cotización por email');
-                      } finally {
-                        setIsSubmitting(false);
+                        const response = await quoteService.createQuote(quoteData);
+                        if (response.success) {
+                          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+                          setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente. Ahora puedes enviarla por email.`);
+                          setShowEmailModal(true);
+                        } else {
+                          throw new Error(response.message || 'Error al guardar cotización');
+                        }
+                      } else {
+                        setShowEmailModal(true);
                       }
-                    }}
-                    quoteData={{
-                      folio: generatedQuote?.folio || generateFolio(), // Usar folio siempre
-                      date: new Date().toLocaleDateString('es-MX', {
-                        weekday: 'long',
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric'
-                      }),
-                      total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
-                      items: cartItems
-                    }}
-                    clientData={{
-                      name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
-                      hospitalName: selectedClient?.name || selectedClient?.nombre,
-                      contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
-                      email: selectedClient?.email || selectedClient?.correo
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    variant="primary"
-                  >
-                    Enviar por Email
-                  </EmailButton>
-                )}
-                <EmailQuoteModal
-                  open={showEmailModal}
-                  onClose={() => setShowEmailModal(false)}
-                  quoteData={generatedQuote || {
-                    // fallback: build from current state if not generated
-                    ...prepareQuoteDataForPDF(),
-                    folio: generatedQuote?.folio || generateFolio()
+                    } catch (err) {
+                      setApiError(err.message || 'Error al guardar/enviar cotización por email');
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  quoteData={{
+                    folio: generatedQuote?.folio || generateFolio(), // Usar folio siempre
+                    date: new Date().toLocaleDateString('es-MX', {
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric'
+                    }),
+                    total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
+                    items: cartItems
                   }}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
@@ -1505,51 +1485,70 @@ ${companyName}`;
                     contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     email: selectedClient?.email || selectedClient?.correo
                   }}
-                  quoteId={generatedQuote?.id || editingQuoteData?.quoteId}
-                />
-                <Button 
-                  onClick={handleSaveQuote}
-                  variant="secondary"
-                  disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
-                  className="w-full flex items-center justify-center space-x-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  variant="primary"
                 >
-                  <Save size={20} />
-                  <span>
-                    {isSubmitting 
-                      ? (isEditingMode ? 'Actualizando...' : 'Guardando...') 
-                      : (isEditingMode ? 'Actualizar Cotización' : 'Guardar Borrador')
-                    }
-                  </span>
-                </Button>
-              </div>
-              {generatedQuote && (
-                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                  <h4 className="font-medium text-indigo-800 mb-2">PDF Disponible</h4>
-                  <div className="text-sm text-indigo-700 space-y-1">
-                    <p>Folio: <span className="font-mono">{generatedQuote.folio}</span></p>
-                    <p>Fecha: {new Date().toLocaleDateString('es-MX')}</p>
-                    <div className="flex space-x-2 mt-3">
-                      <Button
-                        onClick={handleGeneratePDF}
-                        variant="secondary"
-                        className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                      >
-                        <Download size={14} className="mr-1" />
-                        Descargar
-                      </Button>
-                      <Button
-                        onClick={handlePreviewPDF}
-                        variant="secondary"
-                        className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                      >
-                        <Eye size={14} className="mr-1" />
-                        Ver
-                      </Button>
-                    </div>
+                  Enviar por Email
+                </EmailButton>
+              )}
+              <EmailQuoteModal
+                open={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                quoteData={generatedQuote || {
+                  // fallback: build from current state if not generated
+                  ...prepareQuoteDataForPDF(),
+                  folio: generatedQuote?.folio || generateFolio()
+                }}
+                clientData={{
+                  name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
+                  hospitalName: selectedClient?.name || selectedClient?.nombre,
+                  contactName: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
+                  email: selectedClient?.email || selectedClient?.correo
+                }}
+                quoteId={generatedQuote?.id || editingQuoteData?.quoteId}
+              />
+              <Button 
+                onClick={handleSaveQuote}
+                variant="secondary"
+                disabled={isSubmitting || cartItems.length === 0 || !quoteInfo.sellerCompany}
+                className="w-full flex items-center justify-center space-x-2"
+              >
+                <Save size={20} />
+                <span>
+                  {isSubmitting 
+                    ? (isEditingMode ? 'Actualizando...' : 'Guardando...') 
+                    : (isEditingMode ? 'Actualizar Cotización' : 'Guardar Borrador')
+                  }
+                </span>
+              </Button>
+            </div>
+            {generatedQuote && (
+              <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                <h4 className="font-medium text-indigo-800 mb-2">PDF Disponible</h4>
+                <div className="text-sm text-indigo-700 space-y-1">
+                  <p>Folio: <span className="font-mono">{generatedQuote.folio}</span></p>
+                  <p>Fecha: {new Date().toLocaleDateString('es-MX')}</p>
+                  <div className="flex space-x-2 mt-3">
+                    <Button
+                      onClick={handleGeneratePDF}
+                      variant="secondary"
+                      className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                    >
+                      <Download size={14} className="mr-1" />
+                      Descargar
+                    </Button>
+                    <Button
+                      onClick={handlePreviewPDF}
+                      variant="secondary"
+                      className="flex-1 text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                    >
+                      <Eye size={14} className="mr-1" />
+                      Ver
+                    </Button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
