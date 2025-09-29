@@ -1426,40 +1426,41 @@ ${companyName}`;
                     setSuccessMessage('');
                     setIsSubmitting(true);
                     try {
-                      // Si no hay cotización generada, guárdala primero
-                      if (!generatedQuote?.id || !generatedQuote?.folio) {
-                        const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                        const quoteData = {
-                          sellerCompany: selectedSellerCompany?.name || '',
-                          sellerCompanyId: quoteInfo.sellerCompany,
-                          clientName: quoteInfo.clientName || selectedClient?.name,
-                          clientContact: quoteInfo.clientContact || selectedClient?.contact,
-                          email: quoteInfo.email,
-                          phone: quoteInfo.phone,
-                          clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
-                          clientPosition: quoteInfo.clientPosition || '',
-                          products: cartItems,
-                          folio: generateFolio(),
-                          terms: {
-                            paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
-                            deliveryTime: '15 días hábiles',
-                            warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
-                            observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
-                          }
-                        };
-                        if (selectedClient?.id) {
-                          quoteData.clientId = selectedClient.id;
+                      // Siempre guarda/actualiza la cotización antes de abrir el modal
+                      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                      const quoteData = {
+                        sellerCompany: selectedSellerCompany?.name || '',
+                        sellerCompanyId: quoteInfo.sellerCompany,
+                        clientName: quoteInfo.clientName || selectedClient?.name,
+                        clientContact: quoteInfo.clientContact || selectedClient?.contact,
+                        email: quoteInfo.email,
+                        phone: quoteInfo.phone,
+                        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
+                        clientPosition: quoteInfo.clientPosition || '',
+                        products: cartItems,
+                        folio: generatedQuote?.folio || generateFolio(),
+                        terms: {
+                          paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
+                          deliveryTime: '15 días hábiles',
+                          warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
+                          observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
                         }
-                        const response = await quoteService.createQuote(quoteData);
-                        if (response.success) {
-                          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
-                          setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente. Ahora puedes enviarla por email.`);
-                          setShowEmailModal(true);
-                        } else {
-                          throw new Error(response.message || 'Error al guardar cotización');
-                        }
+                      };
+                      if (selectedClient?.id) {
+                        quoteData.clientId = selectedClient.id;
+                      }
+                      let response;
+                      if (isEditingMode && editingQuoteData?.quoteId) {
+                        response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
                       } else {
+                        response = await quoteService.createQuote(quoteData);
+                      }
+                      if (response.success) {
+                        setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+                        setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente. Ahora puedes enviarla por email.`);
                         setShowEmailModal(true);
+                      } else {
+                        throw new Error(response.message || 'Error al guardar cotización');
                       }
                     } catch (err) {
                       setApiError(err.message || 'Error al guardar/enviar cotización por email');
@@ -1476,7 +1477,7 @@ ${companyName}`;
                       day: 'numeric'
                     }),
                     total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
-                    products: cartItems // <--- usa products, no items
+                    products: cartItems
                   }}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
