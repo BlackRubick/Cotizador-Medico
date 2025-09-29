@@ -1428,6 +1428,17 @@ ${companyName}`;
                     let modalShouldOpen = false;
                     try {
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                      // Generar PDF exactamente igual que en la vista previa
+                      const pdfQuoteData = prepareQuoteDataForPDF();
+                      const pdfResult = await pdfService.generateAndDownloadQuotePDF(pdfQuoteData, selectedSellerCompany);
+                      if (pdfResult.success && pdfResult.file) {
+                        setPdfAttachment(pdfResult.file); // Guardar en estado
+                      } else {
+                        setPdfAttachment(null);
+                        throw new Error('No se pudo generar el PDF para adjuntar al email.');
+                      }
+                      // Guardar cotización en la API
+                      let response;
                       const quoteData = {
                         sellerCompany: selectedSellerCompany?.name || '',
                         sellerCompanyId: quoteInfo.sellerCompany,
@@ -1448,15 +1459,6 @@ ${companyName}`;
                       if (selectedClient?.id) {
                         quoteData.clientId = selectedClient.id;
                       }
-                      // Generar PDF para adjuntar al email
-                      const pdfResult = await pdfService.generateQuotePDFForEmail(quoteData, selectedSellerCompany);
-                      if (pdfResult.success && pdfResult.file) {
-                        setPdfAttachment(pdfResult.file); // Guardar en estado
-                      } else {
-                        setPdfAttachment(null);
-                        throw new Error('No se pudo generar el PDF para adjuntar al email.');
-                      }
-                      let response;
                       if (isEditingMode && editingQuoteData?.quoteId) {
                         response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
                       } else {
@@ -1465,14 +1467,12 @@ ${companyName}`;
                       if (response.success) {
                         setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
                         setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente en la API. Ahora puedes enviarla por email.`);
-                        console.log('✅ Cotización guardada en la API:', response.data);
                         modalShouldOpen = true;
                       } else {
                         throw new Error(response.message || 'Error al guardar cotización');
                       }
                     } catch (err) {
                       setApiError(err.message || 'Error al guardar/enviar cotización por email');
-                      console.error('❌ Error al guardar cotización en la API:', err);
                       modalShouldOpen = false;
                     } finally {
                       setIsSubmitting(false);
