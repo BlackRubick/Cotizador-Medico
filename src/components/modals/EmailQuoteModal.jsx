@@ -5,6 +5,7 @@ import Input from '../atoms/Input';
 import { AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import pdfService from '../../services/pdfService';
 import axios from 'axios';
+import { sellerCompanies } from '../organisms/QuoteBuilder'; // Importa sellerCompanies si no está disponible
 
 const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
   const [isSending, setIsSending] = useState(false);
@@ -16,13 +17,17 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
     setSuccess('');
     setIsSending(true);
     try {
-      const pdfResult = await pdfService.generateQuotePDF(quoteData);
-      if (!pdfResult.success || !pdfResult.fileBuffer) {
+      // Buscar la empresa vendedora correcta
+      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteData.sellerCompany?.id || quoteData.sellerCompanyId);
+      if (!selectedSellerCompany) throw new Error('Empresa vendedora no encontrada.');
+      // Generar el PDF como blob
+      const pdfResult = await pdfService.generateQuotePDFBlob(quoteData, selectedSellerCompany);
+      if (!pdfResult || !pdfResult.blob) {
         throw new Error('No se pudo generar el PDF.');
       }
       // Enviar al backend usando FormData y el folio real
       const formData = new FormData();
-      formData.append('pdfBuffer', pdfResult.fileBuffer); // PDF como archivo
+      formData.append('pdfBuffer', pdfResult.blob); // PDF como archivo
       // Usa el folio real de la cotización
       const folio = quoteData.folio;
       if (!folio) throw new Error('Folio de cotización no encontrado.');
@@ -39,7 +44,7 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
         throw new Error(response.data.message || 'Error al enviar email');
       }
     } catch (err) {
-      setError(err.message || 'Error al enviar la cotización por email');
+      setError(err.message);
     } finally {
       setIsSending(false);
     }
