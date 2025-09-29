@@ -1418,65 +1418,23 @@ ${companyName}`;
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
                   onClick={async () => {
-                    if (!validateForm()) {
-                      setApiError('Completa todos los campos requeridos antes de enviar por email.');
-                      return;
-                    }
-                    setApiError('');
-                    setSuccessMessage('');
-                    setIsSubmitting(true);
-                    let modalShouldOpen = false;
+                    if (!validateForm()) return;
+                    setApiError("");
+                    setSuccessMessage("");
                     try {
+                      // Generar datos para el PDF igual que en la vista previa
+                      const quoteDataForPDF = prepareQuoteDataForPDF();
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Generar PDF exactamente igual que en la vista previa
-                      const pdfQuoteData = prepareQuoteDataForPDF();
-                      const pdfResult = await pdfService.generateAndDownloadQuotePDF(pdfQuoteData, selectedSellerCompany);
+                      // Generar el PDF usando la misma función que la vista previa
+                      const pdfResult = await pdfService.generateAndDownloadQuotePDF(quoteDataForPDF, selectedSellerCompany);
                       if (pdfResult.success && pdfResult.file) {
-                        setPdfAttachment(pdfResult.file); // Guardar en estado
+                        setPdfAttachment(pdfResult.file); // Guardar el PDF generado en el estado
+                        setShowEmailModal(true); // Abrir el modal para enviar el email
                       } else {
-                        setPdfAttachment(null);
-                        throw new Error('No se pudo generar el PDF para adjuntar al email.');
+                        throw new Error(pdfResult.error || "Error al generar PDF");
                       }
-                      // Guardar cotización en la API
-                      let response;
-                      const quoteData = {
-                        sellerCompany: selectedSellerCompany?.name || '',
-                        sellerCompanyId: quoteInfo.sellerCompany,
-                        clientName: quoteInfo.clientName || selectedClient?.name,
-                        clientContact: quoteInfo.clientContact || selectedClient?.contact,
-                        email: quoteInfo.email,
-                        phone: quoteInfo.phone,
-                        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
-                        clientPosition: quoteInfo.clientPosition || '',
-                        products: cartItems,
-                        terms: {
-                          paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
-                          deliveryTime: '15 días hábiles',
-                          warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
-                          observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
-                        }
-                      };
-                      if (selectedClient?.id) {
-                        quoteData.clientId = selectedClient.id;
-                      }
-                      if (isEditingMode && editingQuoteData?.quoteId) {
-                        response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
-                      } else {
-                        response = await quoteService.createQuote(quoteData);
-                      }
-                      if (response.success) {
-                        setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
-                        setSuccessMessage(`✅ Cotización ${response.data.folio} guardada exitosamente en la API. Ahora puedes enviarla por email.`);
-                        modalShouldOpen = true;
-                      } else {
-                        throw new Error(response.message || 'Error al guardar cotización');
-                      }
-                    } catch (err) {
-                      setApiError(err.message || 'Error al guardar/enviar cotización por email');
-                      modalShouldOpen = false;
-                    } finally {
-                      setIsSubmitting(false);
-                      if (modalShouldOpen) setShowEmailModal(true);
+                    } catch (error) {
+                      setApiError(error.message || "Error al generar PDF para email");
                     }
                   }}
                   quoteData={{
