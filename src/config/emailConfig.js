@@ -8,6 +8,10 @@ export const EMAIL_CONFIG = {
     timezone: 'America/Mexico_City',
     currency: 'MXN',
     dateFormat: 'es-MX'
+  },
+  COMPANY: {
+    email: 'cotizacionesacr@hotmail.com',
+    password: 'Cuco2024**'
   }
 };
 
