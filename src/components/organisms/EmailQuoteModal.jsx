@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import pdfService from '../../services/pdfService';
 import quoteService from '../../services/quoteService';
 
-const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
+const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData, pdfAttachment }) => {
   const [formData, setFormData] = useState({
     to_email: '',
     to_name: '',
@@ -69,21 +69,11 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
   const sendQuoteEmail = async (emailData) => {
     try {
-      let pdfBlob;
-      if (pdfService.generateAndDownloadQuotePDF) {
-        const jsPDF = (await import('jspdf')).default;
-        const doc = new jsPDF('p', 'mm', 'letter');
-        // Usa el folio del backend para el asunto
-        const folio = emailData.quote?.folio || emailData.quote?.id || '';
-        const subject = `Cotización ${folio} - ${emailData.company_name}`;
-        const message = String(emailData.message || '');
-        doc.text(subject, 10, 10);
-        // Divide el mensaje en líneas para evitar overflow y errores
-        const lines = doc.splitTextToSize(message, 180);
-        doc.text(lines, 10, 20);
-        pdfBlob = doc.output('blob');
-      } else {
-        throw new Error('No se encontró la función para generar el PDF.');
+      let pdfBlob = pdfAttachment;
+      if (!pdfBlob) {
+        // Generar el PDF visual si no existe
+        const sellerCompany = emailData.quote?.sellerCompany || {};
+        pdfBlob = await pdfService.generateQuotePDFBlob(emailData.quote, sellerCompany);
       }
 
       // 2. Crear FormData y enviar al backend
