@@ -536,11 +536,11 @@ class PDFService {
     await this.waitForImages(container);
     // Seleccionar el nodo principal
     const quoteNode = container.querySelector('.quote-container');
-    // Renderizar a imagen
-    const canvas = await window.html2canvas(quoteNode, { scale: 2, useCORS: true });
+    // Renderizar a imagen usando el import correcto
+    const canvas = await html2canvas(quoteNode, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    // Crear PDF y agregar la imagen
-    const pdf = new window.jsPDF('p', 'mm', 'letter');
+    // Crear PDF y agregar la imagen usando el import correcto
+    const pdf = new jsPDF('p', 'mm', 'letter');
     const pageWidth = 216;
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pageWidth;
