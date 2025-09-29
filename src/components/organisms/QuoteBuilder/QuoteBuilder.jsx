@@ -392,6 +392,7 @@ const QuoteBuilder = ({ onBack }) => {
   // Función para preparar datos de la cotización para PDF
   const prepareQuoteDataForPDF = () => {
     const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+    const sellerCompanyId = selectedSellerCompany ? selectedSellerCompany.id : '';
     
     return {
       // Información de la empresa vendedora
