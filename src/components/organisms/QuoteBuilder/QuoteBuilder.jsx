@@ -1437,7 +1437,6 @@ ${companyName}`;
                         clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
                         clientPosition: quoteInfo.clientPosition || '',
                         products: cartItems,
-                        folio: generatedQuote?.folio || generateFolio(),
                         terms: {
                           paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
                           deliveryTime: '15 días hábiles',
@@ -1472,7 +1471,8 @@ ${companyName}`;
                     }
                   }}
                   quoteData={{
-                    folio: generatedQuote?.folio || generateFolio(),
+                    folio: generatedQuote?.folio,
+                    id: generatedQuote?.id,
                     date: new Date().toLocaleDateString('es-MX', {
                       weekday: 'long',
                       year: 'numeric', 
