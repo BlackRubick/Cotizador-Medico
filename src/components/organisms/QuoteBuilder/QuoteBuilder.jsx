@@ -1439,7 +1439,7 @@ ${companyName}`;
                           clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
                           clientPosition: quoteInfo.clientPosition || '',
                           products: cartItems,
-                          folio: generateFolio(), // <--- Asegura folio único
+                          folio: generateFolio(),
                           terms: {
                             paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
                             deliveryTime: '15 días hábiles',
