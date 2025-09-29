@@ -6,15 +6,7 @@ import { AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import pdfService from '../../services/pdfService';
 import axios from 'axios';
 
-const BRANCHES = [
-  { id: 'conduit-life', name: 'Conduit Life' },
-  { id: 'biosystems-hls', name: 'Biosystems HLS' },
-  { id: 'ingenieria-clinica', name: 'Ingeniería Clínica y Diseño' },
-  { id: 'escala-biomedica', name: 'Escala Biomédica' }
-];
-
 const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
-  const [branch, setBranch] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -22,22 +14,20 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
   const handleSendEmail = async () => {
     setError('');
     setSuccess('');
-    if (!branch) {
-      setError('Selecciona la sucursal desde la que se enviará el correo.');
-      return;
-    }
     setIsSending(true);
     try {
       const pdfResult = await pdfService.generateQuotePDF(quoteData);
       if (!pdfResult.success || !pdfResult.fileBuffer) {
         throw new Error('No se pudo generar el PDF.');
       }
-      // 2. Enviar al backend
-      const response = await axios.post(`/api/quotes/${quoteId}/send`, {
-        branch,
-        folio: quoteData.folio,
-        products: quoteData.products,
-        pdfBuffer: pdfResult.fileBuffer // Debe ser base64
+      // Enviar al backend usando FormData y el folio real
+      const formData = new FormData();
+      formData.append('pdfBuffer', pdfResult.fileBuffer); // PDF como archivo
+      // Usa el folio real de la cotización
+      const folio = quoteData.folio;
+      if (!folio) throw new Error('Folio de cotización no encontrado.');
+      const response = await axios.post(`/api/quotes/${folio}/send`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (response.data.success) {
         setSuccess('Cotización enviada exitosamente por email.');
@@ -62,23 +52,9 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
           <Mail className="w-6 h-6 text-blue-600" />
           <span className="font-semibold text-blue-800">Enviar a: {clientData?.email}</span>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">Sucursal de envío *</label>
-          <select
-            value={branch}
-            onChange={e => setBranch(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg"
-            disabled={isSending}
-          >
-            <option value="">-- Selecciona sucursal --</option>
-            {BRANCHES.map(b => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-        </div>
         <Button
           onClick={handleSendEmail}
-          disabled={isSending || !branch}
+          disabled={isSending}
           className="w-full bg-blue-600 text-white mt-2"
         >
           {isSending ? 'Enviando...' : 'Enviar Cotización'}
