@@ -504,7 +504,12 @@ const QuoteBuilder = ({ onBack }) => {
         const response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
         
         if (response.success) {
-          setGeneratedQuote({ ...quoteData, id: editingQuoteData.quoteId, folio: editingQuoteData.folio });
+          setGeneratedQuote({ 
+            ...quoteData, 
+            id: editingQuoteData.quoteId, 
+            folio: editingQuoteData.folio, 
+            cartItems: cartItems // <-- productos actuales
+          });
           setSuccessMessage(`✅ Cotización ${editingQuoteData.folio} actualizada exitosamente`);
           console.log('✅ Quote updated:', response.data);
           
@@ -532,7 +537,12 @@ const QuoteBuilder = ({ onBack }) => {
         const response = await quoteService.createQuote(quoteData);
         
         if (response.success) {
-          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+          setGeneratedQuote({ 
+            ...quoteData, 
+            id: response.data.id, 
+            folio: response.data.folio, 
+            cartItems: cartItems // <-- productos actuales
+          });
           setSuccessMessage(`✅ Cotización ${response.data.folio} guardada como borrador exitosamente`);
           console.log('✅ Quote saved:', response.data);
           
@@ -622,7 +632,12 @@ const QuoteBuilder = ({ onBack }) => {
         const response = await quoteService.updateQuote(editingQuoteData.quoteId, quoteData);
         
         if (response.success) {
-          setGeneratedQuote({ ...quoteData, id: editingQuoteData.quoteId, folio: editingQuoteData.folio });
+          setGeneratedQuote({ 
+            ...quoteData, 
+            id: editingQuoteData.quoteId, 
+            folio: editingQuoteData.folio, 
+            cartItems: cartItems // <-- productos actuales
+          });
           console.log('✅ Quote updated:', response.data);
           
           // Limpiar datos de edición
@@ -725,7 +740,12 @@ ${companyName}`;
         // 6. Abrir WhatsApp en nueva ventana
         window.open(whatsappURL, '_blank');
         
-        setGeneratedQuote({ ...quoteData, id: quoteId, folio: quoteFolio });
+        setGeneratedQuote({ 
+          ...quoteData, 
+          id: quoteId, 
+          folio: quoteFolio, 
+          cartItems: cartItems // <-- productos actuales
+        });
         const storageType = savedInBD ? 'en base de datos' : 'localmente';
         const actionType = wasEditingMode ? 'actualizada' : 'guardada';
         setSuccessMessage(`✅ Cotización ${quoteFolio} ${actionType} ${storageType} exitosamente. Se abrió WhatsApp para envío.`);
