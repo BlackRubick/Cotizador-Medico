@@ -23,7 +23,7 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     if (isOpen && clientData) {
       const hospitalName = clientData.hospitalName || clientData.hospital || clientData.name || clientData.nombre || '';
       const contactName = clientData.contactName || clientData.contact || clientData.name || clientData.nombre || '';
-
+      
       setFormData(prev => ({
         ...prev,
         to_email: clientData.email || clientData.correo || '',
@@ -70,30 +70,20 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
   const sendQuoteEmail = async (emailData) => {
     try {
       let pdfBlob;
-      // Usar el PDF profesional generado por pdfService
       if (pdfService.generateAndDownloadQuotePDF) {
-
-        // Obtener los datos completos de la cotización y la empresa
-        const quote = emailData.quote || quoteData;
-        const sellerCompany = emailData.sellerCompany || (quote && quote.sellerCompany) || {};
-        // Generar el PDF profesional como blob
-        // Usar el mismo método que se usa para descargar el PDF completo
-        // Si pdfService tiene un método para obtener el blob directamente, úsalo; si no, adaptar
-        if (pdfService.generateQuotePDFBlob) {
-          pdfBlob = await pdfService.generateQuotePDFBlob(quote, sellerCompany);
-        } else {
-          // Adaptar: generar y descargar PDF, luego obtener el blob
-          // Usar el método profesional y extraer el blob
-          const result = await pdfService.generateAndDownloadQuotePDF(quote, sellerCompany);
-          if (result && result.pdfBlob) {
-            pdfBlob = result.pdfBlob;
-          } else {
-            throw new Error('No se pudo obtener el PDF profesional como blob.');
-          }
-        }
+        const jsPDF = (await import('jspdf')).default;
+        const doc = new jsPDF('p', 'mm', 'letter');
+        // Usa el folio del backend para el asunto
+        const folio = emailData.quote?.folio || emailData.quote?.id || '';
+        const subject = `Cotización ${folio} - ${emailData.company_name}`;
+        const message = String(emailData.message || '');
+        doc.text(subject, 10, 10);
+        // Divide el mensaje en líneas para evitar overflow y errores
+        const lines = doc.splitTextToSize(message, 180);
+        doc.text(lines, 10, 20);
+        pdfBlob = doc.output('blob');
       } else {
         throw new Error('No se encontró la función para generar el PDF.');
-        throw new Error('No se encontró la función para generar el PDF profesional.');
       }
 
       // 2. Crear FormData y enviar al backend
@@ -121,7 +111,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!formData.to_email.trim()) {
       alert('Por favor, ingrese el email del destinatario');
       return;
