@@ -29,12 +29,14 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
       if (!selectedSellerCompany) throw new Error('Empresa vendedora no encontrada.');
       // Generar el PDF como blob
       const pdfResult = await pdfService.generateQuotePDFBlob(quoteData, selectedSellerCompany);
-      if (!pdfResult || !pdfResult.blob) {
+      if (!pdfResult || (!pdfResult.blob && !pdfResult.file)) {
         throw new Error('No se pudo generar el PDF.');
       }
+      // Usa el blob si existe, si no el file
+      const pdfBlob = pdfResult.blob || pdfResult.file;
       // Enviar al backend usando FormData y el folio real
       const formData = new FormData();
-      formData.append('pdfBuffer', pdfResult.blob); // PDF como archivo
+      formData.append('pdfBuffer', pdfBlob); // PDF como archivo
       // Usa el folio real de la cotización
       const folio = quoteData.folio;
       if (!folio) throw new Error('Folio de cotización no encontrado.');
