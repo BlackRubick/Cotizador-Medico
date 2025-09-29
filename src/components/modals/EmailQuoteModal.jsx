@@ -35,6 +35,8 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
       // 2. Enviar al backend
       const response = await axios.post(`/api/quotes/${quoteId}/send`, {
         branch,
+        folio: quoteData.folio,
+        products: quoteData.products,
         pdfBuffer: pdfResult.fileBuffer // Debe ser base64
       });
       if (response.data.success) {

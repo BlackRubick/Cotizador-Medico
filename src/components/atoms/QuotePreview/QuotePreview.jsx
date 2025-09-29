@@ -15,6 +15,7 @@ const QuotePreview = ({ quote, onClick, className = '' }) => {
           <div>
             <h3 className="font-bold text-lg text-gray-800">COTIZACIÓN</h3>
             <p className="text-sm text-gray-500">Folio: {quote.folio}</p>
+            <p className="text-sm text-gray-500">Productos: {quote.products?.length || 0}</p>
           </div>
         </div>
         <div className="text-right">

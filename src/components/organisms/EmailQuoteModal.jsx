@@ -28,7 +28,7 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
         ...prev,
         to_email: clientData.email || clientData.correo || '',
         to_name: contactName,
-        subject: `Cotización ${quoteData?.number || new Date().getTime()} - ${prev.company_name}`,
+        subject: `Cotización ${quoteData?.folio || quoteData?.id || new Date().getTime()} - ${prev.company_name}`,
         message: `Estimado/a ${contactName},
 
 Esperamos se encuentre bien. Por medio del presente, nos es grato hacerle llegar la cotización solicitada para ${hospitalName}.
@@ -329,10 +329,10 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
             <div className="bg-gray-50 p-3 rounded-md">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Datos de la Cotización:</h4>
               <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Número:</strong> #{quoteData.number || 'N/A'}</p>
+                <p><strong>Folio:</strong> #{quoteData.folio || 'N/A'}</p>
                 <p><strong>Fecha:</strong> {quoteData.date || new Date().toLocaleDateString('es-ES')}</p>
                 <p><strong>Total:</strong> ${quoteData.total || '0'}</p>
-                <p><strong>Items:</strong> {quoteData.items?.length || 0} productos</p>
+                <p><strong>Productos:</strong> {quoteData.products?.length || 0} productos</p>
               </div>
             </div>
           )}

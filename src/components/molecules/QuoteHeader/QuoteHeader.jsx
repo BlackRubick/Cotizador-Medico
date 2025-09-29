@@ -21,6 +21,7 @@ const QuoteHeader = ({ quote, editable = false, onUpdate }) => {
               COTIZACIÓN
             </h1>
             <p className="text-gray-600">Folio: {quote.folio}</p>
+            <p className="text-gray-600">Productos: {quote.products?.length || 0}</p>
           </div>
         </div>
         

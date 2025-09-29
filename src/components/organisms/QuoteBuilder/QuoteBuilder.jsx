@@ -422,7 +422,7 @@ const QuoteBuilder = ({ onBack }) => {
     };
   };
 
-  // Función para generar folio único
+  // Refuerza la función para folio único
   const generateFolio = () => {
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -432,14 +432,13 @@ const QuoteBuilder = ({ onBack }) => {
     const min = String(date.getMinutes()).padStart(2, '0');
     const sec = String(date.getSeconds()).padStart(2, '0');
     const ms = String(date.getMilliseconds()).padStart(3, '0');
-    const random = Math.floor(Math.random() * 99) + 1;
-    // Prefijo por empresa
+    const random = Math.floor(Math.random() * 10000) + 1; // 1-9999
     let prefix = 'ICD';
     if (quoteInfo.sellerCompany === 'biosystems-hls') prefix = 'BHL';
-    if (quoteInfo.sellerCompany === 'conduit-life') prefix = 'CLI';
+    if (quoteInfo.sellerCompany === 'conduit-life') prefix = 'CLF';
     if (quoteInfo.sellerCompany === 'escala-biomedica') prefix = 'EBI';
-    // Folio: PREFIJODDMMYYHHMMSSRR
-    return `${prefix}${day}${month}${year}${hour}${min}${sec}${random}`;
+    // Folio: PREFIJODDMMYYHHMMSSMSRRRR
+    return `${prefix}${day}${month}${year}${hour}${min}${sec}${ms}${random}`;
   };
 
   const handleSaveQuote = async () => {
@@ -1469,7 +1468,7 @@ ${companyName}`;
                     }
                   }}
                   quoteData={{
-                    folio: generatedQuote?.folio || generateFolio(), // Usar folio siempre
+                    folio: generatedQuote?.folio || generateFolio(),
                     date: new Date().toLocaleDateString('es-MX', {
                       weekday: 'long',
                       year: 'numeric', 
@@ -1477,7 +1476,7 @@ ${companyName}`;
                       day: 'numeric'
                     }),
                     total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
-                    items: cartItems
+                    products: cartItems // <--- usa products, no items
                   }}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
@@ -1495,9 +1494,9 @@ ${companyName}`;
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
                 quoteData={generatedQuote || {
-                  // fallback: build from current state if not generated
                   ...prepareQuoteDataForPDF(),
-                  folio: generatedQuote?.folio || generateFolio()
+                  folio: generatedQuote?.folio || generateFolio(),
+                  products: cartItems // <--- usa products, no items
                 }}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
