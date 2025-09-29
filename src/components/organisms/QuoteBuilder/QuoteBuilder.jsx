@@ -1411,9 +1411,11 @@ ${companyName}`;
                     if (!generatedQuote?.id || !generatedQuote?.folio) {
                       setIsSubmitting(true);
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                      // Construir objeto con 'items' para el backend y el modal
                       const quoteData = {
                         ...prepareQuoteDataForPDF(),
                         sellerCompany: selectedSellerCompany,
+                        items: cartItems,
                       };
                       try {
                         const response = await quoteService.createQuote(quoteData);
@@ -1434,7 +1436,7 @@ ${companyName}`;
                       setShowEmailModal(true);
                     }
                   }}
-                  quoteData={generatedQuote || prepareQuoteDataForPDF()}
+                  quoteData={(generatedQuote && generatedQuote.items) ? generatedQuote : { ...prepareQuoteDataForPDF(), items: cartItems }}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     hospitalName: selectedClient?.name || selectedClient?.nombre,
@@ -1450,7 +1452,7 @@ ${companyName}`;
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={generatedQuote || prepareQuoteDataForPDF()}
+                quoteData={(generatedQuote && generatedQuote.items) ? generatedQuote : { ...prepareQuoteDataForPDF(), items: cartItems }}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
