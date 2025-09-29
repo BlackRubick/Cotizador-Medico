@@ -1411,7 +1411,6 @@ ${companyName}`;
                     if (!generatedQuote?.id || !generatedQuote?.folio) {
                       setIsSubmitting(true);
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Usar prepareQuoteDataForPDF para asegurar todos los datos
                       const quoteData = {
                         ...prepareQuoteDataForPDF(),
                         sellerCompany: selectedSellerCompany,
@@ -1435,7 +1434,7 @@ ${companyName}`;
                       setShowEmailModal(true);
                     }
                   }}
-                  quoteData={generatedQuote}
+                  quoteData={generatedQuote || prepareQuoteDataForPDF()}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     hospitalName: selectedClient?.name || selectedClient?.nombre,
@@ -1451,7 +1450,7 @@ ${companyName}`;
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={generatedQuote}
+                quoteData={generatedQuote || prepareQuoteDataForPDF()}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
