@@ -1408,19 +1408,19 @@ ${companyName}`;
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
                   onClick={async () => {
-                    // Si no hay cotización generada, guárdala primero
                     if (!generatedQuote?.id || !generatedQuote?.folio) {
                       setIsSubmitting(true);
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Usar prepareQuoteDataForPDF para asegurar todos los datos
+                      // Construir objeto para el backend
                       const quoteData = {
                         ...prepareQuoteDataForPDF(),
                         sellerCompany: selectedSellerCompany,
+                        items: cartItems,
                       };
                       try {
                         const response = await quoteService.createQuote(quoteData);
-                        if (response.success) {
-                          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
+                        if (response.success && response.data) {
+                          setGeneratedQuote(response.data); // Usar el objeto exacto de BD
                           setIsSubmitting(false);
                           setShowEmailModal(true);
                         } else {
@@ -1435,7 +1435,7 @@ ${companyName}`;
                       setShowEmailModal(true);
                     }
                   }}
-                  quoteData={generatedQuote || prepareQuoteDataForPDF()}
+                  quoteData={generatedQuote}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     hospitalName: selectedClient?.name || selectedClient?.nombre,
@@ -1451,7 +1451,7 @@ ${companyName}`;
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={generatedQuote || prepareQuoteDataForPDF()}
+                quoteData={generatedQuote}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
