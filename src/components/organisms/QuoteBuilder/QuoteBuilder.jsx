@@ -1422,19 +1422,23 @@ ${companyName}`;
                     setApiError("");
                     setSuccessMessage("");
                     try {
-                      // Generar el PDF visual igual que la vista previa
-                      const quoteDataForPDF = prepareQuoteDataForPDF();
-                      const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Usar la función visual, NO la de solo texto
-                      const pdfResult = await pdfService.generateAndDownloadQuotePDF(quoteDataForPDF, selectedSellerCompany);
-                      if (pdfResult.success && pdfResult.file) {
-                        setPdfAttachment(pdfResult.file); // PDF visual
-                        setShowEmailModal(true); // Abrir modal para enviar email
-                      } else {
-                        throw new Error(pdfResult.error || "Error al generar PDF visual");
+                      let pdfFile = pdfAttachment;
+                      if (!pdfFile) {
+                        // Si no hay PDF visual generado, lo generamos igual que la vista previa
+                        const quoteDataForPDF = prepareQuoteDataForPDF();
+                        const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
+                        const pdfResult = await pdfService.generateAndDownloadQuotePDF(quoteDataForPDF, selectedSellerCompany);
+                        if (pdfResult.success && pdfResult.file) {
+                          pdfFile = pdfResult.file;
+                          setPdfAttachment(pdfFile);
+                        } else {
+                          throw new Error(pdfResult.error || "Error al generar PDF visual");
+                        }
                       }
+                      // Usar el PDF visual generado como adjunto
+                      setShowEmailModal(true);
                     } catch (error) {
-                      setApiError(error.message || "Error al generar PDF visual para email");
+                      setApiError(error.message || "Error al adjuntar PDF visual");
                     }
                   }}
                   quoteData={{
