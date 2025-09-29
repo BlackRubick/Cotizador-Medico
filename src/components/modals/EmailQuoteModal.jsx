@@ -5,7 +5,14 @@ import Input from '../atoms/Input';
 import { AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import pdfService from '../../services/pdfService';
 import axios from 'axios';
-import { sellerCompanies } from '../organisms/QuoteBuilder'; // Importa sellerCompanies si no está disponible
+
+// El array sellerCompanies debe estar definido localmente en este archivo, no importado
+const sellerCompanies = [
+  { id: 'conduit-life', name: 'Conduit Life', fullName: 'Conduit Life S.A. de C.V.', address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030', phone: '+52 961 123 4567', email: 'contacto@conduitlife.com', website: 'www.conduitlife.com', rfc: 'CLI150120328' },
+  { id: 'biosystems-hls', name: 'Biosystems HLS', fullName: 'Biosystems HLS S.A. de C.V.', address: 'Camino Real a Xochitepec 108 PA, Colonia La Noria Xochimilco, CDMX CP: 16030', rfc: 'BHL130614LQ4' },
+  { id: 'ingenieria-clinica', name: 'Ingeniería Clínica y Diseño', fullName: 'Ingeniería Clínica y Diseño S.A. de C.V.', address: 'Viena 68, Colonia Del Carmen, Alcaldía Coyoacán, CP. 04100 CDMX', rfc: 'ICD090619J79' },
+  { id: 'escala-biomedica', name: 'Escala Biomédica', fullName: 'Escala Biomédica S.A. de C.V.', address: 'Av. Insurgentes 682 int. 706, Colonia Del Valle Norte, Benito Juárez CP. 03103 CDMX', rfc: 'EBI1081216T38' }
+];
 
 const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
   const [isSending, setIsSending] = useState(false);
