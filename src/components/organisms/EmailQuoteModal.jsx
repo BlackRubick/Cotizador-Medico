@@ -23,7 +23,7 @@ const EmailQuoteModal = ({ isOpen, onClose, quoteData, clientData }) => {
     if (isOpen && clientData) {
       const hospitalName = clientData.hospitalName || clientData.hospital || clientData.name || clientData.nombre || '';
       const contactName = clientData.contactName || clientData.contact || clientData.name || clientData.nombre || '';
-      
+
       setFormData(prev => ({
         ...prev,
         to_email: clientData.email || clientData.correo || '',
@@ -72,18 +72,18 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
       let pdfBlob;
       // Usar el PDF profesional generado por pdfService
       if (pdfService.generateAndDownloadQuotePDF) {
+
         // Obtener los datos completos de la cotización y la empresa
         const quote = emailData.quote || quoteData;
-        let sellerCompany = emailData.sellerCompany || (quote && quote.sellerCompany) || {};
-        // Si no tiene id válido, usar uno por defecto
-        if (!sellerCompany.id || !pdfService.companyTemplates[sellerCompany.id]) {
-          sellerCompany = { id: 'ingenieria-clinica', ...sellerCompany };
-        }
+        const sellerCompany = emailData.sellerCompany || (quote && quote.sellerCompany) || {};
         // Generar el PDF profesional como blob
+        // Usar el mismo método que se usa para descargar el PDF completo
+        // Si pdfService tiene un método para obtener el blob directamente, úsalo; si no, adaptar
         if (pdfService.generateQuotePDFBlob) {
           pdfBlob = await pdfService.generateQuotePDFBlob(quote, sellerCompany);
         } else {
           // Adaptar: generar y descargar PDF, luego obtener el blob
+          // Usar el método profesional y extraer el blob
           const result = await pdfService.generateAndDownloadQuotePDF(quote, sellerCompany);
           if (result && result.pdfBlob) {
             pdfBlob = result.pdfBlob;
@@ -92,6 +92,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
           }
         }
       } else {
+        throw new Error('No se encontró la función para generar el PDF.');
         throw new Error('No se encontró la función para generar el PDF profesional.');
       }
 
@@ -120,7 +121,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.to_email.trim()) {
       alert('Por favor, ingrese el email del destinatario');
       return;
@@ -146,7 +147,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
         const safeQuoteData = {
           ...quoteData,
           email: formData.to_email || quoteData.email || '',
-          products: Array.isArray(quoteData.items) ? quoteData.items : (Array.isArray(quoteData.products) ? quoteData.products : []),
+          products: quoteData.items || quoteData.products || [],
         };
         const createResult = await quoteService.createQuote(safeQuoteData);
         if (createResult.success && createResult.data) {
@@ -338,10 +339,10 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
             <div className="bg-gray-50 p-3 rounded-md">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Datos de la Cotización:</h4>
               <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Número:</strong> #{quoteData.number || quoteData.folio || 'N/A'}</p>
-                <p><strong>Fecha:</strong> {quoteData.date || quoteData.fecha || new Date().toLocaleDateString('es-ES')}</p>
+                <p><strong>Número:</strong> #{quoteData.number || 'N/A'}</p>
+                <p><strong>Fecha:</strong> {quoteData.date || new Date().toLocaleDateString('es-ES')}</p>
                 <p><strong>Total:</strong> ${quoteData.total || '0'}</p>
-                <p><strong>Items:</strong> {Array.isArray(quoteData.items) ? quoteData.items.length : (Array.isArray(quoteData.products) ? quoteData.products.length : 0)} productos</p>
+                <p><strong>Items:</strong> {quoteData.items?.length || 0} productos</p>
               </div>
             </div>
           )}
