@@ -146,7 +146,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
         const safeQuoteData = {
           ...quoteData,
           email: formData.to_email || quoteData.email || '',
-          products: quoteData.items || quoteData.products || [],
+          products: Array.isArray(quoteData.items) ? quoteData.items : (Array.isArray(quoteData.products) ? quoteData.products : []),
         };
         const createResult = await quoteService.createQuote(safeQuoteData);
         if (createResult.success && createResult.data) {
@@ -341,7 +341,7 @@ Quedamos a su disposición para cualquier duda o aclaración.`,
                 <p><strong>Número:</strong> #{quoteData.number || quoteData.folio || 'N/A'}</p>
                 <p><strong>Fecha:</strong> {quoteData.date || quoteData.fecha || new Date().toLocaleDateString('es-ES')}</p>
                 <p><strong>Total:</strong> ${quoteData.total || '0'}</p>
-                <p><strong>Items:</strong> {(quoteData.items?.length || quoteData.products?.length || 0)} productos</p>
+                <p><strong>Items:</strong> {Array.isArray(quoteData.items) ? quoteData.items.length : (Array.isArray(quoteData.products) ? quoteData.products.length : 0)} productos</p>
               </div>
             </div>
           )}
