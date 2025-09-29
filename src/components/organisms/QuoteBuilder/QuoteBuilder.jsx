@@ -1408,35 +1408,56 @@ ${companyName}`;
               {(selectedClient && (selectedClient.email || selectedClient.correo)) && (
                 <EmailButton
                   onClick={async () => {
+                    // Si no hay cotización generada, guárdala primero
                     if (!generatedQuote?.id || !generatedQuote?.folio) {
                       setIsSubmitting(true);
                       const selectedSellerCompany = sellerCompanies.find(company => company.id === quoteInfo.sellerCompany);
-                      // Construir objeto con 'items' para el backend y el modal
                       const quoteData = {
-                        ...prepareQuoteDataForPDF(),
-                        sellerCompany: selectedSellerCompany,
-                        items: cartItems,
+                        sellerCompany: selectedSellerCompany?.name || '',
+                        sellerCompanyId: quoteInfo.sellerCompany,
+                        clientName: quoteInfo.clientName || selectedClient?.name,
+                        clientContact: quoteInfo.clientContact || selectedClient?.contact,
+                        email: quoteInfo.email,
+                        phone: quoteInfo.phone,
+                        clientAddress: quoteInfo.clientAddress || selectedClient?.fullAddress,
+                        clientPosition: quoteInfo.clientPosition || '',
+                        products: cartItems,
+                        terms: {
+                          paymentConditions: '100% Anticipado a la entrega. (Transferencia Bancaria)',
+                          deliveryTime: '15 días hábiles',
+                          warranty: 'Garantía: 12 meses sobre defectos de fabricación.',
+                          observations: 'Sin más por el momento, nos ponemos a sus órdenes para cualquier duda y/o información adicional.'
+                        }
                       };
+                      if (selectedClient?.id) {
+                        quoteData.clientId = selectedClient.id;
+                      }
                       try {
                         const response = await quoteService.createQuote(quoteData);
                         if (response.success) {
-                          const bdQuote = { ...quoteData, id: response.data.id, folio: response.data.folio };
-                          setGeneratedQuote(bdQuote);
-                          setIsSubmitting(false);
-                          setShowEmailModal(true);
-                        } else {
-                          setIsSubmitting(false);
-                          setApiError('No se pudo crear la cotización.');
+                          setGeneratedQuote({ ...quoteData, id: response.data.id, folio: response.data.folio });
                         }
                       } catch (err) {
+                        // Puedes mostrar un error aquí si lo deseas
+                      } finally {
                         setIsSubmitting(false);
-                        setApiError('Error al crear la cotización.');
+                        setShowEmailModal(true);
                       }
                     } else {
                       setShowEmailModal(true);
                     }
                   }}
-                  quoteData={(generatedQuote && generatedQuote.items) ? generatedQuote : { ...prepareQuoteDataForPDF(), items: cartItems }}
+                  quoteData={{
+                    number: generatedQuote?.folio || `COT-${Date.now()}`,
+                    date: new Date().toLocaleDateString('es-MX', {
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric'
+                    }),
+                    total: cartItems.reduce((total, item) => total + (Number(item.basePrice) * Number(item.quantity)), 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }),
+                    items: cartItems
+                  }}
                   clientData={{
                     name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                     hospitalName: selectedClient?.name || selectedClient?.nombre,
@@ -1452,7 +1473,11 @@ ${companyName}`;
               <EmailQuoteModal
                 open={showEmailModal}
                 onClose={() => setShowEmailModal(false)}
-                quoteData={(generatedQuote && generatedQuote.items) ? generatedQuote : { ...prepareQuoteDataForPDF(), items: cartItems }}
+                quoteData={generatedQuote || {
+                  // fallback: build from current state if not generated
+                  ...prepareQuoteDataForPDF(),
+                  folio: generatedQuote?.folio || `COT-${Date.now()}`
+                }}
                 clientData={{
                   name: selectedClient?.contact || selectedClient?.nombre || selectedClient?.name,
                   hospitalName: selectedClient?.name || selectedClient?.nombre,
