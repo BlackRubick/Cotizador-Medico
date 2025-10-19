@@ -40,9 +40,9 @@ function App() {
             >
               {/* Protección real por roles */}
               <Route index element={<RoleBasedRedirect />} />
-              {/* Dashboard solo para jefes */}
+              {/* Dashboard para jefes y admins */}
               <Route path="dashboard" element={
-                <RoleBasedRoute allowedRoles={["jefe"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador"]}>
                   <DashboardPage />
                 </RoleBasedRoute>
               } />
@@ -63,16 +63,16 @@ function App() {
                   <HistoryPage />
                 </RoleBasedRoute>
               } />
-              {/* Clientes solo para jefes */}
+              {/* Clientes para jefes y admins */}
               <Route path="clientes" element={
-                <RoleBasedRoute allowedRoles={["jefe"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador"]}>
                   <ClientesPage />
                 </RoleBasedRoute>
               } />
 
-              {/* Crear usuario solo para jefes */}
+              {/* Crear usuario para jefes y admins */}
               <Route path="crear-usuario" element={
-                <RoleBasedRoute allowedRoles={["jefe"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador"]}>
                   <UserCreatePage />
                 </RoleBasedRoute>
               } />
