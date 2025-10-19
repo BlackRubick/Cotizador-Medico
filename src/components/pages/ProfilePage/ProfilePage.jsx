@@ -5,7 +5,7 @@ import Card from '../../atoms/Card';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 import Avatar from '../../atoms/Avatar';
-import EmailConfigButton from '../../atoms/EmailConfigButton';
+// ...existing code...
 
 const ProfilePage = () => {
   const { user } = useAuthContext();
@@ -192,7 +192,7 @@ const ProfilePage = () => {
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Configuración</h3>
             <div className="flex flex-wrap gap-3">
-              <EmailConfigButton showStatus={true} />
+              {/* EmailConfigButton eliminado porque EmailJS ya no se utiliza */}
             </div>
           </div>
 

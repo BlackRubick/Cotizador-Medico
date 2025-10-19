@@ -4,7 +4,7 @@ import Button from '../atoms/Button';
 import Input from '../atoms/Input';
 import { AlertCircle, CheckCircle, Mail } from 'lucide-react';
 import pdfService from '../../services/pdfService';
-import axios from 'axios';
+// import axios from 'axios';
 
 // El array sellerCompanies debe estar definido localmente en este archivo, no importado
 const sellerCompanies = [
@@ -40,17 +40,20 @@ const EmailQuoteModal = ({ open, onClose, quoteData, clientData, quoteId }) => {
       // Usa el folio real de la cotización
       const folio = quoteData.folio;
       if (!folio) throw new Error('Folio de cotización no encontrado.');
-      const response = await axios.post(`/api/quotes/${folio}/send`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const res = await fetch(`/api/quotes/${folio}/send`, {
+        method: 'POST',
+        body: formData,
+        // No se debe poner Content-Type, fetch lo pone automáticamente para FormData
       });
-      if (response.data.success) {
+      const data = await res.json();
+      if (data.success) {
         setSuccess('Cotización enviada exitosamente por email.');
         setTimeout(() => {
           setSuccess('');
           onClose();
         }, 2000);
       } else {
-        throw new Error(response.data.message || 'Error al enviar email');
+        throw new Error(data.message || 'Error al enviar email');
       }
     } catch (err) {
       setError(err.message);

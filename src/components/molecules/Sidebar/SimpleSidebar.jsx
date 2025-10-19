@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, User, FileText, History, ShoppingCart, LogOut, Menu, X, Activity, Users } from 'lucide-react';
+import { Home, User, FileText, History, ShoppingCart, LogOut, Menu, X, Activity, Users, UserPlus } from 'lucide-react';
 import { useAuthContext } from '../../../context/AuthContext';
 import { useUserRole } from '../../../hooks/useUserRole';
 
@@ -19,9 +19,16 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
   
   console.log('SimpleSidebar render - userRole:', userRole);
   
-  if (userRole === 'admin' || userRole === 'administrador') {
+  if (userRole === 'jefe') {
     menuItems = [
       { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
+      { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
+      { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
+      { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
+      { id: 'crear-usuario', path: '/crear-usuario', icon: UserPlus, label: 'Crear Usuario' },
+    ];
+  } else if (userRole === 'admin' || userRole === 'administrador') {
+    menuItems = [
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
@@ -29,7 +36,6 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
   } else {
     menuItems = [
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
-      { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
     ];
   }

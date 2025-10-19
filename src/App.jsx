@@ -17,6 +17,7 @@ import ProfilePage from './components/pages/ProfilePage';
 import HistoryPage from './components/pages/HistoryPage';
 import QuotePage from './components/pages/QuotePage';
 import ClientesPage from './components/pages/ClientesPage';
+import UserCreatePage from './components/pages/UserCreatePage/UserCreatePage.jsx';
 
 function App() {
   return (
@@ -37,13 +38,44 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Rutas simplificadas - SIN protección por roles por ahora */}
+              {/* Protección real por roles */}
               <Route index element={<RoleBasedRedirect />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="cotizar/*" element={<QuotePage />} />
-              <Route path="cotizar" element={<QuotePage />} />
-              <Route path="historial" element={<HistoryPage />} />
-              <Route path="clientes" element={<ClientesPage />} />
+              {/* Dashboard solo para jefes */}
+              <Route path="dashboard" element={
+                <RoleBasedRoute allowedRoles={["jefe"]}>
+                  <DashboardPage />
+                </RoleBasedRoute>
+              } />
+              {/* Cotizar: jefes y vendedores */}
+              <Route path="cotizar/*" element={
+                <RoleBasedRoute allowedRoles={["jefe", "vendedor"]}>
+                  <QuotePage />
+                </RoleBasedRoute>
+              } />
+              <Route path="cotizar" element={
+                <RoleBasedRoute allowedRoles={["jefe", "vendedor"]}>
+                  <QuotePage />
+                </RoleBasedRoute>
+              } />
+              {/* Historial: jefes y vendedores */}
+              <Route path="historial" element={
+                <RoleBasedRoute allowedRoles={["jefe", "vendedor"]}>
+                  <HistoryPage />
+                </RoleBasedRoute>
+              } />
+              {/* Clientes solo para jefes */}
+              <Route path="clientes" element={
+                <RoleBasedRoute allowedRoles={["jefe"]}>
+                  <ClientesPage />
+                </RoleBasedRoute>
+              } />
+
+              {/* Crear usuario solo para jefes */}
+              <Route path="crear-usuario" element={
+                <RoleBasedRoute allowedRoles={["jefe"]}>
+                  <UserCreatePage />
+                </RoleBasedRoute>
+              } />
             </Route>
 
             <Route path="*" element={<RoleBasedRedirect />} />
