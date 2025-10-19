@@ -19,19 +19,13 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
   
   console.log('SimpleSidebar render - userRole:', userRole);
   
-  if (userRole === 'jefe') {
+  if (userRole === 'jefe' || userRole === 'admin' || userRole === 'administrador') {
     menuItems = [
       { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
       { id: 'crear-usuario', path: '/crear-usuario', icon: UserPlus, label: 'Crear Usuario' },
-    ];
-  } else if (userRole === 'admin' || userRole === 'administrador') {
-    menuItems = [
-      { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
-      { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
-      { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
     ];
   } else {
     menuItems = [
