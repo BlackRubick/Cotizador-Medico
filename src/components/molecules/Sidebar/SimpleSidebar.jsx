@@ -20,6 +20,7 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
   console.log('SimpleSidebar render - userRole:', userRole);
   
   if (userRole === 'jefe' || userRole === 'admin' || userRole === 'administrador') {
+    // Jefe ve todo
     menuItems = [
       { id: 'dashboard', path: '/dashboard', icon: Home, label: 'Dashboard' },
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
@@ -27,7 +28,15 @@ const SimpleSidebar = ({ isOpen = false, onToggle }) => {
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
       { id: 'crear-usuario', path: '/crear-usuario', icon: UserPlus, label: 'Crear Usuario' },
     ];
-  } else {
+  } else if (userRole === 'manager' || userRole === 'encargado') {
+    // Encargado ve historial, clientes y cotización
+    menuItems = [
+      { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
+      { id: 'clientes', path: '/clientes', icon: Users, label: 'Clientes' },
+      { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
+    ];
+  } else if (userRole === 'user' || userRole === 'vendedor') {
+    // Vendedor solo cotización e historial
     menuItems = [
       { id: 'cotizar', path: '/cotizar', icon: ShoppingCart, label: 'Nueva Cotización' },
       { id: 'historial', path: '/historial', icon: History, label: 'Historial' },
