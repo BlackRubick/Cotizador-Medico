@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import authService from '../../services/authService';
 import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 
@@ -54,15 +55,13 @@ const UserCreatePage = () => {
     setError('');
     setSuccess('');
     try {
-      // Aquí deberías obtener el token del usuario actual si es admin
-      // y decidir el endpoint según el rol actual
-      // Ejemplo: POST /api/users para admin, /api/auth/register para público
       const endpoint = '/api/users';
+      const token = authService.getToken();
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}` // si es admin
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify(form)
       });
