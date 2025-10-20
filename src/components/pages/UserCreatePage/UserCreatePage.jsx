@@ -4,9 +4,9 @@ import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 
 const ROLES = [
-  { value: 'jefe', label: 'Jefe' },
-  { value: 'administrador', label: 'Administrador' },
-  { value: 'vendedor', label: 'Vendedor' }
+  { value: 'admin', label: 'Administrador' },
+  { value: 'user', label: 'Usuario' },
+  { value: 'manager', label: 'Manager' }
 ];
 
 const validateEmail = email => /\S+@\S+\.\S+/.test(email);
@@ -21,7 +21,7 @@ const UserCreatePage = () => {
     lastName: '',
     phone: '',
     position: '',
-    role: 'vendedor'
+    role: 'user'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -76,7 +76,7 @@ const UserCreatePage = () => {
           lastName: '',
           phone: '',
           position: '',
-          role: 'vendedor'
+          role: 'user'
         });
       } else {
         setError(data.message || 'Error al crear usuario');
