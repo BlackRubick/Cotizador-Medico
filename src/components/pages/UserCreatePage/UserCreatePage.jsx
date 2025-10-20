@@ -4,9 +4,9 @@ import Button from '../../atoms/Button';
 import Input from '../../atoms/Input';
 
 const ROLES = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'user', label: 'Usuario' },
-  { value: 'manager', label: 'Manager' }
+  { value: 'admin', label: 'Jefe' },
+  { value: 'user', label: 'Vendedor' },
+  { value: 'manager', label: 'Encargado' }
 ];
 
 const validateEmail = email => /\S+@\S+\.\S+/.test(email);
