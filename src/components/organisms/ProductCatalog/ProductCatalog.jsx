@@ -76,6 +76,23 @@ const ProductCatalog = ({ onCategorySelect, onBack }) => {
           )}
           <h1 className="text-2xl font-bold text-gray-800">Catálogo de Productos</h1>
         </div>
+        <div className="flex items-center space-x-3">
+          {/* Excel Uploader: botón para cargar catálogo desde Excel */}
+          <ExcelUploader
+            onDataLoaded={handleExcelDataLoaded}
+            onError={handleUploadError}
+          />
+
+          {/* Botón para restablecer catálogo */}
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw size={16} />
+            <span>Restablecer catálogo</span>
+          </Button>
+        </div>
         
 
       </div>
