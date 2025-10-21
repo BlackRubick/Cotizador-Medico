@@ -46,26 +46,26 @@ function App() {
                   <DashboardPage />
                 </RoleBasedRoute>
               } />
-              {/* Cotizar: jefes, admins y vendedores */}
+              {/* Cotizar: jefes, admins, encargados y vendedores */}
               <Route path="cotizar/*" element={
-                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "vendedor"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "manager", "encargado", "user", "vendedor"]}>
                   <QuotePage />
                 </RoleBasedRoute>
               } />
               <Route path="cotizar" element={
-                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "vendedor"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "manager", "encargado", "user", "vendedor"]}>
                   <QuotePage />
                 </RoleBasedRoute>
               } />
-              {/* Historial: jefes, admins y vendedores */}
+              {/* Historial: jefes, admins, encargados y vendedores */}
               <Route path="historial" element={
-                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "vendedor"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "manager", "encargado", "user", "vendedor"]}>
                   <HistoryPage />
                 </RoleBasedRoute>
               } />
-              {/* Clientes para jefes y admins */}
+              {/* Clientes: jefes, admins y encargados */}
               <Route path="clientes" element={
-                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador"]}>
+                <RoleBasedRoute allowedRoles={["jefe", "admin", "administrador", "manager", "encargado"]}>
                   <ClientesPage />
                 </RoleBasedRoute>
               } />
