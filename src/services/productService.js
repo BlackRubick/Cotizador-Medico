@@ -28,6 +28,45 @@ class ProductService {
     return allProducts;
   }
 
+  // Mapear producto del backend al formato que usa el frontend (fallback)
+  mapBackendToFrontend(backendProduct) {
+    // Priorizar múltiples campos que podrían contener el precio
+    const basePrice = parseFloat(
+      backendProduct.basePrice ||
+      backendProduct.precioVenta ||
+      backendProduct.precioVentaPaquete ||
+      backendProduct.precioUnitario ||
+      backendProduct.priceExw ||
+      backendProduct.price ||
+      backendProduct.costo ||
+      0
+    ) || 0;
+
+    const formatPrice = (price, currency = 'MXN') => {
+      if (!price) return '$0';
+      return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0
+      }).format(price);
+    };
+
+    return {
+      id: backendProduct.id || backendProduct.code || String(Math.random()).slice(2),
+      name: backendProduct.item || backendProduct.name || backendProduct.description || 'Producto sin nombre',
+      code: backendProduct.code || backendProduct.modelo || '',
+      description: backendProduct.paraDescripcion || backendProduct.description || '',
+      category: backendProduct.category?.name || backendProduct.category || 'Sin categoría',
+      brand: backendProduct.proveedor || backendProduct.brand || '',
+      proveedor: backendProduct.proveedor || backendProduct.brand || '',
+      basePrice: basePrice,
+      formattedPrice: formatPrice(basePrice, backendProduct.moneda || 'MXN'),
+      currency: backendProduct.moneda || 'MXN',
+      proveedor: backendProduct.proveedor || backendProduct.brand || null,
+      compatibility: backendProduct.para || backendProduct.paraDescripcion || backendProduct.compatibility || []
+    };
+  }
+
   // Cargar productos desde Excel
   loadProductsFromExcel(excelProducts) {
     try {
