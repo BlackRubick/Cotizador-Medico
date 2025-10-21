@@ -192,6 +192,12 @@ const ExcelUploader = ({ onDataLoaded, onError }) => {
             compatibility: compatibility
           };
 
+          // Incluir alias/formatos que el backend podría esperar
+          product.precioUnitario = product.basePrice;
+          product.precioVentaPaquete = product.basePrice;
+          product.precioVenta = product.basePrice;
+          product.priceExw = product.priceExw || product.basePrice;
+
           if (!product.name || product.name === 'Producto sin nombre') {
             throw new Error(`Fila ${index + 2}: Se requiere DESCRIPCIÓN o MARCA + MODELO`);
           }
