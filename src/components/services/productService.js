@@ -80,17 +80,10 @@ class ProductService {
     console.log('🔄 Mapping product:', backendProduct); // DEBUG
     
     // ✅ CORREGIDO: Usar los campos reales de tu base de datos
-    // Priorizar múltiples campos que el backend podría retornar
-    const basePrice = parseFloat(
-      backendProduct.basePrice ||
-      backendProduct.precioVenta ||
-      backendProduct.precioVentaPaquete ||
-      backendProduct.precioUnitario ||
-      backendProduct.priceExw ||
-      backendProduct.price ||
-      backendProduct.costo ||
-      0
-    ) || 0;
+    const basePrice = backendProduct.precioVentaPaquete || 
+                     backendProduct.precioUnitario || 
+                     backendProduct.costo || 
+                     0;
     
     // ✅ CORREGIDO: Formatear precio sin usar this
     const formatPrice = (price, currency = 'MXN') => {

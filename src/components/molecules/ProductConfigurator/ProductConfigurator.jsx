@@ -128,30 +128,127 @@ const ProductConfigurator = ({ categoryId, categoryName, onBack }) => {
         }
         
         if (response && response.data && Array.isArray(response.data)) {
-          // Usar el mapeador centralizado para asegurarnos de tomar el precio correcto
           products = response.data.map((product, index) => {
-            // Mostrar debug del primer producto completo
-            if (index === 0) {
+            // 🔍 DEBUG COMPLETO: Mostrar TODOS los campos del producto para encontrar el precio
+            if (index === 0) { // Solo mostrar el primer producto para no saturar la consola
               console.log('🔍 DEBUGGING PRODUCTO COMPLETO - Todos los campos disponibles:');
               console.log(product);
+              console.log('📋 Campos que podrían contener precio:', {
+                // Precios principales
+                precioVentaPaquete: product.precioVentaPaquete,
+                precioUnitario: product.precioUnitario,
+                finalPrice: product.finalPrice,
+                basePrice: product.basePrice,
+                factoryPrice: product.factoryPrice,
+                // Costos
+                costo: product.costo,
+                costoUnitario: product.costoUnitario,
+                // Otros posibles campos de precio
+                precio: product.precio,
+                price: product.price,
+                cost: product.cost,
+                unitPrice: product.unitPrice,
+                salePrice: product.salePrice,
+                // Campos con guión bajo
+                precio_venta: product.precio_venta,
+                precio_unitario: product.precio_unitario,
+                precio_costo: product.precio_costo,
+                // Campos específicos de tu Excel
+                'Precio Venta': product['Precio Venta'],
+                'Precio Unitario': product['Precio Unitario'],
+                'Costo': product['Costo'],
+                'Precio': product['Precio']
+              });
             }
-
-            // Mapear con la función centralizada del servicio
-            const mapped = productService.mapBackendToFrontend(product);
-
-            // Asegurar category y otros campos faltantes
-            mapped.category = product.category?.name || categoryName || mapped.category;
-            mapped.proveedor = product.proveedor || mapped.brand || mapped.supplier?.name;
-
-            // Si por alguna razón mapped.basePrice es 0, asignar precio temporal (solo como fallback)
-            if (!mapped.basePrice || mapped.basePrice <= 0) {
-              const tempPrice = generateTemporaryPrice(product, categoryName);
-              console.log(`🛠️ PRECIO TEMPORAL ASIGNADO para ${product.code || mapped.code}: $${tempPrice}`);
-              mapped.basePrice = tempPrice;
-              mapped.formattedPrice = new Intl.NumberFormat('es-MX', { style: 'currency', currency: mapped.currency || 'MXN', minimumFractionDigits: 0 }).format(tempPrice);
+            
+            // Intentar múltiples formas de obtener el precio
+            let price = product.precioVentaPaquete || 
+                        product.precioUnitario || 
+                        product.finalPrice || 
+                        product.basePrice || 
+                        product.factoryPrice || 
+                        product.costo || 
+                        product.costoUnitario ||
+                        product.precio ||
+                        product.price ||
+                        product.cost ||
+                        product.unitPrice ||
+                        product.salePrice ||
+                        product.precio_venta ||
+                        product.precio_unitario ||
+                        product.precio_costo ||
+                        product['Precio Venta'] ||
+                        product['Precio Unitario'] ||
+                        product['Costo'] ||
+                        product['Precio'] ||
+                        0;
+            
+            // 🛠️ SOLUCIÓN TEMPORAL: Si no hay precio, generar uno basado en categoría y código
+            if (price === 0 || price === null || price === undefined) {
+              price = generateTemporaryPrice(product, categoryName);
+              console.log(`🛠️ PRECIO TEMPORAL ASIGNADO para ${product.code}: $${price}`);
             }
-
-            return mapped;
+            
+            // Debug individual por producto si no tiene precio
+            if (price === 0) {
+              console.log(`⚠️ PRODUCTO SIN PRECIO: ${product.code} - ${product.item || product.name}`, {
+                todosLosCamposDePrecios: {
+                  precioVentaPaquete: product.precioVentaPaquete,
+                  precioUnitario: product.precioUnitario,
+                  finalPrice: product.finalPrice,
+                  basePrice: product.basePrice,
+                  costo: product.costo,
+                  costoUnitario: product.costoUnitario
+                }
+              });
+            }
+            
+            // Debug de marcas y compatibilidad para los primeros 5 productos
+            if (index < 5) {
+              console.log(`🏷️ MARCA Y COMPATIBILIDAD DETECTADA en producto ${index + 1}:`, {
+                codigo: product.code,
+                nombre: product.item || product.name,
+                proveedor: product.proveedor,
+                brand: product.brand,
+                para: product.para,
+                paraDescripcion: product.paraDescripcion,
+                marcaFinal: product.proveedor || product.brand || 'SIN MARCA',
+                compatibilidadFinal: product.para || product.paraDescripcion || 'SIN COMPATIBILIDAD'
+              });
+            }
+            
+            return {
+              id: product.id,
+              name: product.item || product.name || 'Producto sin nombre',
+              code: product.code,
+              description: product.paraDescripcion || product.para_descripcion || product.description || 'Sin descripción',
+              category: product.category?.name || categoryName,
+              brand: product.proveedor || product.brand,
+              basePrice: price,
+              // Mapear campos específicos de tu API
+              servicio: product.servicio,
+              especialidad: product.especialidad,
+              clasificacion: product.clasificacion,
+              proveedor: product.proveedor,
+              cantidadPaquete: product.cantidadPaquete || 1,
+              costo: product.costo || 0,
+              costoUnitario: product.costoUnitario || 0,
+              precioVentaPaquete: product.precioVentaPaquete || 0,
+              precioUnitario: product.precioUnitario || 0,
+              finalPrice: product.finalPrice || 0,
+              factoryPrice: product.factoryPrice || 0,
+              formattedPrice: product.formattedPrice,
+              formattedUnitPrice: product.formattedUnitPrice,
+              moneda: product.moneda || 'MXN',
+              valorMoneda: product.valorMoneda || 1,
+              impuestos: product.impuestos || 0,
+              // Campos adicionales para compatibilidad - usar campo PARA del Excel
+              compatibility: product.para || product.paraDescripcion || product.compatibility || product.especialidad || null,
+              stock: {
+                isInStock: true, // Por defecto asumimos que hay stock
+                quantity: 99 // Cantidad por defecto
+              }
+            };
           });
           
           console.log('✅ Productos formateados:', products.length, 'productos');
